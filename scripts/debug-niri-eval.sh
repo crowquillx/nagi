@@ -5,7 +5,7 @@ HOST="${1:-tanlappy}"
 USER_NAME="${2:-tan}"
 FLAKE_REF="${3:-.}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
-LOG_FILE="/tmp/tanos-niri-debug-${HOST}-${USER_NAME}-${STAMP}.log"
+LOG_FILE="/tmp/nagi-niri-debug-${HOST}-${USER_NAME}-${STAMP}.log"
 
 run_eval() {
   local title="$1"

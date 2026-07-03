@@ -20,7 +20,7 @@ let
       fi
     '';
 
-  noctaliaCommandWrapper = pkgs.writeShellScriptBin "tanos-noctalia-shell" ''
+  noctaliaCommandWrapper = pkgs.writeShellScriptBin "nagi-noctalia-shell" ''
     set -eu
 
     ${exportSecret "NOCTALIA_AP_GOOGLE_API_KEY" googleApiKeyPath}

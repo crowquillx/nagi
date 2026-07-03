@@ -10,7 +10,7 @@ Primary host configuration is composed from `hosts/<host>/variables.nix` and
   terminals, theme extras, portals, Tailscale, laptop extras, printing,
   Bluetooth, networking, and service toggles.
 
-The files are merged into the same `config.tanos.variables` attrset before
+The files are merged into the same `config.nagi.variables` attrset before
 modules consume them. Later fragments override earlier fragments for duplicate
 scalar values.
 
@@ -39,6 +39,7 @@ scalar values.
 - `desktop.session.keyring.enable = true | false`
 - `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }`
 - `users.git = { name, email }`
+- `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
 - `desktop.enable = true | false`
 - `features.stylix = { enable, variant }`
@@ -229,7 +230,7 @@ desktop = {
 ```nix
 desktop.noctalia = {
   enable = true;
-  command = "tanos-noctalia-shell";
+  command = "nagi-noctalia-shell";
   systemd.enable = false;
   assistantPanel.secrets = {
     googleApiKey = "noctalia-ap-google-api-key";
@@ -238,7 +239,7 @@ desktop.noctalia = {
 ```
 
 This enables Home Manager's current `programs.noctalia.*` module. Only `enable` and `systemd.enable` are forwarded directly; `desktop.noctalia.command` is used by Niri startup and Noctalia IPC keybinds.
-When `desktop.noctalia.command` is set to a wrapper such as `tanos-noctalia-shell`, Niri startup and keybinds use that command instead of plain `noctalia`.
+When `desktop.noctalia.command` is set to a wrapper such as `nagi-noctalia-shell`, Niri startup and keybinds use that command instead of plain `noctalia`.
 
 `desktop.noctalia.assistantPanel.secrets` names optional `sops-nix` secrets that are exposed to the plugin through its documented environment variables. Set only the ones you actually use:
 
@@ -417,7 +418,7 @@ The SSH daemon is owned by `modules/nixos/services/ssh.nix` and is fully host-co
 
 Notes:
 
-- Steam ports only take effect where `features.gaming.enable = true` (tandesk). On tanvm/tanlappy gaming is disabled, so `features.gaming.steam.*.openFirewall` is inert and should be set `false` to reflect honest intent.
+- Steam ports only take effect where `features.gaming.enable = true` (tandesk). On default/tanlappy gaming is disabled, so `features.gaming.steam.*.openFirewall` is inert and should be set `false` to reflect honest intent.
 - The Mullvad daemon does not require a manually declared inbound firewall port.
 - ollama, open-webui, and comfyui bind to `127.0.0.1` and open no firewall ports.
 - ICMP echo (`allowPing`) is left at the NixOS default (`true`) for diagnostics; it is not a TCP/UDP port and can be tightened separately.
@@ -446,7 +447,7 @@ features.laptop = {
 ```nix
 users.git = {
   name = "Tan User";
-  email = "tan@example.com";
+  email = "nagi.com";
 };
 ```
 

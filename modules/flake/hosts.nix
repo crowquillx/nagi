@@ -14,12 +14,12 @@
         ../../hosts/tandesk/advanced.nix
       ];
     };
-    tanvm = {
+    default = {
       system = "x86_64-linux";
-      module = ../../hosts/tanvm/default.nix;
+      module = ../../hosts/default/default.nix;
       variables = [
-        ../../hosts/tanvm/variables.nix
-        ../../hosts/tanvm/advanced.nix
+        ../../hosts/default/variables.nix
+        ../../hosts/default/advanced.nix
       ];
     };
     tanlappy = {
@@ -31,16 +31,13 @@
       ];
     };
   };
-  users = {
-    tan = ../../users/tan/home.nix;
-  };
+  homeModule = import ../../users/default/home.nix;
   noctaliaHmModule = lib.attrByPath ["noctalia" "homeModules" "default"] null inputs;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
   importVariables = files:
     lib.foldl' lib.recursiveUpdate { } (map import files);
   hostVars = lib.mapAttrs (_: spec: importVariables spec.variables) hosts;
   nixosHostModules = lib.mapAttrs (_: spec: import spec.module) hosts;
-  homeUserModules = lib.mapAttrs (_: import) users;
 
   niriOverlay = lib.attrByPath ["niri" "overlays" "niri"] null inputs;
   niriNixosModule = lib.attrByPath ["niri" "nixosModules" "niri"] null inputs;
@@ -159,7 +156,7 @@
           inputs
           vars
           hostName
-          homeUserModules
+          homeModule
           combined
           ;
       };
@@ -196,34 +193,32 @@
 
   mkHome = hostName: hostPlatform: let
     vars = hostVars.${hostName};
-    primaryUser = lib.attrByPath ["users" "primary"] "tan" vars;
-    homeModule = lib.attrByPath [primaryUser] null homeUserModules;
+    primaryUser = lib.attrByPath ["users" "primary"] "nagi" vars;
   in
-    assert homeModule != null;
-      inputs.home-manager.lib.homeManagerConfiguration {
-        pkgs = import inputs.nixpkgs {
-          system = hostPlatform;
-          config.allowUnfree = true;
-          overlays = sharedOverlays vars;
-        };
-        extraSpecialArgs = {
-          inherit
-            self
-            vars
-            inputs
-            combined
-            ;
-        };
-        modules =
-          [
-            homeModule
-            {
-              home.username = primaryUser;
-              home.homeDirectory = "/home/${primaryUser}";
-            }
-          ]
-          ++ sharedHomeModules vars;
+    inputs.home-manager.lib.homeManagerConfiguration {
+      pkgs = import inputs.nixpkgs {
+        system = hostPlatform;
+        config.allowUnfree = true;
+        overlays = sharedOverlays vars;
       };
+      extraSpecialArgs = {
+        inherit
+          self
+          vars
+          inputs
+          combined
+          ;
+      };
+      modules =
+        [
+          homeModule
+          {
+            home.username = primaryUser;
+            home.homeDirectory = "/home/${primaryUser}";
+          }
+        ]
+        ++ sharedHomeModules vars;
+    };
 
   nixosConfigs = lib.mapAttrs mkHost hostPlatforms;
   ciNixosConfigs = lib.mapAttrs mkCiHost hostPlatforms;
@@ -269,7 +264,7 @@ in {
   flake = {
     nixosModules = nixosHostModules;
 
-    homeModules = homeUserModules;
+    homeModules.default = homeModule;
 
     nixosConfigurations = nixosConfigs;
     ciNixosConfigurations = ciNixosConfigs;

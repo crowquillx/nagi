@@ -1,6 +1,6 @@
 { lib, pkgs, config, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   enabled = get [ "features" "portals" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";

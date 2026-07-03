@@ -154,10 +154,10 @@ Before every `nh os` invocation, `tcli` prints the current git HEAD sha and unco
 
 `tcli` finds the repo in this order:
 
-1. `TANOS_FLAKE_DIR` environment variable
+1. `NAGI_FLAKE_DIR` environment variable
 2. current git root (if it has `flake.nix`)
 3. current directory (if it has `flake.nix`)
-4. `$HOME/tanos`
+4. `$HOME/nagi`
 
 ## Aliases
 

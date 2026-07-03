@@ -20,14 +20,19 @@ let
     };
 in
 {
-  options.tanos.variables = mkOption {
+  options.nagi.variables = mkOption {
     type = looseSubmodule {
       users = mkOption {
         type = looseSubmodule {
           primary = mkOption {
             type = types.nonEmptyStr;
-            default = "tan";
+            default = "nagi";
             description = "Primary user receiving the host Home Manager configuration.";
+          };
+          flakeDirectory = mkOption {
+            type = types.nullOr types.nonEmptyStr;
+            default = null;
+            description = "Absolute path to this flake checkout for user tools. Defaults to /home/<primary>/nagi.";
           };
           extraPackages = mkOption {
             type = types.listOf types.nonEmptyStr;

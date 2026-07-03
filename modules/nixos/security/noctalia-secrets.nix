@@ -5,7 +5,7 @@
 }:
 let
   get = path: default: lib.attrByPath path default vars;
-  primaryUser = get [ "users" "primary" ] "tan";
+  primaryUser = get [ "users" "primary" ] "nagi";
   desktopEnabled = get [ "desktop" "enable" ] true;
   noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] desktopEnabled;
   secrets = get [ "desktop" "noctalia" "assistantPanel" "secrets" ] { };

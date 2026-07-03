@@ -5,7 +5,7 @@
   ...
 }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
   dm = get [ "desktop" "displayManager" ] "auto";

@@ -5,7 +5,7 @@
   ...
 }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   enabled = get [ "features" "nh" "enable" ] true;
   cleanEnable = get [ "features" "nh" "clean" "enable" ] true;

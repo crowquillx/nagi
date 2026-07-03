@@ -1,6 +1,6 @@
 {
   enable = true;
-  command = "tanos-noctalia-shell";
+  command = "nagi-noctalia-shell";
   systemd.enable = false;
   assistantPanel.secrets = { };
 }

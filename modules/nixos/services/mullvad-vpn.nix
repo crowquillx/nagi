@@ -1,6 +1,6 @@
 { lib, config, pkgs, ... }:
 let
-  cfg = config.tanos.variables.features.mullvad;
+  cfg = config.nagi.variables.features.mullvad;
 in
 {
   config = lib.mkMerge [

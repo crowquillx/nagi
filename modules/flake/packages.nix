@@ -16,10 +16,10 @@
     in
     {
       packages = lib.filterAttrs (_: value: value != null) {
-        tanos-zen = zenPkg;
-        tanos-helium = heliumPkg;
-        tanos-noctalia = noctaliaPkg;
-        tanos-niri = niriPkg;
+        nagi-zen = zenPkg;
+        nagi-helium = heliumPkg;
+        nagi-noctalia = noctaliaPkg;
+        nagi-niri = niriPkg;
       };
     };
 }

@@ -140,7 +140,7 @@
       keyring.enable = true;
       lock = {
         enable = true;
-        command = "tanos-noctalia-shell msg session lock";
+        command = "nagi-noctalia-shell msg session lock";
         idleSeconds = 300;
         beforeSleep = true;
         onLidClose = true;

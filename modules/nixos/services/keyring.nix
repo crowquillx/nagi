@@ -1,6 +1,6 @@
 { lib, config, options, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;

@@ -1,6 +1,6 @@
 { lib, pkgs, config, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   secureBootEnabled = get [ "boot" "secureBoot" "enable" ] false;
   secureBootPkiBundle = get [ "boot" "secureBoot" "pkiBundle" ] "/etc/secureboot";

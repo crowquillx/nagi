@@ -2,10 +2,10 @@
 
 ## 1) Copy an existing host profile
 
-Use `tanvm` as a starting point unless you need laptop defaults.
+Use `default` as a starting point unless you need laptop defaults.
 
 ```bash
-cp -r hosts/tanvm hosts/<newhost>
+cp -r hosts/default hosts/<newhost>
 ```
 
 ## 2) Update host variables
@@ -14,6 +14,8 @@ Edit `hosts/<newhost>/variables.nix` and at minimum set:
 
 - `host.name = "<newhost>"`
 - `host.isVm = true|false`
+- `users.primary = "<username>"`
+- `users.flakeDirectory = "/home/<username>/<flake-dir>"` or `null` to use `/home/<username>/nagi`
 - core desktop, graphics, and maintenance toggles for that machine
 - `security.sops.defaultSopsFile = ../../secrets/<newhost>.yaml` (if using sops)
 
@@ -28,7 +30,7 @@ If adding/removing globally shared modules, update `modules/combined/stacks.nix`
 Option A (recommended): let bootstrap generate it.
 
 ```bash
-sudo ./install/bootstrap.sh <newhost> --update-hardware
+sudo ./install/bootstrap.sh <newhost> --user <username> --hostname <hostname> --flake-dir /home/<username>/nagi --update-hardware
 ```
 
 Option B: manually generate and place `hosts/<newhost>/hardware-configuration.nix`.
@@ -54,7 +56,7 @@ Add `<newhost>` in the `hosts` attrset in `modules/flake/hosts.nix` with its sys
 ## 5) Build and switch
 
 ```bash
-sudo ./install/bootstrap.sh <newhost>
+sudo ./install/bootstrap.sh <newhost> --user <username> --hostname <hostname> --flake-dir /home/<username>/nagi
 ```
 
 or after initial bootstrap:

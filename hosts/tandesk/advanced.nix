@@ -37,7 +37,7 @@
         codex = {
           enable = true;
           trustedDirectories = [
-            "/home/tan/tanos"
+            "/home/tan/nagi"
             "/home/tan/REPOS"
             "/home/tan/REPOS/Bloom"
           ];

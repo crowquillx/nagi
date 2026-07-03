@@ -18,7 +18,7 @@ let
       run ln -sfn "${source}" "${target}"
       run chmod ${mode} "${target}" 2>/dev/null || true
     else
-      echo "tanos: sops secret not found at ${source}; leaving ${target} unchanged." >&2
+      echo "nagi: sops secret not found at ${source}; leaving ${target} unchanged." >&2
     fi
   '';
 
@@ -28,7 +28,7 @@ let
     # Wait for /run/secrets to be populated by sops-install-secrets before
     # creating the symlinks. This handles the race where HM activation runs
     # before the systemd service has finished decrypting.
-    _tanosWaitForSops() {
+    _nagiWaitForSops() {
       local deadline=$(( $(date +%s) + 30 ))
       while [ "$(date +%s)" -lt "$deadline" ]; do
         if [ -e '${privSource}' ] && [ -e '${pubSource}' ]; then
@@ -39,8 +39,8 @@ let
       return 1
     }
 
-    if ! _tanosWaitForSops; then
-      echo "tanos: timed out waiting for sops secrets in /run/secrets; SSH key symlinks may be missing." >&2
+    if ! _nagiWaitForSops; then
+      echo "nagi: timed out waiting for sops secrets in /run/secrets; SSH key symlinks may be missing." >&2
     fi
 
     run mkdir -p "$sshDir"

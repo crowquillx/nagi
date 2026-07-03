@@ -3,7 +3,7 @@
   config,
   ...
 }: let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   enabled = get ["features" "tailscale" "enable"] true;
   exitNode = get ["features" "tailscale" "exitNode"] null;

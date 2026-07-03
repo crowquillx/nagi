@@ -1,6 +1,6 @@
 { lib, config, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   mounts = lib.attrByPath [ "storage" "mounts" ] [ ] v;
 
   normalizeMount =

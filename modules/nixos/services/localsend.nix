@@ -1,6 +1,6 @@
 { lib, config, ... }:
 let
-  cfg = config.tanos.variables.features.localsend;
+  cfg = config.nagi.variables.features.localsend;
 in
 {
   config = lib.mkIf cfg.openFirewall {

@@ -5,9 +5,9 @@
   ...
 }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
-  primaryUser = get [ "users" "primary" ] "tan";
+  primaryUser = get [ "users" "primary" ] "nagi";
   fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
   maintenance = v.features.nixMaintenance;
 in

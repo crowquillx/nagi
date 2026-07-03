@@ -10,7 +10,7 @@ let
   ageKeyFile = get [ "security" "sops" "ageKeyFile" ] "/var/lib/sops-nix/key.txt";
   gnupgHome = get [ "security" "sops" "gnupgHome" ] null;
   administrativeGroup = get [ "security" "sops" "administrativeGroup" ] null;
-  primaryUser = get [ "users" "primary" ] "tan";
+  primaryUser = get [ "users" "primary" ] "nagi";
   sshKey = {
     enable = get [ "security" "sops" "sshKey" "enable" ] false;
     name = get [ "security" "sops" "sshKey" "name" ] "ssh_key";

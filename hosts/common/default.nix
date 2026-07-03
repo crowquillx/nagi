@@ -4,14 +4,13 @@
   config,
   vars,
   inputs,
-  homeUserModules,
+  homeModule,
   combined,
   ...
 }: let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
-  primaryUser = get ["users" "primary"] "tan";
-  homeModule = lib.attrByPath [primaryUser] null homeUserModules;
+  primaryUser = get ["users" "primary"] "nagi";
   noctaliaHmModule = lib.attrByPath ["noctalia" "homeModules" "default"] null inputs;
   hmBackupCommand = pkgs.writeShellScript "home-manager-backup" ''
     set -eu
@@ -34,16 +33,19 @@ in {
     ]
     ++ combined.nixosModules;
 
-  tanos.variables = vars;
+  nagi.variables = vars;
 
   assertions = [
     {
-      assertion = homeModule != null;
-      message = "No homeModules entry exists for tanos.variables.users.primary = '${primaryUser}'.";
-    }
-    {
       assertion = builtins.isString primaryUser && primaryUser != "";
       message = "users.primary must be a non-empty string.";
+    }
+    {
+      assertion = let
+        flakeDirectory = get ["users" "flakeDirectory"] null;
+      in
+        flakeDirectory == null || (builtins.isString flakeDirectory && flakeDirectory != "");
+      message = "users.flakeDirectory must be null or a non-empty string.";
     }
     {
       assertion = let

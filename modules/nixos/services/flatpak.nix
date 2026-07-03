@@ -1,6 +1,6 @@
 { lib, config, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   enabled = get [ "features" "flatpak" "enable" ] false;
   packageRefs = get [ "features" "flatpak" "packages" ] [ ];

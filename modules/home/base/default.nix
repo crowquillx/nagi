@@ -23,6 +23,11 @@ let
   footEnabled = get [ "features" "terminals" "foot" "enable" ] true;
   fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
   noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] false;
+  configuredFlakeDirectory = get [ "users" "flakeDirectory" ] null;
+  flakeDirectory =
+    if configuredFlakeDirectory == null
+    then "${config.home.homeDirectory}/nagi"
+    else configuredFlakeDirectory;
 
   zenPkg = lib.attrByPath [ "zen-browser" "packages" system "default" ] null inputs;
   thunarPkg =
@@ -185,7 +190,7 @@ in
         pkgs.libnotify
       ];
     sessionVariables = {
-      TANOS_FLAKE_DIR = "${config.home.homeDirectory}/tanos";
+      NAGI_FLAKE_DIR = flakeDirectory;
       QT_STYLE_OVERRIDE = lib.mkForce "";
     };
   };
@@ -217,7 +222,7 @@ in
             end
 
             pkill -u $USER -x noctalia 2>/dev/null
-            nohup tanos-noctalia-shell >/dev/null 2>&1 &
+            nohup nagi-noctalia-shell >/dev/null 2>&1 &
             disown
           '';
         };

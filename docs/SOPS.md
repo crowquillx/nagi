@@ -25,7 +25,7 @@ sops secrets/<host>.yaml
 Example:
 
 ```bash
-sops secrets/tanvm.yaml
+sops secrets/default.yaml
 ```
 
 To store the user's SSH key in sops, add the key as a sops secret. The
@@ -37,7 +37,7 @@ ssh_key: |
   -----BEGIN OPENSSH PRIVATE KEY-----
   ...
   -----END OPENSSH PRIVATE KEY-----
-ssh_key_pub: ssh-rsa AAAA... tan@tandesk
+ssh_key_pub: ssh-rsa AAAA... user@host
 ```
 
 ## 3) Point host variables to that file
@@ -60,7 +60,7 @@ security.sops = {
 ## 4) Apply config
 
 ```bash
-sudo ./install/bootstrap.sh <host>
+sudo ./install/bootstrap.sh <host> --user <user> --hostname <hostname> --flake-dir /home/<user>/nagi
 ```
 
 or:
@@ -247,10 +247,10 @@ declarative and discoverable, then mirror it into `.sops.yaml`.
              - age1<...tandesk public key...>
          - pgp:
              - B7873777D243B2011C50F7B83DF8B7D2772745D9
-     - path_regex: secrets/tanvm\.ya?ml$
+     - path_regex: secrets/default\.ya?ml$
        key_groups:
          - age:
-             - age1<...tanvm public key...>
+             - age1<...default public key...>
          - pgp:
              - B7873777D243B2011C50F7B83DF8B7D2772745D9
      # ...one rule per host...

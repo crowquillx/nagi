@@ -5,7 +5,7 @@
   ...
 }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   enabled = get [ "features" "gaming" "enable" ] false;
   gamescopeSessionEnable = get [ "features" "gaming" "steam" "gamescopeSession" "enable" ] false;

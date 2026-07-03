@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Validate tanos flake configuration for a selected host.
+Validate nagi flake configuration for a selected host.
 
 Usage:
   scripts/validate-host.sh <host> [--strict-statix] [--no-dry-run] [--flake-dir <path>]

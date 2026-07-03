@@ -16,7 +16,7 @@ let
 
     usage() {
       cat <<'EOF'
-    tcli - tanos helper for flake updates, rebuilds, and garbage collection
+    tcli - nagi helper for flake updates, rebuilds, and garbage collection
 
     Usage:
       tcli
@@ -49,7 +49,7 @@ let
 
     Notes:
       - Host defaults to current hostname.
-      - Flake path defaults to current repo root; override with TANOS_FLAKE_DIR.
+      - Flake path defaults to current repo root; override with NAGI_FLAKE_DIR.
       - Bare `tcli` defaults to `switch` on the current host.
       - Rebuilds run through `nh os`, so Home Manager is still applied via NixOS module integration.
     EOF
@@ -61,9 +61,9 @@ let
     }
 
     resolve_flake_dir() {
-      if [[ -n "''${TANOS_FLAKE_DIR-}" ]]; then
-        [[ -f "''${TANOS_FLAKE_DIR}/flake.nix" ]] || die "TANOS_FLAKE_DIR does not contain flake.nix: ''${TANOS_FLAKE_DIR}"
-        printf '%s\n' "''${TANOS_FLAKE_DIR}"
+      if [[ -n "''${NAGI_FLAKE_DIR-}" ]]; then
+        [[ -f "''${NAGI_FLAKE_DIR}/flake.nix" ]] || die "NAGI_FLAKE_DIR does not contain flake.nix: ''${NAGI_FLAKE_DIR}"
+        printf '%s\n' "''${NAGI_FLAKE_DIR}"
         return
       fi
 
@@ -77,12 +77,12 @@ let
         return
       fi
 
-      if [[ -f "$HOME/tanos/flake.nix" ]]; then
-        printf '%s\n' "$HOME/tanos"
+      if [[ -f "$HOME/nagi/flake.nix" ]]; then
+        printf '%s\n' "$HOME/nagi"
         return
       fi
 
-      die "could not find tanos flake. Run inside the repo, or set TANOS_FLAKE_DIR."
+      die "could not find nagi flake. Run inside the repo, or set NAGI_FLAKE_DIR."
     }
 
     resolve_host() {

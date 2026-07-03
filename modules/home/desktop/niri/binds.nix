@@ -12,7 +12,7 @@ let
   noctaliaCommand = get [ "desktop" "noctalia" "command" ] "noctalia";
   chatClient = get [ "features" "chat" "client" ] "none";
   microphoneMuteScript = pkgs.writeShellApplication {
-    name = "tanos-toggle-microphone-mute";
+    name = "nagi-toggle-microphone-mute";
     runtimeInputs = [
       pkgs.libnotify
       pkgs.wireplumber
@@ -35,7 +35,7 @@ let
     if chatClient == "equibop" then
       [ (leaf "spawn" [ "equibop" "--toggle-mic" ]) ]
     else if chatClient != "none" then
-      [ (leaf "spawn" [ "${microphoneMuteScript}/bin/tanos-toggle-microphone-mute" ]) ]
+      [ (leaf "spawn" [ "${microphoneMuteScript}/bin/nagi-toggle-microphone-mute" ]) ]
     else
       [ (leaf "spawn" [ "notify-send" "Chat mute" "No chat client is configured." ]) ];
 in

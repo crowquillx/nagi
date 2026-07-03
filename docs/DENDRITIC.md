@@ -21,19 +21,19 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
 ## 2) Flake logic lives in `modules/flake/`
 
 - `modules/flake/hosts.nix`
-  - defines the host registry (`hosts`) and published user modules (`users`)
-  - publishes `flake.nixosModules.<host>` and `flake.homeModules.<user>`
+  - defines the host registry (`hosts`) and the generic Home Manager user module
+  - publishes `flake.nixosModules.<host>` and `flake.homeModules.default`
   - builds `nixosConfigurations`, `ciNixosConfigurations`, `homeConfigurations`
 - `modules/flake/packages.nix`
   - defines `perSystem.packages` for wrapped/custom packages
-  - includes wrapped + upstream package outputs (`tanos-niri`, `tanos-noctalia`, `tanos-zen`, `tanos-helium`)
+  - includes wrapped + upstream package outputs (`nagi-niri`, `nagi-noctalia`, `nagi-zen`, `nagi-helium`)
 
 ## 3) Shared NixOS + Home stack wiring
 
 `modules/combined/stacks.nix` is the single source for repo-owned shared module composition:
 
 - `nixosModules`: imported by `hosts/common/default.nix`
-- `homeModules`: imported by `users/tan/home.nix`
+- `homeModules`: imported by `users/default/home.nix`
 
 `combined` is passed through special args from `modules/flake/hosts.nix` into both system and home evaluation paths.
 External upstream flake modules and host-conditional upstream modules stay in `modules/flake/hosts.nix`.
@@ -58,9 +58,9 @@ External upstream flake modules and host-conditional upstream modules stay in `m
 ## Initial installation
 
 1. Clone repository.
-2. Select host (`tandesk`, `tanvm`, `tanlappy`).
+2. Select profile (`default`, `tandesk`, `tanlappy`).
 3. Run bootstrap:
-   - `sudo ./install/bootstrap.sh <host>`
+   - `sudo ./install/bootstrap.sh <profile> --user <user> --hostname <hostname> --flake-dir <absolute-path>`
 4. Reboot and log in via SDDM.
 
 ## Updates and day-to-day operations

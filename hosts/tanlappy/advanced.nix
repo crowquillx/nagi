@@ -36,7 +36,7 @@
         enable = true;
         codex = {
           enable = true;
-          trustedDirectories = [ "/home/tan/tanos" ];
+          trustedDirectories = [ "/home/tan/nagi" ];
         };
         opencode.enable = true;
         gemini.enable = false;

@@ -1,6 +1,6 @@
 { lib, config, ... }:
 let
-  v = config.tanos.variables;
+  v = config.nagi.variables;
   zram = v.features.swap.zram;
   disk = v.features.swap.disk;
 in

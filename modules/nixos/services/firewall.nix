@@ -33,7 +33,7 @@
   #
   # Notes:
   # - Steam port openings only take effect on hosts where features.gaming.enable = true
-  #   (currently tandesk only). On tanvm/tanlappy, gaming is disabled, so the
+  #   (currently tandesk only). On default/tanlappy, gaming is disabled, so the
   #   features.gaming.steam.*.openFirewall toggles are inert regardless of value.
   # - mullvad-vpn, ollama, open-webui, and comfyui bind to 127.0.0.1 and open
   #   no firewall ports.

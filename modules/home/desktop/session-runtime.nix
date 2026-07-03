@@ -39,7 +39,7 @@ let
   appStartupSystemdEnable = appStartupEnable && startupBackend == "systemd";
 
   mkStartupService = index: command: {
-    name = "tanos-startup-app-${toString index}";
+    name = "nagi-startup-app-${toString index}";
     value = {
       Unit = {
         Description = "Tanos Startup App ${toString index}";
@@ -59,7 +59,7 @@ let
 
   startupAppServices = builtins.listToAttrs (lib.imap0 mkStartupService effectiveStartupApps);
 
-  lockScript = pkgs.writeShellScript "tanos-lock-session" ''
+  lockScript = pkgs.writeShellScript "nagi-lock-session" ''
     exec ${lockCommand}
   '';
 
@@ -114,7 +114,7 @@ in
     (lib.mkIf (desktopEnabled && sessionEnabled) {
       systemd.user.services = lib.mkMerge [
         (lib.mkIf polkitEnable {
-          tanos-polkit-agent = {
+          nagi-polkit-agent = {
             Unit = {
               Description = "Tanos Polkit Authentication Agent";
               PartOf = [ waylandTarget ];
@@ -131,7 +131,7 @@ in
           };
         })
         (lib.mkIf (lockEnable && !noctaliaIdleManage) {
-          tanos-idle-lock = {
+          nagi-idle-lock = {
             Unit = {
               Description = "Tanos Idle Lock Service";
               PartOf = [ waylandTarget ];
@@ -148,7 +148,7 @@ in
           };
         })
         (lib.mkIf shellStartupEnable {
-          tanos-shell-startup = {
+          nagi-shell-startup = {
             Unit = {
               Description = "Tanos Desktop Shell Startup";
               PartOf = [ waylandTarget ];

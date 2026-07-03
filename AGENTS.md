@@ -28,7 +28,7 @@ Read [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md) before changing flak
 - [hosts/common/default.nix](/home/tan/tanos/hosts/common/default.nix): shared host wiring and Home Manager integration.
 - [hosts/common/variables-schema.nix](/home/tan/tanos/hosts/common/variables-schema.nix): variable schema and defaults.
 - [hosts/<host>/variables.nix](/home/tan/tanos/hosts/tandesk/variables.nix): host toggles and values.
-- [users/tan/home.nix](/home/tan/tanos/users/tan/home.nix): primary user Home Manager entrypoint.
+- [users/default/home.nix](/home/tan/tanos/users/default/home.nix): primary user Home Manager entrypoint.
 
 ## Working Rules
 
@@ -48,12 +48,12 @@ Read [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md) before changing flak
 - Be especially conservative with anything that runs during activation or boot. A broken activation snippet can prevent the machine from booting cleanly.
 
 ### Host variable model
-- This repo uses `config.tanos.variables` as the shared host data model.
+- This repo uses `config.nagi.variables` as the shared host data model.
 - Prefer adding a clear variable and consuming it from a module instead of hardcoding host-specific behavior in shared modules.
 - When adding a new variable, update the schema and docs.
 
 ### Desktop/session specifics
-- `tandesk`, `tanvm`, and `tanlappy` may differ in graphics, session, and hardware assumptions.
+- `tandesk`, `default`, and `tanlappy` may differ in graphics, session, and hardware assumptions.
 - Niri support is intentional and should be preserved.
 - SDDM, portals, keyring, session services, and compositor-specific behavior should be treated as runtime-sensitive changes and validated carefully.
 - Do not assume KDE- or GNOME-style defaults fit a Niri session; check the existing module design first.

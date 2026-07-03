@@ -3,29 +3,63 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: bootstrap.sh [host] [--update-hardware]
+Usage: bootstrap.sh [profile] [--user <username>] [--hostname <hostname>] [--flake-dir <path>] [--update-hardware]
 
 Options:
-  --update-hardware  Also regenerate and overwrite hosts/<host>/hardware-configuration.nix
+  --user <username>  Primary user to create and activate Home Manager for
+  --hostname <name>  Installed machine hostname written to hosts/<profile>/variables.nix
+  --flake-dir <path> Absolute flake checkout path written to users.flakeDirectory
+  --update-hardware  Also regenerate and overwrite hosts/<profile>/hardware-configuration.nix
   -h, --help         Show this help
 EOF
 }
 
-HOST="tanvm"
+HOST="default"
 HOST_SET="false"
+PRIMARY_USER_OVERRIDE=""
+HOSTNAME_OVERRIDE=""
+FLAKE_DIR_OVERRIDE=""
 UPDATE_HARDWARE="false"
 
-for arg in "$@"; do
-  case "${arg}" in
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --user)
+      [[ $# -ge 2 ]] || {
+        echo "--user requires a value"
+        usage
+        exit 1
+      }
+      PRIMARY_USER_OVERRIDE="$2"
+      shift 2
+      ;;
+    --hostname)
+      [[ $# -ge 2 ]] || {
+        echo "--hostname requires a value"
+        usage
+        exit 1
+      }
+      HOSTNAME_OVERRIDE="$2"
+      shift 2
+      ;;
+    --flake-dir)
+      [[ $# -ge 2 ]] || {
+        echo "--flake-dir requires a value"
+        usage
+        exit 1
+      }
+      FLAKE_DIR_OVERRIDE="$2"
+      shift 2
+      ;;
     --update-hardware)
       UPDATE_HARDWARE="true"
+      shift
       ;;
     -h|--help)
       usage
       exit 0
       ;;
     -*)
-      echo "Unknown option: ${arg}"
+      echo "Unknown option: $1"
       usage
       exit 1
       ;;
@@ -35,8 +69,9 @@ for arg in "$@"; do
         usage
         exit 1
       fi
-      HOST="${arg}"
+      HOST="$1"
       HOST_SET="true"
+      shift
       ;;
   esac
 done
@@ -51,10 +86,6 @@ DETERMIMATE_SUBSTITUTER="https://install.determinate.systems"
 DETERMIMATE_PUBLIC_KEY="cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
 FLAKE_PATH="path:${REPO_ROOT}"
 NIXOS_FLAKE_REF="${FLAKE_PATH}#${HOST}"
-PRIMARY_USER="$(sed -nE 's/^[[:space:]]*primary[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' "${HOST_DIR}/variables.nix" | head -n1)"
-if [[ -z "${PRIMARY_USER}" ]]; then
-  PRIMARY_USER="${SUDO_USER:-tan}"
-fi
 
 if [[ ! -d "${HOST_DIR}" ]]; then
   KNOWN_HOSTS="$(find "${REPO_ROOT}/hosts" -mindepth 1 -maxdepth 1 -type d ! -name 'common' -printf '%f\n' | sort | paste -sd', ' -)"
@@ -67,7 +98,73 @@ if [[ "${EUID}" -ne 0 ]]; then
   exit 1
 fi
 
+VARIABLES_FILE="${HOST_DIR}/variables.nix"
+read_var() {
+  local name="$1"
+  sed -nE "s/^[[:space:]]*${name}[[:space:]]*=[[:space:]]*\"([^\"]+)\".*/\\1/p" "${VARIABLES_FILE}" | head -n1
+}
+
+validate_user() {
+  [[ "$1" =~ ^[a-z_][a-z0-9_-]*[$]?$ ]] && [[ "$1" != "root" ]]
+}
+
+validate_hostname() {
+  [[ "$1" =~ ^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$ ]]
+}
+
+write_string_assignment() {
+  local name="$1"
+  local value="$2"
+  local file="$3"
+  local escaped
+  escaped="$(printf '%s' "${value}" | sed 's/[\/&]/\\&/g')"
+  sed -i -E "0,/^([[:space:]]*)${name}[[:space:]]*=/s//\\1${name} = \"${escaped}\";/" "${file}"
+}
+
+insert_users_assignment() {
+  local name="$1"
+  local value="$2"
+  local file="$3"
+  local escaped
+  escaped="$(printf '%s' "${value}" | sed 's/[\/&]/\\&/g')"
+  sed -i -E "/^[[:space:]]*primary[[:space:]]*=/a\\    ${name} = \"${escaped}\";" "${file}"
+}
+
+CURRENT_PRIMARY_USER="$(read_var primary)"
+CURRENT_HOSTNAME="$(read_var name)"
+PRIMARY_USER="${PRIMARY_USER_OVERRIDE:-${CURRENT_PRIMARY_USER:-${SUDO_USER:-nagi}}}"
+TARGET_HOSTNAME="${HOSTNAME_OVERRIDE:-${CURRENT_HOSTNAME:-${HOST}}}"
+TARGET_FLAKE_DIR="${FLAKE_DIR_OVERRIDE:-${REPO_ROOT}}"
+
+if ! validate_user "${PRIMARY_USER}"; then
+  echo "Invalid username '${PRIMARY_USER}'."
+  exit 1
+fi
+
+if ! validate_hostname "${TARGET_HOSTNAME}"; then
+  echo "Invalid hostname '${TARGET_HOSTNAME}'."
+  exit 1
+fi
+
+if [[ "${TARGET_FLAKE_DIR}" != /* ]] || [[ ! -f "${TARGET_FLAKE_DIR}/flake.nix" ]]; then
+  echo "--flake-dir must be an absolute path containing flake.nix: ${TARGET_FLAKE_DIR}"
+  exit 1
+fi
+
+write_string_assignment name "${TARGET_HOSTNAME}" "${VARIABLES_FILE}"
+write_string_assignment primary "${PRIMARY_USER}" "${VARIABLES_FILE}"
+if grep -qE '^[[:space:]]*flakeDirectory[[:space:]]*=' "${VARIABLES_FILE}"; then
+  write_string_assignment flakeDirectory "${TARGET_FLAKE_DIR}" "${VARIABLES_FILE}"
+else
+  insert_users_assignment flakeDirectory "${TARGET_FLAKE_DIR}" "${VARIABLES_FILE}"
+fi
+if [[ -n "${SUDO_UID-}" ]] && [[ -n "${SUDO_GID-}" ]]; then
+  chown "${SUDO_UID}:${SUDO_GID}" "${VARIABLES_FILE}"
+fi
+
 echo "Bootstrapping host: ${HOST}"
+echo "Machine hostname: ${TARGET_HOSTNAME}"
+echo "Primary user: ${PRIMARY_USER}"
 echo "Repo root: ${REPO_ROOT}"
 
 # Keep bootstrap self-contained even when /etc/nix/nix.conf is immutable
@@ -129,7 +226,7 @@ echo "Running Home Manager activation for ${HOST} as ${PRIMARY_USER}"
 if ! id "${PRIMARY_USER}" >/dev/null 2>&1; then
   echo "Primary user '${PRIMARY_USER}' does not exist on this system; skipping Home Manager activation."
 else
-  HM_OUT_LINK="/tmp/tanos-hm-${HOST}"
+  HM_OUT_LINK="/tmp/nagi-hm-${HOST}"
   rm -f "${HM_OUT_LINK}"
   sudo -H -u "${PRIMARY_USER}" \
     nix --extra-experimental-features "${NIX_EXPERIMENTAL_FEATURES}" \

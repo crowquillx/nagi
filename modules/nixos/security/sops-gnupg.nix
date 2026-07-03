@@ -35,7 +35,7 @@ in
         # to import a key it already has.
         fingerprint=$(gpg --homedir "$home" --with-colons --import-options show-only --import "$key" 2>/dev/null | awk -F: '/^fpr:/ {print $10; exit}')
         if [ -z "$fingerprint" ]; then
-          echo "tanos: failed to read PGP fingerprint from $key" >&2
+          echo "nagi: failed to read PGP fingerprint from $key" >&2
           exit 1
         fi
         if ! gpg --homedir "$home" --list-keys "$fingerprint" >/dev/null 2>&1; then
