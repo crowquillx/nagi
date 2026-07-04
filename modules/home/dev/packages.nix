@@ -53,7 +53,13 @@
     (lib.attrByPath ["nixd"] null pkgs)
     (lib.attrByPath ["nil"] null pkgs)
   ];
-  t3DesktopPkg = lib.attrByPath ["t3code"] null pkgs;
+  t3DesktopPkg = let
+    base = lib.attrByPath ["t3code"] null pkgs;
+    llmCodex = llmAgent "codex";
+  in
+    if base != null && llmCodex != null
+    then base.override { codex = llmCodex; }
+    else base;
   t3DesktopProgram =
     if t3DesktopPkg == null
     then "t3code-desktop"
