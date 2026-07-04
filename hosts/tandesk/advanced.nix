@@ -6,12 +6,12 @@
     };
 
     chat = {
-      client = "discord";
+      client = "equibop";
       startup.enable = true;
       discord = {
         forceXwayland = false;
         equicord = {
-          enable = true;
+          enable = false;
           startupDelaySeconds = 4;
         };
       };
@@ -34,14 +34,7 @@
       };
       aiCli = {
         enable = true;
-        codex = {
-          enable = true;
-          trustedDirectories = [
-            "/home/tan/nagi"
-            "/home/tan/REPOS"
-            "/home/tan/REPOS/Bloom"
-          ];
-        };
+        codex.enable = true;
         opencode.enable = true;
         gemini.enable = true;
         droid.enable = true;

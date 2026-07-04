@@ -12,6 +12,7 @@
   get = path: default: lib.attrByPath path default v;
   primaryUser = get ["users" "primary"] "nagi";
   noctaliaHmModule = lib.attrByPath ["noctalia" "homeModules" "default"] null inputs;
+  codexDesktopHmModule = lib.attrByPath ["codex-desktop-linux" "homeManagerModules" "default"] null inputs;
   hmBackupCommand = pkgs.writeShellScript "home-manager-backup" ''
     set -eu
 
@@ -218,36 +219,6 @@ in {
       message = "features.codingTools.aiCli.codex.enable must be a boolean.";
     }
     {
-      assertion = let
-        dirs = get ["features" "codingTools" "aiCli" "codex" "trustedDirectories"] [];
-      in
-        builtins.isList dirs && builtins.all (d: builtins.isString d && d != "") dirs;
-      message = "features.codingTools.aiCli.codex.trustedDirectories must be a list of non-empty strings.";
-    }
-    {
-      assertion = let
-        model = get ["features" "codingTools" "aiCli" "codex" "model"] "gpt-5.5";
-      in
-        builtins.isString model && model != "";
-      message = "features.codingTools.aiCli.codex.model must be a non-empty string.";
-    }
-    {
-      assertion = let
-        valid = ["minimal" "low" "medium" "high" "xhigh"];
-        effort = get ["features" "codingTools" "aiCli" "codex" "modelReasoningEffort"] "low";
-      in
-        builtins.elem effort valid;
-      message = "features.codingTools.aiCli.codex.modelReasoningEffort must be one of: minimal, low, medium, high, xhigh.";
-    }
-    {
-      assertion = let
-        valid = ["none" "minimal" "low" "medium" "high" "xhigh"];
-        effort = get ["features" "codingTools" "aiCli" "codex" "planModeReasoningEffort"] "high";
-      in
-        builtins.elem effort valid;
-      message = "features.codingTools.aiCli.codex.planModeReasoningEffort must be one of: none, minimal, low, medium, high, xhigh.";
-    }
-    {
       assertion = builtins.isBool (
         get ["features" "codingTools" "aiCli" "opencode" "enable"] (
           get ["features" "codingTools" "aiCli" "enable"] (get ["features" "codingTools" "enable"] true)
@@ -338,7 +309,9 @@ in {
     useUserPackages = true;
     backupCommand = hmBackupCommand;
     extraSpecialArgs = {inherit vars inputs combined;};
-    sharedModules = lib.optionals (noctaliaHmModule != null) [noctaliaHmModule];
+    sharedModules =
+      lib.optionals (noctaliaHmModule != null) [noctaliaHmModule]
+      ++ lib.optionals (codexDesktopHmModule != null) [codexDesktopHmModule];
     users.${primaryUser} = {
       imports = [homeModule];
       home.username = lib.mkForce primaryUser;

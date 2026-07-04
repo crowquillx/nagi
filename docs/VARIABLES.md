@@ -61,10 +61,6 @@ scalar values.
 - `features.codingTools.editors.<name>.enable = true | false` for `vscode`, `antigravity`, `t3code`, `cursor`, and `zed`
 - `features.codingTools.aiCli.enable = true | false`
 - `features.codingTools.aiCli.codex.enable = true | false`
-- `features.codingTools.aiCli.codex.trustedDirectories = [ "<absolute-path>" ... ]` (directories pre-trusted in `config.toml` so codex doesn't try to persist trust at runtime; required because HM manages `~/.codex/config.toml` as a read-only store symlink)
-- `features.codingTools.aiCli.codex.model = "<model-id>"` (defaults to `gpt-5.5`)
-- `features.codingTools.aiCli.codex.modelReasoningEffort = "minimal" | "low" | "medium" | "high" | "xhigh"` (defaults to `low`)
-- `features.codingTools.aiCli.codex.planModeReasoningEffort = "none" | "minimal" | "low" | "medium" | "high" | "xhigh"` (defaults to `high`)
 - `features.codingTools.aiCli.opencode.enable = true | false`
 - `features.codingTools.aiCli.gemini.enable = true | false`
 - `features.codingTools.aiCli.droid.enable = true | false`
@@ -188,7 +184,7 @@ features.chat = {
 };
 ```
 
-`client = "discord"` installs the official Discord package and binds `MouseForward` in Niri to a PipeWire microphone mute toggle using `wpctl`. This mutes the default microphone source system-wide, so Discord's in-app mute indicator may not change. `discord.forceXwayland = true` wraps Discord so its keybind recorder can receive focused key events under Niri if you still want to configure Discord keybinds. `discord.equicord.enable = true` patches the official Discord package with Equicord at build time; Equicord does not provide a runnable `equicord` binary. `client = "equibop"` installs Equibop and uses `equibop --toggle-mic` for the same Niri bind; Equicord is rejected with Equibop.
+`client = "discord"` installs the official Discord package and binds `MouseForward` in Niri to a PipeWire microphone mute toggle using `wpctl`. This mutes the default microphone source system-wide, so Discord's in-app mute indicator may not change. `discord.forceXwayland = true` wraps Discord so its keybind recorder can receive focused key events under Niri if you still want to configure Discord keybinds. `discord.equicord.enable = true` patches the official Discord package with Equicord at build time; Equicord does not provide a runnable `equicord` binary. `client = "equibop"` installs Equibop and uses `equibop --toggle-mic` for the same Niri bind; Equicord is rejected with Equibop. If no chat client is selected but `users.extraPackages` contains `equibop`, the Niri bind still uses Equibop's toggle-mic action.
 
 ### Niri monitor configuration
 

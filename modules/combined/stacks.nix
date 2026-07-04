@@ -44,6 +44,7 @@
     ../home/base/tcli.nix
     ../home/dev/packages.nix
     ../home/dev/mcp.nix
+    ../home/dev/codex-desktop.nix
     ../home/terminals/kitty.nix
     ../home/theme/gtk.nix
     ../home/theme/qt.nix

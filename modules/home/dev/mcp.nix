@@ -20,23 +20,15 @@
     llmPkg = llmAgent "codex";
   in
     if llmPkg != null then llmPkg else lib.attrByPath ["codex"] null pkgs;
-  # Keep opencode from nixpkgs: llm-agents.nix's opencode is a different
-  # project (anomalyco/opencode) than the one the Home Manager module
-  # configures (opencode.sh/opencode.com).
-  opencodePkg = lib.attrByPath ["opencode"] null pkgs;
+  # Prefer llm-agents.nix for opencode: it tracks upstream anomalyco/opencode
+  # releases closely (nixpkgs lags far behind). The Home Manager
+  # programs.opencode module configures the same project (opencode.ai), so
+  # the llm-agents package is a drop-in upgrade, not a different app.
+  opencodePkg = let
+    llmPkg = llmAgent "opencode";
+  in
+    if llmPkg != null then llmPkg else lib.attrByPath ["opencode"] null pkgs;
 
-  codexTrustedDirs = get ["features" "codingTools" "aiCli" "codex" "trustedDirectories"] [];
-  codexModel = get ["features" "codingTools" "aiCli" "codex" "model"] "gpt-5.5";
-  codexModelReasoningEffort = get ["features" "codingTools" "aiCli" "codex" "modelReasoningEffort"] "low";
-  codexPlanModeReasoningEffort = get ["features" "codingTools" "aiCli" "codex" "planModeReasoningEffort"] "high";
-
-  codexSettings = {
-    model = codexModel;
-    model_reasoning_effort = codexModelReasoningEffort;
-    plan_mode_reasoning_effort = codexPlanModeReasoningEffort;
-  } // lib.optionalAttrs (codexTrustedDirs != []) {
-    projects = lib.genAttrs codexTrustedDirs (_: { trust_level = "trusted"; });
-  };
 in {
   imports = [
     inputs.mcp-servers-nix.homeManagerModules.default
@@ -51,18 +43,10 @@ in {
         }
         {
           assertion = !(opencodeEnabled && opencodePkg == null);
-          message = "features.codingTools.aiCli.opencode.enable is true, but nixpkgs package 'opencode' could not be resolved.";
+          message = "features.codingTools.aiCli.opencode.enable is true, but package 'opencode' could not be resolved from llm-agents.nix or nixpkgs.";
         }
       ];
     }
-    (lib.mkIf codexEnabled {
-      programs.codex = {
-        enable = true;
-        package = codexPkg;
-        enableMcpIntegration = nixosMcpEnabled;
-        settings = codexSettings;
-      };
-    })
     (lib.mkIf opencodeEnabled {
       programs.opencode = {
         enable = true;

@@ -34,10 +34,7 @@
       };
       aiCli = {
         enable = true;
-        codex = {
-          enable = true;
-          trustedDirectories = [ "/home/tan/nagi" ];
-        };
+        codex.enable = true;
         opencode.enable = true;
         gemini.enable = false;
         droid.enable = false;

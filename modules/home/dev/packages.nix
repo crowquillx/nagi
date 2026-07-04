@@ -59,7 +59,10 @@
     then "t3code-desktop"
     else t3DesktopPkg.meta.mainProgram or "t3code-desktop";
   ghPkg = lib.attrByPath ["gh"] null pkgs;
-  skillsPkg = lib.attrByPath ["skills"] null pkgs;
+  skillsPkg = let
+    llmPkg = llmAgent "skills";
+  in
+    if llmPkg != null then llmPkg else lib.attrByPath ["skills"] null pkgs;
   cursorPkg = lib.attrByPath ["code-cursor"] null pkgs;
   cursorCliPkg = lib.attrByPath ["cursor-cli"] null pkgs;
   zedEditorPkg = lib.attrByPath ["zed-editor"] null pkgs;
@@ -116,7 +119,7 @@ in {
     }
     {
       assertion = !(aiCliEnabled && skillsPkg == null);
-      message = "features.codingTools.aiCli.enable is true, but nixpkgs package 'skills' could not be resolved.";
+      message = "features.codingTools.aiCli.enable is true, but package 'skills' could not be resolved from llm-agents.nix or nixpkgs.";
     }
     {
       assertion = !(cursorEnabled && cursorPkg == null);

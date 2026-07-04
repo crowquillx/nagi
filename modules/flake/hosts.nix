@@ -33,6 +33,7 @@
   };
   homeModule = import ../../users/default/home.nix;
   noctaliaHmModule = lib.attrByPath ["noctalia" "homeModules" "default"] null inputs;
+  codexDesktopHmModule = lib.attrByPath ["codex-desktop-linux" "homeManagerModules" "default"] null inputs;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
   importVariables = files:
     lib.foldl' lib.recursiveUpdate { } (map import files);
@@ -129,7 +130,8 @@
     ++ lib.optional (llmAgentsOverlay != null) llmAgentsOverlay;
   sharedHomeModules = vars:
     lib.optionals (niriHmConfigModule != null) [niriHmConfigModule]
-    ++ lib.optionals (noctaliaHmModule != null) [noctaliaHmModule];
+    ++ lib.optionals (noctaliaHmModule != null) [noctaliaHmModule]
+    ++ lib.optionals (codexDesktopHmModule != null) [codexDesktopHmModule];
 
   millenniumEnabled = vars: lib.attrByPath ["features" "gaming" "steam" "millennium" "enable"] false vars;
   cheatengineEnabled = vars: lib.attrByPath ["features" "gaming" "cheatengine" "enable"] false vars;

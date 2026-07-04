@@ -11,6 +11,16 @@ let
   get = path: default: lib.attrByPath path default vars;
   noctaliaCommand = get [ "desktop" "noctalia" "command" ] "noctalia";
   chatClient = get [ "features" "chat" "client" ] "none";
+  packageNames = get [ "users" "extraPackages" ] [ ];
+  effectiveChatClient =
+    if chatClient != "none" then
+      chatClient
+    else if builtins.elem "equibop" packageNames then
+      "equibop"
+    else if builtins.elem "discord" packageNames then
+      "discord"
+    else
+      "none";
   microphoneMuteScript = pkgs.writeShellApplication {
     name = "nagi-toggle-microphone-mute";
     runtimeInputs = [
@@ -32,9 +42,9 @@ let
     '';
   };
   chatMuteAction =
-    if chatClient == "equibop" then
-      [ (leaf "spawn" [ "equibop" "--toggle-mic" ]) ]
-    else if chatClient != "none" then
+    if effectiveChatClient == "equibop" then
+      [ (leaf "spawn" [ "${pkgs.equibop}/bin/equibop" "--toggle-mic" ]) ]
+    else if effectiveChatClient != "none" then
       [ (leaf "spawn" [ "${microphoneMuteScript}/bin/nagi-toggle-microphone-mute" ]) ]
     else
       [ (leaf "spawn" [ "notify-send" "Chat mute" "No chat client is configured." ]) ];
