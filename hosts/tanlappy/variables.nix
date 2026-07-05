@@ -128,8 +128,11 @@
   };
 
   security.sops = {
-    enable = false;
+    enable = true;
     defaultSopsFile = ../../secrets/tanlappy.yaml;
     ageKeyFile = "/var/lib/sops-nix/key.txt";
+    # Make the age key group-readable so sops CLI doesn't need sudo or
+    # a /tmp copy. The user is added to this group at activation.
+    administrativeGroup = "sops";
   };
 }
