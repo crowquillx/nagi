@@ -58,6 +58,19 @@ in
       "d %h/.ssh 0700"
     ];
 
+    # Tell the ssh client to present the materialized sops key. The key
+    # lives at ~/.ssh/<privName> which is not one of ssh's default
+    # identity filenames (id_rsa, id_ed25519, ...), so ssh will not try
+    # it unless explicitly listed. We intentionally do NOT set
+    # IdentitiesOnly=yes: that would suppress default-name keys and
+    # anything in ssh-agent, breaking unrelated git/server access.
+    programs.ssh = {
+      enable = true;
+      extraConfig = ''
+        IdentityFile ~/.ssh/${privName}
+      '';
+    };
+
     # Symlink the materialized sops secrets into ~/.ssh at HM activation.
     # The sops secrets only exist at boot/runtime, so we can't reference
     # their absolute paths in a pure Nix expression. The shell snippet
