@@ -56,6 +56,7 @@
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
     ../home/security/ssh-key.nix
+    ../home/security/sops-age-key.nix
     ../home/security/gpg-agent.nix
   ];
 }
