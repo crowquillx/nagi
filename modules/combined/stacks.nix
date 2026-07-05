@@ -31,6 +31,7 @@
     ../nixos/services/localsend.nix
     ../nixos/security/noctalia-secrets.nix
     ../nixos/security/sops.nix
+    ../nixos/security/kotomi.nix
     ../nixos/security/sops-gnupg.nix
     ../nixos/security/yubikey.nix
     ../nixos/security/secure-boot.nix
@@ -49,6 +50,7 @@
     ../home/theme/gtk.nix
     ../home/theme/qt.nix
     ../home/shell/zoxide.nix
+    ../home/shell/kotomi.nix
     ../home/desktop/session-runtime.nix
     ../home/desktop/niri-user.nix
     ../home/desktop/noctalia-command.nix
