@@ -1,19 +1,21 @@
 creation_rules:
   # Per-host rules: each host's sops file is encrypted to that host's
-  # own age key (for unattended boot) and the Yubikey PGP key (for sops
-  # CLI). Either recipient alone can decrypt (OR semantics inside a
-  # single key group).
+  # own age key (for unattended boot) AND the Yubikey PGP key (for sops
+  # CLI), both inside a single key group. Within a single group, any
+  # one recipient can decrypt (OR semantics). Splitting age and pgp
+  # into separate groups would force threshold 2 (AND) and break
+  # unattended boot, since the Yubikey isn't present at boot.
   - path_regex: secrets/tandesk\.ya?ml$
     key_groups:
       - age:
           - age16x7tq5ndgm3hr55gqfh2ujecq4hypyjn3vrmm36vam7y0fu5ffes7qt20s
-      - pgp:
+        pgp:
           - B7873777D243B2011C50F7B83DF8B7D2772745D9
   - path_regex: secrets/tanlappy\.ya?ml$
     key_groups:
       - age:
           - age1w65nqky3ur3q9vatn984z3l6jhkpvmx9fgv0e838tug7uzfjy55qrwj49y
-      - pgp:
+        pgp:
           - B7873777D243B2011C50F7B83DF8B7D2772745D9
   # Catch-all: encrypt to tandesk's age key + Yubikey. Used for any
   # future host file that hasn't been migrated to per-host recipients.
@@ -22,7 +24,6 @@ creation_rules:
       - age:
           # Add additional host public keys here as needed and run `sops updatekeys`.
           - age16x7tq5ndgm3hr55gqfh2ujecq4hypyjn3vrmm36vam7y0fu5ffes7qt20s
-          - age1w65nqky3ur3q9vatn984z3l6jhkpvmx9fgv0e838tug7uzfjy55qrwj49y
         pgp:
           # Yubikey 5 — private key on hardware token, never leaves device.
           - B7873777D243B2011C50F7B83DF8B7D2772745D9
