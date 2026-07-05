@@ -134,5 +134,10 @@
     # Make the age key group-readable so sops CLI doesn't need sudo or
     # a /tmp copy. The user is added to this group at activation.
     administrativeGroup = "sops";
+    sshKey = {
+      enable = true;
+      name = "ssh_key";
+      pubName = "ssh_key_pub";
+    };
   };
 }
