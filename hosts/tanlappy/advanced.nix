@@ -1,8 +1,8 @@
 {
   features = {
     localsend = {
-      package.enable = false;
-      openFirewall = false;
+      package.enable = true;
+      openFirewall = true;
     };
 
     chat = {
@@ -64,7 +64,7 @@
 
     tailscale = {
       enable = true;
-      exitNode = "tanime-1";
+      exitNode = "tanime";
     };
     portals.enable = true;
     services = {
