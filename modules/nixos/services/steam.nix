@@ -25,7 +25,6 @@ let
     "openFirewall"
   ] true;
   millenniumEnable = get [ "features" "gaming" "steam" "millennium" "enable" ] false;
-  cheatengineEnable = get [ "features" "gaming" "cheatengine" "enable" ] false;
   lutrisPkg = pkgs.lutris or null;
   heroicPkg = pkgs.heroic or null;
   protonPlusPkg = pkgs.protonplus or pkgs."protonup-qt" or null;
@@ -38,7 +37,6 @@ let
   vulkanToolsPkg = pkgs.vulkan-tools or null;
   pciutilsPkg = pkgs.pciutils or null;
   bottlesPkg = pkgs.bottles or null;
-  cheatenginePkg = pkgs.cheatengine or null;
 in
 {
   config = lib.mkMerge [
@@ -76,10 +74,6 @@ in
           assertion = !enabled || bottlesPkg != null;
           message = "features.gaming.enable is true, but nixpkgs package 'bottles' could not be resolved.";
         }
-        {
-          assertion = !cheatengineEnable || cheatenginePkg != null;
-          message = "features.gaming.cheatengine.enable is true, but the 'cheatengine' package could not be resolved. Ensure the cheatengine-flake overlay is applied.";
-        }
       ];
     }
     (lib.mkIf enabled {
@@ -101,22 +95,7 @@ in
         vulkanToolsPkg
         pciutilsPkg
         bottlesPkg
-      ] ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
-    })
-    (lib.mkIf (enabled && cheatengineEnable) {
-      # Grant Cheat Engine cap_sys_ptrace so it can scan and debug other
-      # processes without lowering kernel.yama.ptrace_scope system-wide.
-      # The wrapper copies the real ELF into /run/wrappers/bin with the file
-      # capability set; the package's bin/cheatengine launcher execs this copy
-      # after setting up LD_LIBRARY_PATH and cwd, so the capped process inherits
-      # the full runtime env. Requires `switch` to materialize the wrapper.
-      security.wrappers.cheatengine-bin = {
-        source = "${cheatenginePkg}/opt/cheatengine/cheatengine-x86_64";
-        capabilities = "cap_sys_ptrace+ep";
-        owner = "root";
-        group = "root";
-        permissions = "u+rx,g+rx,o+rx";
-      };
+      ];
     })
   ];
 }

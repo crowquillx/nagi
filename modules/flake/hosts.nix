@@ -52,69 +52,6 @@
       disabledTests = (old.disabledTests or []) ++ ["test_read_text_file"];
     });
   };
-  # cheatengine-flake is currently broken against the live official download:
-  # cheatengine.org re-serves 7.7 with a flat zip layout (files at the archive
-  # root, binary named tutorial-x86_64) and a different sha256 than upstream
-  # pinned. Upstream package.nix still expects a wrapping CheatEngineLinux77/
-  # directory and gtutorial-x86_64. Patch src + installPhase locally, reusing
-  # upstream's runtimeDeps (old.buildInputs) for libPath and upstream's icon.
-  # The launcher's exec target is then rewritten to the security.wrappers
-  # cap-bearing copy at /run/wrappers/bin/cheatengine-bin (see
-  # modules/nixos/services/steam.nix): makeWrapper cannot target that path
-  # directly (assertExecutable fails on a build-time-absent file), so build the
-  # wrapper against the store ELF then substituteInPlace the exec line.
-  #
-  # Patching notes: autoPatchelf is disabled because it sets DT_RUNPATH, which
-  # is NOT searched by dlopen — and CE dlopens libGL.so.1. We manually set
-  # DT_RPATH (--force-rpath) which IS searched by dlopen, and patch the
-  # interpreter to the nixpkgs glibc ld-linux (NixOS stub-ld blocks the generic
-  # one). DT_RPATH is the only lib-discovery mechanism that survives the
-  # cap-wrapper exec, which strips LD_LIBRARY_PATH. Drop this overlay when the
-  # upstream flake updates package.nix.
-  cheatengineShimOverlay = final: prev: {
-    cheatengine = prev.cheatengine.overrideAttrs (old: let
-      libPath = final.lib.makeLibraryPath old.buildInputs;
-      rpath = "$out/opt/cheatengine:${libPath}";
-      interpreter = final.stdenv.cc.bintools.dynamicLinker;
-    in {
-      src = final.fetchurl {
-        url = old.src.url or "https://cheatengine.org/download/CheatEngineLinux77.zip";
-        hash = "sha256-mzbojv4sNl1xgewYH/88rZcABwSbSS7pOX8WjYHQ+Zc=";
-      };
-      dontAutoPatchelf = true;
-      nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ final.patchelf ];
-      installPhase = ''
-        runHook preInstall
-        mkdir -p "$out/opt/cheatengine"
-        cp -r ./* "$out/opt/cheatengine/"
-        chmod +x "$out/opt/cheatengine/cheatengine-x86_64"
-        if [ -f "$out/opt/cheatengine/tutorial-x86_64" ]; then
-          chmod +x "$out/opt/cheatengine/tutorial-x86_64"
-        fi
-        mkdir -p "$out/bin"
-        makeWrapper "$out/opt/cheatengine/cheatengine-x86_64" "$out/bin/cheatengine" \
-          --prefix LD_LIBRARY_PATH : "$out/opt/cheatengine" \
-          --prefix LD_LIBRARY_PATH : "${libPath}" \
-          --chdir "$out/opt/cheatengine"
-        substituteInPlace "$out/bin/cheatengine" \
-          --replace-fail "$out/opt/cheatengine/cheatengine-x86_64" "/run/wrappers/bin/cheatengine-bin"
-        mkdir -p "$out/share/icons/hicolor/128x128/apps"
-        cp ${inputs.cheatengine-flake.outPath + "/cheatengine.png"} "$out/share/icons/hicolor/128x128/apps/cheatengine.png"
-        runHook postInstall
-      '';
-      # Run after fixupPhase (which includes shrinkRPATHs that strips rpath
-      # entries and converts DT_RPATH to DT_RUNPATH). postFixup is the last
-      # chance to set ELF properties before the store path is sealed.
-      postFixup = ''
-        patchelf --set-interpreter "${interpreter}" "$out/opt/cheatengine/cheatengine-x86_64"
-        patchelf --force-rpath --set-rpath "${rpath}" "$out/opt/cheatengine/cheatengine-x86_64"
-        if [ -f "$out/opt/cheatengine/tutorial-x86_64" ]; then
-          patchelf --set-interpreter "${interpreter}" "$out/opt/cheatengine/tutorial-x86_64"
-          patchelf --force-rpath --set-rpath "${rpath}" "$out/opt/cheatengine/tutorial-x86_64"
-        fi
-      '';
-    });
-  };
 
   # Use llm-agents.nix's default overlay so packages come from its binary
   # cache instead of being rebuilt against our nixpkgs revision.
@@ -122,10 +59,6 @@
   sharedOverlays = vars:
     lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
-    ++ lib.optionals (cheatengineEnabled vars) [
-      inputs.cheatengine-flake.overlays.default
-      cheatengineShimOverlay
-    ]
     ++ lib.optionals (nixosMcpEnabled vars) [mcpNixosOverlay]
     ++ lib.optional (llmAgentsOverlay != null) llmAgentsOverlay;
   sharedHomeModules = vars:
@@ -134,7 +67,6 @@
     ++ lib.optionals (codexDesktopHmModule != null) [codexDesktopHmModule];
 
   millenniumEnabled = vars: lib.attrByPath ["features" "gaming" "steam" "millennium" "enable"] false vars;
-  cheatengineEnabled = vars: lib.attrByPath ["features" "gaming" "cheatengine" "enable"] false vars;
   nixosMcpEnabled = vars:
     lib.attrByPath ["features" "mcp" "nixos" "enable"] (
       lib.attrByPath ["features" "codingTools" "aiCli" "enable"] (
