@@ -66,7 +66,7 @@ scalar values.
 - `features.codingTools.aiCli.droid.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
-- `features.tailscale = { enable, exitNode }`
+- `features.tailscale = { enable, acceptDns, exitNode }`
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys }`
   - `enable` (bool, default `true`): enable the OpenSSH daemon.
   - `openFirewall` (bool, default `true`): open the SSH port in the firewall.

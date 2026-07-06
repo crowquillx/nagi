@@ -245,6 +245,10 @@ in {
       message = "features.tailscale.enable must be a boolean.";
     }
     {
+      assertion = builtins.isBool (get ["features" "tailscale" "acceptDns"] true);
+      message = "features.tailscale.acceptDns must be a boolean.";
+    }
+    {
       assertion = let
         exitNode = get ["features" "tailscale" "exitNode"] null;
       in

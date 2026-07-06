@@ -283,6 +283,19 @@ in
             };
             default = { };
           };
+
+          tailscale = mkOption {
+            type = looseSubmodule {
+              enable = enableOption "Enable Tailscale." true;
+              acceptDns = enableOption "Accept DNS settings advertised by the tailnet." true;
+              exitNode = mkOption {
+                type = types.nullOr types.nonEmptyStr;
+                default = null;
+                description = "Optional Tailscale exit node name or IP.";
+              };
+            };
+            default = { };
+          };
         };
         default = { };
       };
