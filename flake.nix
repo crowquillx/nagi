@@ -78,11 +78,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    cheatengine-flake = {
-      url = "github:Hy4ri/cheatengine-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     comfyui-nix = {
       url = "github:utensils/comfyui-nix";
       inputs.nixpkgs.follows = "nixpkgs";

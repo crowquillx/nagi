@@ -126,26 +126,6 @@
         "type": "github"
       }
     },
-    "cheatengine-flake": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1782130562,
-        "narHash": "sha256-Qg4T9wNVqGyTjzNMXVuv0j71GYNowI82MuvDB3mxTaU=",
-        "owner": "Hy4ri",
-        "repo": "cheatengine-flake",
-        "rev": "4b1cb8437b033162250e9b11013cc4e107f9a973",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Hy4ri",
-        "repo": "cheatengine-flake",
-        "type": "github"
-      }
-    },
     "codex-desktop-linux": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -816,7 +796,6 @@
     },
     "root": {
       "inputs": {
-        "cheatengine-flake": "cheatengine-flake",
         "codex-desktop-linux": "codex-desktop-linux",
         "comfyui-nix": "comfyui-nix",
         "flake-parts": "flake-parts_2",

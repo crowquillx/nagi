@@ -85,7 +85,6 @@
         localNetworkGameTransfers.openFirewall = true;
         millennium.enable = false;
       };
-      cheatengine.enable = true;
     };
     virtualisation = {
       vmHost = {
