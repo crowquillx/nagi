@@ -6,8 +6,8 @@ usage() {
 Validate nagi flake configuration for a selected host.
 
 Usage:
-  scripts/validate-host.sh <host> [--strict-statix] [--no-dry-run] [--flake-dir <path>]
-  scripts/validate-host.sh --host <host> [--strict-statix] [--no-dry-run] [--flake-dir <path>]
+  secrets/scripts/validate-host.sh <host> [--strict-statix] [--no-dry-run] [--flake-dir <path>]
+  secrets/scripts/validate-host.sh --host <host> [--strict-statix] [--no-dry-run] [--flake-dir <path>]
 
 Options:
   --host <host>       Host name under hosts/<host>
@@ -79,7 +79,7 @@ done
 
 if [[ -z "$FLAKE_DIR" ]]; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  FLAKE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+  FLAKE_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 fi
 
 [[ -f "${FLAKE_DIR}/flake.nix" ]] || die "flake.nix not found in ${FLAKE_DIR}"
