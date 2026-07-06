@@ -29,9 +29,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [tandesk, tanlappy, tanvm]
+        host: [tandesk, tanlappy, default]
     steps:
       - uses: actions/checkout@v4
+
+      # ubuntu-latest only ships ~14 GiB free. NixOS toplevel builds for this
+      # flake can exceed that once toolchains and desktop closures land in
+      # /nix/store, so reclaim runner image bloat before installing Nix.
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
 
       - name: Install Nix
         uses: cachix/install-nix-action@v31
@@ -40,11 +54,10 @@ jobs:
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
       # Build the NixOS toplevel for this host from the standard checks
-      # output. This also exercises sops file validation at build time.
+      # output. Home Manager is integrated through the NixOS module here, so
+      # this also validates the user activation closure without building the
+      # standalone home-* check a second time.
       - name: Build NixOS configuration
-        run: nix build --accept-flake-config .#checks.x86_64-linux.nixos-${{ matrix.host }}
-
-      # Build the standalone Home Manager activation package for this host
-      # from the standard checks output.
-      - name: Build Home Manager activation
-        run: nix build --accept-flake-config .#checks.x86_64-linux.home-${{ matrix.host }}
+        run: |
+          nix build --accept-flake-config --no-link .#checks.x86_64-linux.nixos-${{ matrix.host }}
+          nix-collect-garbage -d
