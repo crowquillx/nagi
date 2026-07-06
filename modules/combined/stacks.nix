@@ -29,6 +29,7 @@
     ../nixos/services/keyring.nix
     ../nixos/services/tailscale.nix
     ../nixos/services/localsend.nix
+    ../nixos/services/davinci-resolve.nix
     ../nixos/security/noctalia-secrets.nix
     ../nixos/security/sops.nix
     ../nixos/security/kotomi.nix
@@ -46,6 +47,7 @@
     ../home/dev/packages.nix
     ../home/dev/mcp.nix
     ../home/dev/codex-desktop.nix
+    ../home/creative/davinci-resolve.nix
     ../home/terminals/kitty.nix
     ../home/theme/gtk.nix
     ../home/theme/qt.nix

@@ -296,6 +296,21 @@ in
             };
             default = { };
           };
+
+          davinciResolve = mkOption {
+            type = looseSubmodule {
+              enable = enableOption "Install DaVinci Resolve through Home Manager." false;
+              variant = mkOption {
+                type = types.enum [ "free" "studio" ];
+                default = "free";
+                description = "DaVinci Resolve edition to install.";
+              };
+              waylandCompat = enableOption
+                "Force X11/Qt xcb launch settings for Wayland compositors such as Niri."
+                true;
+            };
+            default = { };
+          };
         };
         default = { };
       };

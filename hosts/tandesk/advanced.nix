@@ -97,6 +97,10 @@
         docker.enable = false;
       };
     };
+    davinciResolve = {
+      enable = true;
+    };
+
     ai = {
       enable = false;
       comfyui = {

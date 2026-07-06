@@ -6,7 +6,8 @@ Primary host configuration is composed from `hosts/<host>/variables.nix` and
 - `variables.nix` is for core host identity, boot, graphics, desktop/session,
   users, core maintenance toggles, and security settings.
 - `advanced.nix` is for niche or optional feature toggles such as chat,
-  coding tools, Flatpak, gaming, virtualisation, AI, MCP, LocalSend, Mullvad,
+  coding tools, Flatpak, DaVinci Resolve, gaming, virtualisation, AI, MCP,
+  LocalSend, Mullvad,
   terminals, theme extras, portals, Tailscale, laptop extras, printing,
   Bluetooth, networking, and service toggles.
 
@@ -76,6 +77,7 @@ scalar values.
   - `authorizedKeys` (list of non-empty string public keys, default `[]`): authorized for the primary user. Required when `passwordAuthentication = false`.
 - `features.fileManager.thunar.enable = true | false`
 - `features.services = { fstrim.enable, resolved.enable, powerProfilesDaemon.enable }`
+- `features.davinciResolve = { enable, variant = "free" | "studio", waylandCompat }`
 - `features.flatpak = { enable, packages = [ "<app-id>" ... ] }`
 - `features.gaming = { enable, steam.gamescopeSession.enable, steam.remotePlay.openFirewall, steam.dedicatedServer.openFirewall, steam.localNetworkGameTransfers.openFirewall }`
 - `features.virtualisation.vmHost = { enable, spiceUSBRedirection.enable }`
@@ -329,6 +331,18 @@ features.flatpak = {
 ```
 
 Declared `features.flatpak.packages` entries are installed declaratively via `nix-flatpak`. Removing an entry converges the system-wide Flatpak set back to the declared list on the next rebuild.
+
+### DaVinci Resolve
+
+```nix
+features.davinciResolve = {
+  enable = true;
+  variant = "free"; # or "studio"
+  waylandCompat = true; # recommended for Niri and other Wayland compositors
+};
+```
+
+Installs the nixpkgs `davinci-resolve` or `davinci-resolve-studio` package through Home Manager and registers Blackmagic udev rules on the host. On NVIDIA hosts, the launcher wrapper also sets the common GPU offload environment variables.
 
 ### GTK / QT / Kitty
 
