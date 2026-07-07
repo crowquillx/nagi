@@ -1,5 +1,4 @@
-{ lib, ... }:
-let
+{lib, ...}: let
   inherit (lib) mkOption types;
 
   looseSubmodule = options:
@@ -18,8 +17,7 @@ let
     looseSubmodule {
       enable = enableOption "Install ${name}." true;
     };
-in
-{
+in {
   options.nagi.variables = mkOption {
     type = looseSubmodule {
       users = mkOption {
@@ -36,11 +34,11 @@ in
           };
           extraPackages = mkOption {
             type = types.listOf types.nonEmptyStr;
-            default = [ ];
+            default = [];
             description = "Additional Home Manager package attribute paths.";
           };
         };
-        default = { };
+        default = {};
       };
 
       desktop = mkOption {
@@ -48,27 +46,27 @@ in
           browser = mkOption {
             type = looseSubmodule {
               default = mkOption {
-                type = types.enum [ "zen" "helium" "mullvadBrowser" ];
+                type = types.enum ["zen" "helium" "mullvadBrowser"];
                 default = "zen";
                 description = "Default browser and MIME handler.";
               };
               zen = mkOption {
                 type = packageToggle "Zen Browser";
-                default = { };
+                default = {};
               };
               helium = mkOption {
                 type = packageToggle "Helium";
-                default = { };
+                default = {};
               };
               mullvadBrowser = mkOption {
                 type = packageToggle "Mullvad Browser";
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
           };
         };
-        default = { };
+        default = {};
       };
 
       features = mkOption {
@@ -84,7 +82,7 @@ in
                     description = "Maximum zram capacity as a percentage of physical memory.";
                   };
                 };
-                default = { };
+                default = {};
               };
               disk = mkOption {
                 type = looseSubmodule {
@@ -100,7 +98,7 @@ in
                     description = "Swap-file size in MiB.";
                   };
                 };
-                default = { };
+                default = {};
               };
               swappiness = mkOption {
                 type = types.ints.between 0 200;
@@ -108,7 +106,7 @@ in
                 description = "Kernel vm.swappiness value.";
               };
             };
-            default = { };
+            default = {};
           };
 
           nixMaintenance = mkOption {
@@ -127,7 +125,7 @@ in
                     description = "Additional options passed to nix-collect-garbage.";
                   };
                 };
-                default = { };
+                default = {};
               };
               optimise = mkOption {
                 type = looseSubmodule {
@@ -138,10 +136,10 @@ in
                     description = "systemd calendar expression for store optimisation.";
                   };
                 };
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
           };
 
           localsend = mkOption {
@@ -150,17 +148,17 @@ in
                 type = looseSubmodule {
                   enable = enableOption "Install LocalSend through Home Manager." false;
                 };
-                default = { };
+                default = {};
               };
               openFirewall = enableOption "Open TCP and UDP port 53317 for LocalSend discovery and transfers." false;
             };
-            default = { };
+            default = {};
           };
 
           chat = mkOption {
             type = looseSubmodule {
               client = mkOption {
-                type = types.enum [ "none" "discord" "equibop" ];
+                type = types.enum ["none" "discord" "equibop"];
                 default = "none";
                 description = "Chat client package and Niri mute integration.";
               };
@@ -168,14 +166,14 @@ in
                 type = looseSubmodule {
                   enable = enableOption "Start the selected chat client with the desktop session." true;
                 };
-                default = { };
+                default = {};
               };
               discord = mkOption {
                 type = looseSubmodule {
                   forceXwayland =
                     enableOption
-                      "Run official Discord through XWayland so Discord's keybind recorder can receive focused key events."
-                      true;
+                    "Run official Discord through XWayland so Discord's keybind recorder can receive focused key events."
+                    true;
                   equicord = mkOption {
                     type = looseSubmodule {
                       enable = enableOption "Patch the official Discord package with Equicord." false;
@@ -185,19 +183,19 @@ in
                         description = "Deprecated; Equicord is applied at build time rather than run before Discord.";
                       };
                     };
-                    default = { };
+                    default = {};
                   };
                 };
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
           };
 
           mullvad = mkOption {
             type = looseSubmodule {
               package = mkOption {
-                type = types.enum [ "none" "cli" "gui" ];
+                type = types.enum ["none" "cli" "gui"];
                 default = "none";
                 description = "Home Manager Mullvad package variant.";
               };
@@ -205,28 +203,51 @@ in
                 type = looseSubmodule {
                   enable = enableOption "Enable the Mullvad system daemon." false;
                 };
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
           };
 
           terminals = mkOption {
             type = looseSubmodule {
               alacritty = mkOption {
                 type = packageToggle "Alacritty";
-                default = { };
+                default = {};
               };
               foot = mkOption {
                 type = packageToggle "Foot";
-                default = { };
+                default = {};
               };
               kitty = mkOption {
                 type = packageToggle "Kitty";
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
+          };
+
+          videoEditing = mkOption {
+            type = looseSubmodule {
+              kdenlive = mkOption {
+                type = looseSubmodule {
+                  enable = enableOption "Install Kdenlive." false;
+                };
+                default = {};
+              };
+              davinciResolve = mkOption {
+                type = looseSubmodule {
+                  enable = enableOption "Install DaVinci Resolve." false;
+                  edition = mkOption {
+                    type = types.enum ["free" "studio"];
+                    default = "free";
+                    description = "DaVinci Resolve package edition to install when enabled.";
+                  };
+                };
+                default = {};
+              };
+            };
+            default = {};
           };
 
           codingTools = mkOption {
@@ -237,51 +258,51 @@ in
                   enable = enableOption "Enable editor packages." true;
                   vscode = mkOption {
                     type = packageToggle "Visual Studio Code";
-                    default = { };
+                    default = {};
                   };
                   antigravity = mkOption {
                     type = packageToggle "Antigravity";
-                    default = { };
+                    default = {};
                   };
                   t3code = mkOption {
                     type = packageToggle "T3 Code";
-                    default = { };
+                    default = {};
                   };
                   cursor = mkOption {
                     type = packageToggle "Cursor and Cursor CLI";
-                    default = { };
+                    default = {};
                   };
                   zed = mkOption {
                     type = packageToggle "Zed";
-                    default = { };
+                    default = {};
                   };
                 };
-                default = { };
+                default = {};
               };
               aiCli = mkOption {
                 type = looseSubmodule {
                   enable = enableOption "Enable AI CLI agents." true;
                   codex = mkOption {
                     type = packageToggle "OpenAI Codex CLI";
-                    default = { };
+                    default = {};
                   };
                   opencode = mkOption {
                     type = packageToggle "OpenCode CLI";
-                    default = { };
+                    default = {};
                   };
                   gemini = mkOption {
                     type = packageToggle "Gemini CLI";
-                    default = { };
+                    default = {};
                   };
                   droid = mkOption {
                     type = packageToggle "Factory AI Droid";
-                    default = { };
+                    default = {};
                   };
                 };
-                default = { };
+                default = {};
               };
             };
-            default = { };
+            default = {};
           };
 
           tailscale = mkOption {
@@ -294,13 +315,13 @@ in
                 description = "Optional Tailscale exit node name or IP.";
               };
             };
-            default = { };
+            default = {};
           };
         };
-        default = { };
+        default = {};
       };
     };
-    default = { };
+    default = {};
     description = "Host-scoped variables loaded from hosts/<host>/variables.nix.";
   };
 }

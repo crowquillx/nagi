@@ -48,6 +48,13 @@
       foot.enable = true;
       kitty.enable = true;
     };
+    videoEditing = {
+      kdenlive.enable = false;
+      davinciResolve = {
+        enable = false;
+        edition = "free";
+      };
+    };
     theme = {
       gtk = {
         enable = true;

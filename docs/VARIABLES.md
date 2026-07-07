@@ -51,6 +51,8 @@ scalar values.
 - `features.localsend = { package.enable, openFirewall }`
 - `features.mullvad = { package = "none" | "cli" | "gui"; service.enable }`
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, and `kitty`
+- `features.videoEditing.kdenlive.enable = true | false`
+- `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
 - `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }`
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
@@ -315,6 +317,23 @@ starting the system daemon. The daemon requires `package = "gui"` and uses
 `mullvad-vpn`, preventing both package variants from being installed together.
 Remove legacy `localsend`, `mullvad`, and `mullvad-vpn` entries from
 `users.extraPackages` when migrating to these variables.
+
+### Video editing
+
+```nix
+features.videoEditing = {
+  kdenlive.enable = true;
+  davinciResolve = {
+    enable = false;
+    edition = "free";
+  };
+};
+```
+
+Kdenlive is installed from `kdePackages.kdenlive`. DaVinci Resolve is installed
+from the unfree `davinci-resolve` package for `edition = "free"` or
+`davinci-resolve-studio` for `edition = "studio"`; this repo already enables
+unfree packages globally.
 
 ### Flatpak
 
