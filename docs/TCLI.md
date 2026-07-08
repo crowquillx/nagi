@@ -13,13 +13,13 @@ The default rebuild path now runs through `nh`, so you get the tree view, diffs,
 - Equivalent to: `tcli switch`
 - Defaults to current machine hostname
 - Runs:
-  - `nh os switch <repo> -H <host>`
+  - `nh os switch <repo> -H <host> --accept-flake-config`
 
 ### `tcli [switch|build|test|boot] [host] [-- <nh-args...>]`
 
 - Default host: current machine hostname
 - Runs a single `nh` command:
-  - `nh os <action> <repo> -H <host> [nh args...]`
+  - `nh os <action> <repo> -H <host> --accept-flake-config [nh args...]`
 
 Home Manager is applied through the NixOS `home-manager` module (`home-manager.users`), so this remains a full system+home workflow without a second standalone `home-manager` invocation.
 
@@ -31,9 +31,10 @@ Home Manager is applied through the NixOS `home-manager` module (`home-manager.u
 
 - Defaults to current machine hostname
 - Runs:
-  - `nh os switch <repo> -H <host> --update [nh args...]`
+  - `nix flake update --accept-flake-config --flake <repo>`
+  - `nh os switch <repo> -H <host> --accept-flake-config [nh args...]`
 
-This still uses one rebuild invocation and keeps Home Manager on the NixOS-integrated path.
+This keeps Home Manager on the NixOS-integrated path. `tcli` performs the flake update itself instead of using `nh --update` because `nh 4.4.0` does not pass `--accept-flake-config` through to its internal `nix flake update` command.
 
 ### `tcli check`
 
@@ -98,14 +99,14 @@ Runs:
 - Default action: `switch`
 - Default host: current machine hostname
 - Runs:
-  - `nh os <action> <repo> -H <host> [nh args...]`
+  - `nh os <action> <repo> -H <host> --accept-flake-config [nh args...]`
 
 ### `tcli nh home [switch|build] [host] [-- <nh-args...>]`
 
 - Default action: `switch`
 - Default host: current machine hostname
 - Runs:
-  - `nh home <action> <repo> -c <host> [nh args...]`
+  - `nh home <action> <repo> -c <host> --accept-flake-config [nh args...]`
 
 ### `tcli nh clean [-- <nh-args...>]`
 

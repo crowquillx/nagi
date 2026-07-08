@@ -3,6 +3,7 @@
   # External flake modules and host-conditional upstream modules stay in modules/flake/hosts.nix.
   nixosModules = [
     ../nixos/base/default.nix
+    ../nixos/base/lix.nix
     ../nixos/services/mounts.nix
     ../nixos/theme/stylix.nix
     ../nixos/hardware/graphics.nix

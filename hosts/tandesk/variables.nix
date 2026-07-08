@@ -46,6 +46,8 @@
       "qbittorrent"
       "proton-vpn"
       "brave"
+      "mkvtoolnix"
+      "osu-lazer-bin"
     ];
     git = {
       name = "tan";

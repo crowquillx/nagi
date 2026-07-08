@@ -13,6 +13,7 @@ let
     FORCE=0
     # Global: trust repo-declared cache settings by default.
     ACCEPT_FLAKE_CONFIG=1
+    FILTERED_ARGS=()
 
     usage() {
       cat <<'EOF'
@@ -333,11 +334,16 @@ let
 
       print_git_context "$flake_ref"
       print_host_note "$host"
-      printf '==> nh os switch --update for host %s\n' "$host"
-      printf '==> Updating flake inputs through nh before activation\n'
+      printf '==> Updating flake inputs\n'
+      local nix_args=()
+      mapfile -t nix_args < <(nix_extra_args)
+      nix flake update "''${nix_args[@]}" --flake "$flake_ref"
+
+      printf '==> nh os switch for host %s\n' "$host"
+      printf '==> Home Manager is applied via NixOS module integration (single build path)\n'
       local extra_args=()
       mapfile -t extra_args < <(build_nh_extra_args "$@")
-      nh os switch "$flake_ref" -H "$host" --update "''${extra_args[@]}"
+      nh os switch "$flake_ref" -H "$host" "''${extra_args[@]}"
       local nh_rc=$?
 
       if [[ $nh_rc -eq 0 ]]; then
@@ -582,6 +588,7 @@ let
 
     # Parse global flags from args before dispatching.
     extract_global_flags() {
+      FILTERED_ARGS=()
       local filtered=()
       while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -591,22 +598,17 @@ let
         esac
         shift
       done
-      set -- "''${filtered[@]}"
+      FILTERED_ARGS=("''${filtered[@]}")
     }
 
-    # Build an array of extra args for `nh` commands, inserting
-    # --accept-flake-config after the nh/-- separator when requested.
+    # Build an array of args for `nh` commands, inserting trust flags as
+    # first-class nh options before any caller-provided separator.
     build_nh_extra_args() {
-      local accept_args=()
       if [[ "$ACCEPT_FLAKE_CONFIG" -eq 1 ]]; then
-        accept_args=("--accept-flake-config")
+        printf '%s\n' "--accept-flake-config"
       fi
-      if [[ $# -eq 0 ]]; then
-        printf '%s\n' "--" "''${accept_args[@]}"
-      elif [[ "$1" == "--" ]]; then
-        printf '%s\n' "--" "''${accept_args[@]}" "''${@:2}"
-      else
-        printf '%s\n' "$@" "--" "''${accept_args[@]}"
+      if [[ $# -gt 0 ]]; then
+        printf '%s\n' "$@"
       fi
     }
 
@@ -619,6 +621,7 @@ let
 
     main() {
       extract_global_flags "$@"
+      set -- "''${FILTERED_ARGS[@]}"
       local cmd="''${1-switch}"
       if [[ $# -gt 0 ]]; then
         shift || true
