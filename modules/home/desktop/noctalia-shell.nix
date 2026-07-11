@@ -13,6 +13,7 @@ in
     programs.noctalia = {
       enable = true;
       systemd.enable = get [ "desktop" "noctalia" "systemd" "enable" ] false;
+      settings.shell.polkit_agent = true;
     };
   };
 }

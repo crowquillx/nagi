@@ -86,9 +86,12 @@
   # upstream's runtimeDeps (old.buildInputs) for libPath and upstream's icon.
   # The launcher's exec target is then rewritten to the security.wrappers
   # cap-bearing copy at /run/wrappers/bin/cheatengine-bin (see
-  # modules/nixos/services/steam.nix): makeWrapper cannot target that path
+  # modules/nixos/services/steam.nix): wrappers cannot target that path
   # directly (assertExecutable fails on a build-time-absent file), so build the
   # wrapper against the store ELF then substituteInPlace the exec line.
+  # Must use makeShellWrapper (not makeWrapper): wrapGAppsHook propagates
+  # makeBinaryWrapper, which overrides makeWrapper to emit an ELF that
+  # substituteInPlace rejects ("Input null bytes").
   #
   # Patching notes: autoPatchelf is disabled because it sets DT_RUNPATH, which
   # is NOT searched by dlopen — and CE dlopens libGL.so.1. We manually set
@@ -118,7 +121,7 @@
           chmod +x "$out/opt/cheatengine/tutorial-x86_64"
         fi
         mkdir -p "$out/bin"
-        makeWrapper "$out/opt/cheatengine/cheatengine-x86_64" "$out/bin/cheatengine" \
+        makeShellWrapper "$out/opt/cheatengine/cheatengine-x86_64" "$out/bin/cheatengine" \
           --prefix LD_LIBRARY_PATH : "$out/opt/cheatengine" \
           --prefix LD_LIBRARY_PATH : "${libPath}" \
           --chdir "$out/opt/cheatengine"

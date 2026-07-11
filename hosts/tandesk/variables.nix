@@ -139,7 +139,7 @@
     noctalia = import ./noctalia;
     session = {
       enable = true;
-      polkit.enable = true;
+      polkit.enable = false;
       keyring.enable = true;
       lock = {
         enable = true;

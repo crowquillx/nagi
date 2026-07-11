@@ -32,5 +32,8 @@ in
       enable = true;
       package = niriPackage;
     };
+
+    # Noctalia provides the authentication agent in Niri sessions.
+    systemd.user.services.niri-flake-polkit.enable = false;
   };
 }
