@@ -4,6 +4,8 @@ let
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
+  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
   niriSettings = get [ "desktop" "niri" "settings" ] { };
   niriOutputs = get [ "desktop" "niri" "outputs" ] { };
   niriSettingsBuilder = get [ "desktop" "niri" "settingsBuilder" ] null;
@@ -28,13 +30,13 @@ let
   rosePineCursorPkg = lib.attrByPath [ "rose-pine-cursor" ] null pkgs;
 in
 {
-  config = lib.mkIf (desktopEnabled && compositor == "niri") (
+  config = lib.mkIf (desktopEnabled && hasNiri) (
     lib.mkMerge [
       {
         assertions = [
           {
             assertion = rosePineCursorPkg != null;
-            message = "desktop.compositor = \"niri\" requires the nixpkgs package 'rose-pine-cursor'.";
+            message = "Installing the Niri session requires the nixpkgs package 'rose-pine-cursor'.";
           }
         ];
 
@@ -47,8 +49,6 @@ in
         };
 
         home.sessionVariables = {
-          XDG_CURRENT_DESKTOP = lib.mkDefault "niri";
-          XDG_SESSION_DESKTOP = lib.mkDefault "niri";
           NIXOS_OZONE_WL = lib.mkDefault "1";
           ELECTRON_OZONE_PLATFORM_HINT = lib.mkDefault "auto";
         };

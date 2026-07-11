@@ -4,8 +4,10 @@ let
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && compositor == "niri");
-  noctaliaIdleManage = noctaliaEnable && compositor == "niri";
+  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
+  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNiri);
+  noctaliaIdleManage = noctaliaEnable && hasNiri;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   waylandTarget = config.wayland.systemd.target;
 
@@ -106,8 +108,8 @@ in
           message = "features.chat.discord.equicord.enable requires features.chat.client = \"discord\"; Equicord cannot be used with Equibop.";
         }
         {
-          assertion = !(appStartupEnable && startupBackend == "niri") || compositor == "niri";
-          message = "desktop.startup.backend = \"niri\" requires desktop.compositor = \"niri\".";
+          assertion = !(appStartupEnable && startupBackend == "niri") || hasNiri;
+          message = "desktop.startup.backend = \"niri\" requires Niri in desktop.compositor or desktop.extraCompositors.";
         }
       ];
     }

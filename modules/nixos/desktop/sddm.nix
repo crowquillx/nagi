@@ -70,7 +70,7 @@ in
       inherit defaultSession;
       sddm = {
         enable = true;
-        package = pkgs.kdePackages.sddm;
+        package = lib.mkDefault pkgs.kdePackages.sddm;
         wayland.enable = sddmWaylandEnable;
         extraPackages = [ sddmAstronaut ];
         theme = "sddm-astronaut-theme";

@@ -5,6 +5,7 @@ let
   enabled = get [ "features" "portals" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
   extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
   hasPlasma = builtins.elem "plasma" ([ compositor ] ++ extraCompositors);
 in
 {
@@ -12,24 +13,24 @@ in
     xdg.portal = {
       enable = true;
       xdgOpenUsePortal = true;
-      extraPortals = [
+      extraPortals = lib.optionals hasNiri [
         pkgs.xdg-desktop-portal-gtk
-        pkgs.xdg-desktop-portal-gnome
-      ] ++ lib.optionals hasPlasma [
-        pkgs.kdePackages.xdg-desktop-portal-kde
       ];
       config = {
         common.default = [ "gtk" ];
-        niri.default = [ "gtk" ];
-        niri."org.freedesktop.impl.portal.ScreenCast" = [ "gnome" ];
-      } // lib.optionalAttrs hasPlasma {
+      }
+      // lib.optionalAttrs hasNiri {
+        niri = {
+          default = [ "gnome" "gtk" ];
+          "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+        };
+      }
+      // lib.optionalAttrs hasPlasma {
         kde.default = [ "kde" "gtk" ];
-        KDE.default = [ "kde" "gtk" ];
-        plasma.default = [ "kde" "gtk" ];
       };
-      configPackages = lib.optionals hasPlasma [
-        pkgs.kdePackages.xdg-desktop-portal-kde
-      ];
     };
   };
 }

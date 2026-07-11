@@ -48,6 +48,7 @@
       "brave"
       "mkvtoolnix"
       "osu-lazer-bin"
+      "hushmic"
     ];
     git = {
       name = "tan";
@@ -70,7 +71,7 @@
   desktop = {
     enable = true;
     compositor = "niri";
-    extraCompositors = [ ];
+    extraCompositors = [ "plasma" ];
     displayManager = "auto";
     sddm.wayland.enable = false;
     sddm.background = ../../wallpapers/1.png;
@@ -151,6 +152,7 @@
     shellStartupCommand = null;
     startup.apps = [
       "spotify"
+      "hushmic"
     ];
     startup.backend = "niri";
   };

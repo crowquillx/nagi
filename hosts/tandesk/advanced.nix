@@ -6,12 +6,12 @@
     };
 
     chat = {
-      client = "equibop";
+      client = "discord";
       startup.enable = true;
       discord = {
         forceXwayland = false;
         equicord = {
-          enable = false;
+          enable = true;
           startupDelaySeconds = 4;
         };
       };

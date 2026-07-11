@@ -3,7 +3,9 @@ let
   get = path: default: lib.attrByPath path default vars;
   desktopEnabled = get [ "desktop" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
-  noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && compositor == "niri");
+  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
+  noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNiri);
   secrets = get [ "desktop" "noctalia" "assistantPanel" "secrets" ] { };
 
   mkSecretPath = name:
@@ -31,7 +33,7 @@ let
   '';
 in
 {
-  config = lib.mkIf noctaliaEnabled {
+  config = lib.mkIf (desktopEnabled && hasNiri && noctaliaEnabled) {
     home.packages = [ noctaliaCommandWrapper ];
   };
 }

@@ -6,6 +6,10 @@ let
   enabled = get [ "features" "stylix" "enable" ] true;
   variantRaw = get [ "features" "stylix" "variant" ] "moon";
   allowedVariants = [ "moon" "main" "dawn" ];
+  desktopEnabled = get [ "desktop" "enable" ] true;
+  compositor = get [ "desktop" "compositor" ] "niri";
+  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = desktopEnabled && builtins.elem "niri" ([ compositor ] ++ extraCompositors);
 
   rosePineMoon = {
     base00 = "232136";
@@ -92,6 +96,7 @@ in
 
         targets = {
           grub.enable = false;
+          qt.platform = lib.mkIf hasNiri (lib.mkForce "qtct");
         };
       };
     })

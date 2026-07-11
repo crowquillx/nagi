@@ -52,6 +52,32 @@
       disabledTests = (old.disabledTests or []) ++ ["test_read_text_file"];
     });
   };
+  # patool's pytestCheckPhase fails on recent nixos-unstable: libmagic
+  # reports `application/x-bzip2` for `*.tar.bz2.foo` instead of
+  # `application/x-tar`, and several tar/pytarfile tests can't locate the
+  # list_bzip2/lzma/xz/lzip helpers. These are upstream test-suite issues, not
+  # packaging correctness problems, so skip them to keep bottles buildable.
+  # bottles depends on python314Packages.patool (the python-package-set copy),
+  # not the top-level `patool` alias, so override at the package-set scope.
+  patoolSkipTests = old: {
+    disabledTests = (old.disabledTests or []) ++ [
+      "test_mime_file"
+      "test_mime_file_bzip"
+      "test_tar_bz2"
+      "test_tar_bz2_file"
+      "test_tar_lzip"
+      "test_tar_lzma"
+      "test_tar_xz"
+      "test_tar_xz_file"
+      "test_py_tarfile_bz2"
+      "test_py_tarfile_bz2_file"
+    ];
+  };
+  patoolOverlay = final: prev: {
+    python314Packages = prev.python314Packages.overrideScope (pyFinal: pyPrev: {
+      patool = pyPrev.patool.overridePythonAttrs patoolSkipTests;
+    });
+  };
   # cheatengine-flake is currently broken against the live official download:
   # cheatengine.org re-serves 7.7 with a flat zip layout (files at the archive
   # root, binary named tutorial-x86_64) and a different sha256 than upstream
@@ -119,14 +145,19 @@
   # Use llm-agents.nix's default overlay so packages come from its binary
   # cache instead of being rebuilt against our nixpkgs revision.
   llmAgentsOverlay = lib.attrByPath ["llm-agents" "overlays" "default"] null inputs;
+  hushmicOverlay = final: _prev: {
+    hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
+  };
   sharedOverlays = vars:
-    lib.optionals (niriOverlay != null) [niriOverlay]
+    [hushmicOverlay]
+    ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
     ++ lib.optionals (cheatengineEnabled vars) [
       inputs.cheatengine-flake.overlays.default
       cheatengineShimOverlay
     ]
     ++ lib.optionals (nixosMcpEnabled vars) [mcpNixosOverlay]
+    ++ lib.optional (gamingEnabled vars) patoolOverlay
     ++ lib.optional (llmAgentsOverlay != null) llmAgentsOverlay;
   sharedHomeModules = vars:
     lib.optionals (niriHmConfigModule != null) [niriHmConfigModule]
@@ -134,6 +165,7 @@
     ++ lib.optionals (codexDesktopHmModule != null) [codexDesktopHmModule];
 
   millenniumEnabled = vars: lib.attrByPath ["features" "gaming" "steam" "millennium" "enable"] false vars;
+  gamingEnabled = vars: lib.attrByPath ["features" "gaming" "enable"] false vars;
   cheatengineEnabled = vars: lib.attrByPath ["features" "gaming" "cheatengine" "enable"] false vars;
   nixosMcpEnabled = vars:
     lib.attrByPath ["features" "mcp" "nixos" "enable"] (

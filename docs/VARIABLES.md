@@ -16,8 +16,8 @@ scalar values.
 
 ## Key switches
 
-- `desktop.compositor = "niri" | "plasma"`
-- `desktop.extraCompositors = [ "niri" "plasma" ... ]` (optional additional installed sessions; first login default still comes from `desktop.compositor`)
+- `desktop.compositor = "niri" | "plasma"` (default session selected by SDDM)
+- `desktop.extraCompositors = [ "niri" "plasma" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
 - `desktop.sddm.wayland.enable = true | false`
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
@@ -211,17 +211,50 @@ desktop.niri = {
 
 Use `niri msg outputs` from inside a running Niri session to discover the output names and supported modes.
 
-### Install both Niri and Plasma sessions
+### Select desktop sessions
+
+Niri only:
 
 ```nix
 desktop = {
-  # Default selected in SDDM.
   compositor = "niri";
+  extraCompositors = [ ];
+};
+```
 
-  # Also install Plasma so both sessions are available at login.
+Plasma only:
+
+```nix
+desktop = {
+  compositor = "plasma";
+  extraCompositors = [ ];
+};
+```
+
+Niri and Plasma, with Niri selected by default in SDDM:
+
+```nix
+desktop = {
+  compositor = "niri";
   extraCompositors = [ "plasma" ];
 };
 ```
+
+To make Plasma the default while keeping Niri available, swap the two values:
+
+```nix
+desktop = {
+  compositor = "plasma";
+  extraCompositors = [ "niri" ];
+};
+```
+
+When both sessions are installed, portal routing remains session-specific.
+Niri uses the GNOME portal with GTK fallbacks, while Plasma uses the KDE portal
+with GTK fallbacks. Do not set `XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP`
+globally; SDDM sets the correct desktop identity for the selected session.
+When Niri is installed, Stylix keeps Qt applications on its qtct/Kvantum theme;
+a Plasma-only configuration uses Plasma's native KDE Qt integration instead.
 
 ### Noctalia shell
 
