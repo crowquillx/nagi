@@ -106,6 +106,20 @@ in
     (leaf "min-height" 225)
   ])
 
+  (plain "window-rule" [
+    (leaf "match" { app-id = "^steam$"; })
+    (leaf "open-floating" true)
+  ])
+
+  (plain "window-rule" [
+    (leaf "match" {
+      app-id = "^steam$";
+      title = "^Steam$";
+    })
+    (leaf "open-floating" false)
+    (leaf "open-maximized" true)
+  ])
+
   (if isTandesk then chatRule else null)
 
   (if isTandesk then spotifyRule else null)
