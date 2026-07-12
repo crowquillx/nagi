@@ -90,7 +90,7 @@
         remotePlay.openFirewall = true;
         dedicatedServer.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
-        millennium.enable = false;
+        millennium.enable = true;
       };
       cheatengine.enable = true;
     };
