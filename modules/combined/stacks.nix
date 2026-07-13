@@ -26,6 +26,7 @@
     ../nixos/services/steam.nix
     ../nixos/services/virtualisation.nix
     ../nixos/services/mullvad-vpn.nix
+    ../nixos/services/mullvad-split-tunnel.nix
     ../nixos/services/ai.nix
     ../nixos/services/keyring.nix
     ../nixos/services/tailscale.nix
@@ -57,6 +58,7 @@
     ../home/desktop/niri-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
+    ../home/desktop/mullvad-browser-vpn.nix
     ../home/security/ssh-key.nix
     ../home/security/sops-age-key.nix
     ../home/security/gpg-agent.nix

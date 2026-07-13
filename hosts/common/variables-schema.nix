@@ -205,6 +205,38 @@ in {
                 };
                 default = {};
               };
+              splitTunnel = mkOption {
+                type = looseSubmodule {
+                  whonix = mkOption {
+                    type = looseSubmodule {
+                      enable = enableOption "Route Whonix-Gateway's external network exclusively through Mullvad WireGuard." false;
+                      externalInterface = mkOption {
+                        type = types.nonEmptyStr;
+                        default = "virbr1";
+                        description = "Host bridge used by the Whonix-External libvirt network.";
+                      };
+                      ipv4Subnet = mkOption {
+                        type = types.nonEmptyStr;
+                        default = "10.0.2.0/24";
+                        description = "IPv4 subnet assigned to Whonix-External.";
+                      };
+                      ipv6Subnet = mkOption {
+                        type = types.nonEmptyStr;
+                        default = "fd19:c33d:98bc::/64";
+                        description = "IPv6 subnet assigned to Whonix-External.";
+                      };
+                    };
+                    default = {};
+                  };
+                  browser = mkOption {
+                    type = looseSubmodule {
+                      enable = enableOption "Launch Mullvad Browser in a vopono WireGuard namespace." false;
+                    };
+                    default = {};
+                  };
+                };
+                default = {};
+              };
             };
             default = {};
           };

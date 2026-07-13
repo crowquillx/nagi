@@ -19,7 +19,13 @@
 
     mullvad = {
       package = "gui";
-      service.enable = true;
+      # The system-wide daemon would compete with the dedicated WireGuard
+      # routing table. Keep the GUI package available, but use scoped tunnels.
+      service.enable = false;
+      splitTunnel = {
+        whonix.enable = true;
+        browser.enable = true;
+      };
     };
 
     codingTools = {
@@ -81,6 +87,13 @@
       packages = [
         "org.upscayl.Upscayl"
         "ru.linux_gaming.PortProton"
+        {
+          appId = "com.cakewallet.cake_wallet";
+          bundle = {
+            url = "https://github.com/cake-tech/cake_wallet/releases/download/v6.2.1/Cake_Wallet_v6.2.0_Linux.flatpak";
+            hash = "sha256-GBybiogmaL+3mDxjRQuhqwtVEgx4UOqigwpWHR8iEq4=";
+          };
+        }
       ];
     };
     gaming = {

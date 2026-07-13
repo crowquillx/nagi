@@ -1,7 +1,8 @@
-{ lib, config, ... }:
+{ lib, pkgs, config, ... }:
 let
   v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
+  primaryUser = get [ "users" "primary" ] "nagi";
 in
 {
   imports = [
@@ -10,6 +11,15 @@ in
   ];
 
   networking.hostName = get [ "host" "name" ] "tandesk";
+
+  sops.secrets.pango_host = {
+    owner = primaryUser;
+    group = "users";
+    mode = "0400";
+  };
+
+  programs.fish.shellAliases.pango =
+    "ssh tan@(${pkgs.coreutils}/bin/cat /run/secrets/pango_host)";
 
   services.logind.settings = {
     Login = {

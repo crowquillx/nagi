@@ -11,6 +11,7 @@ let
   get = path: default: lib.attrByPath path default vars;
   noctaliaCommand = get [ "desktop" "noctalia" "command" ] "noctalia";
   chatClient = get [ "features" "chat" "client" ] "none";
+  mullvadBrowserVpnEnabled = get [ "features" "mullvad" "splitTunnel" "browser" "enable" ] false;
   packageNames = get [ "users" "extraPackages" ] [ ];
   effectiveChatClient =
     if chatClient != "none" then
@@ -86,7 +87,9 @@ in
       (leaf "spawn" [ "zen" ])
     ])
     (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
-      (leaf "spawn" [ "mullvad-browser" ])
+      (leaf "spawn" [
+        (if mullvadBrowserVpnEnabled then "mullvad-browser-vpn" else "mullvad-browser")
+      ])
     ])
     (node "MouseForward" { "hotkey-overlay-title" = "Chat: Toggle Mute"; } chatMuteAction)
     (node "Super+B" { "hotkey-overlay-title" = "Assistant Panel: Toggle"; } [

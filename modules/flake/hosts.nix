@@ -145,9 +145,17 @@
     });
   };
 
-  # Use llm-agents.nix's default overlay so packages come from its binary
-  # cache instead of being rebuilt against our nixpkgs revision.
-  llmAgentsOverlay = lib.attrByPath ["llm-agents" "overlays" "default"] null inputs;
+  # Keep the former upstream overlay namespace when llm-agents.nix only
+  # exposes flake packages. Referencing those packages directly preserves
+  # binary-cache compatibility instead of rebuilding them with our nixpkgs.
+  llmAgentsOverlay = let
+    upstreamOverlay = lib.attrByPath ["llm-agents" "overlays" "default"] null inputs;
+  in
+    if upstreamOverlay != null
+    then upstreamOverlay
+    else final: _prev: {
+      llm-agents = inputs.llm-agents.packages.${final.stdenv.hostPlatform.system} or {};
+    };
   hushmicOverlay = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
   };
@@ -161,7 +169,7 @@
     ]
     ++ lib.optionals (nixosMcpEnabled vars) [mcpNixosOverlay]
     ++ lib.optional (gamingEnabled vars) patoolOverlay
-    ++ lib.optional (llmAgentsOverlay != null) llmAgentsOverlay;
+    ++ [llmAgentsOverlay];
   sharedHomeModules = vars:
     lib.optionals (niriHmConfigModule != null) [niriHmConfigModule]
     ++ lib.optionals (noctaliaHmModule != null) [noctaliaHmModule]

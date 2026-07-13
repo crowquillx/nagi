@@ -70,7 +70,7 @@ let
     terminals = "(?i)^org\\.wezfurlong\\.wezterm$|^wezterm$|^com\\.mitchellh\\.ghostty$|^ghostty$|^kitty$|^Alacritty$|^alacritty$|^foot$|^org\\.gnome\\.Console$|^kgx$|^app\\.devsuite\\.Ptyxis$|^org\\.gnome\\.Ptyxis$|^ptyxis$|^org\\.kde\\.konsole$|^konsole$|^org\\.gnome\\.Terminal$|^gnome-terminal$|^terminator$|^com\\.github\\.gnunn1\\.tilix$|^tilix$|^xterm$|^uxterm$";
     fileManagers = "(?i)^thunar$|^org\\.xfce\\.Thunar$|^org\\.kde\\.dolphin$|^dolphin$|^org\\.gnome\\.Nautilus$|^nautilus$|^nemo$|^org\\.nemo\\.Nemo$|^pcmanfm$|^pcmanfm-qt$|^org\\.lxde\\.PCManFM$|^org\\.lxqt\\.pcmanfm-qt$|^org\\.kde\\.krusader$|^krusader$";
     chats = "^equibop$|^vesktop$|^dev\\.vencord\\.Vesktop$|^discord$|^com\\.discordapp\\.Discord$|^org\\.telegram\\.desktop$|^telegram-desktop$|^element$|^im\\.riot\\.Riot$|^comet$|^org\\.gnome\\.Fractal$|^fractal$";
-    editors = "^code$|^code-url-handler$|^com\\.visualstudio\\.code$|^code-oss$|^codium$|^vscodium$|^cursor$|^zed$|^dev\\.zed\\.Zed$|^t3-code$|^T3 Code.*$|^windsurf$|^jetbrains-.*$|^android-studio$|^neovide$|^emacs$|^micro$";
+    editors = "^codex-desktop$|^ChatGPT$|^code$|^code-url-handler$|^com\\.visualstudio\\.code$|^code-oss$|^codium$|^vscodium$|^cursor$|^zed$|^dev\\.zed\\.Zed$|^t3-code$|^T3 Code.*$|^windsurf$|^jetbrains-.*$|^android-studio$|^neovide$|^emacs$|^micro$";
     mediaPlayers = "(?i)^spotify$";
   };
 

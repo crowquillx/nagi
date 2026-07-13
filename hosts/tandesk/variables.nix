@@ -152,7 +152,7 @@
     shellStartupCommand = null;
     startup.apps = [
       "spotify"
-      "hushmic"
+      "until busctl --user --quiet status org.kde.StatusNotifierWatcher >/dev/null 2>&1; do sleep 0.25; done; mic='alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo'; stable=0; until [ \"$stable\" -ge 10 ]; do if pw-dump 2>/dev/null | grep -Fq \"\\\"node.name\\\": \\\"$mic\\\"\"; then stable=$((stable + 1)); else stable=0; fi; sleep 1; done; exec hushmic --tray"
     ];
     startup.backend = "niri";
   };

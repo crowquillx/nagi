@@ -49,7 +49,7 @@ scalar values.
 - `features.nixMaintenance = { gc.enable, gc.dates, gc.options, optimise.enable, optimise.dates }`
 - `features.chat = { client = "none" | "discord" | "equibop"; startup.enable; discord.forceXwayland; discord.equicord = { enable; startupDelaySeconds; } }`
 - `features.localsend = { package.enable, openFirewall }`
-- `features.mullvad = { package = "none" | "cli" | "gui"; service.enable }`
+- `features.mullvad = { package = "none" | "cli" | "gui"; service.enable; splitTunnel = { whonix, browser }; }`
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
@@ -339,7 +339,11 @@ features = {
 
   mullvad = {
     package = "gui";
-    service.enable = true;
+    service.enable = false;
+    splitTunnel = {
+      whonix.enable = true;
+      browser.enable = true;
+    };
   };
 };
 ```
@@ -350,6 +354,19 @@ starting the system daemon. The daemon requires `package = "gui"` and uses
 `mullvad-vpn`, preventing both package variants from being installed together.
 Remove legacy `localsend`, `mullvad`, and `mullvad-vpn` entries from
 `users.extraPackages` when migrating to these variables.
+
+`splitTunnel.whonix.enable` routes only the configured Whonix-External bridge
+through a randomly selected relay from `modules/nixos/services/data/mullvad-relays.tsv`.
+Its forwarding kill switch remains active even while the tunnel is down. The
+WireGuard profile is read from the `mullvad_whonix_config` sops secret and is
+never copied into the Nix store. Whonix-Gateway startup rotates the relay and
+fails if the tunnel cannot be configured; shutdown removes the tunnel.
+
+`splitTunnel.browser.enable` replaces the Mullvad Browser desktop entry and
+Niri binding with a vopono namespace launcher. Run
+`vopono sync --protocol wireguard` once after activation to create a separate
+Mullvad device key and download the browser relay catalog. Each launch chooses
+a random WireGuard relay and vopono supplies a namespace-local kill switch.
 
 ### Video editing
 
@@ -376,11 +393,19 @@ features.flatpak = {
   packages = [
     "com.spotify.Client"
     "md.obsidian.Obsidian"
+    {
+      appId = "com.example.Bundle";
+      bundle = {
+        url = "https://example.com/App.flatpak";
+        hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+      };
+    }
   ];
 };
 ```
 
 Declared `features.flatpak.packages` entries are installed declaratively via `nix-flatpak`. Removing an entry converges the system-wide Flatpak set back to the declared list on the next rebuild.
+Bundle declarations fetch and verify a standalone `.flatpak` file through Nix. Update both the URL and hash when moving to a new release; a hash mismatch fails the build.
 
 ### GTK / QT / Kitty
 
