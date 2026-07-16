@@ -35,6 +35,18 @@ let
     else
       pkgs.wine or null;
   winetricksPkg = pkgs.winetricks or null;
+  protontricksPkg = pkgs.protontricks or null;
+  bg3ModePkg = pkgs.writeShellApplication {
+    name = "bg3-mode";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.findutils
+      pkgs.gnugrep
+      pkgs.procps
+      protontricksPkg
+    ];
+    text = builtins.readFile ../../../scripts/bg3-mode;
+  };
   vulkanToolsPkg = pkgs.vulkan-tools or null;
   pciutilsPkg = pkgs.pciutils or null;
   bottlesPkg = pkgs.bottles or null;
@@ -63,6 +75,10 @@ in
         {
           assertion = !enabled || winetricksPkg != null;
           message = "features.gaming.enable is true, but nixpkgs package 'winetricks' could not be resolved.";
+        }
+        {
+          assertion = !enabled || protontricksPkg != null;
+          message = "features.gaming.enable is true, but nixpkgs package 'protontricks' could not be resolved.";
         }
         {
           assertion = !enabled || vulkanToolsPkg != null;
@@ -98,6 +114,8 @@ in
         protonPlusPkg
         winePkg
         winetricksPkg
+        protontricksPkg
+        bg3ModePkg
         vulkanToolsPkg
         pciutilsPkg
         bottlesPkg

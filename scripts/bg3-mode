@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly app_id=1086940
+readonly library="${BG3_STEAM_LIBRARY:-/mnt/games/SteamLibrary}"
+readonly game_dir="$library/steamapps/common/Baldurs Gate 3"
+readonly prefix="$library/steamapps/compatdata/$app_id"
+readonly extender="$game_dir/bin/DWrite.dll"
+readonly disabled_extender="$game_dir/bin/DWrite.dll.disabled"
+readonly manager="$prefix/BG3 Mod Manager/BG3ModManager.exe"
+
+usage() {
+  printf 'Usage: bg3-mode {modded|vanilla|status|manager}\n'
+}
+
+require_install() {
+  if [[ ! -d "$game_dir" || ! -d "$prefix/pfx" ]]; then
+    printf 'BG3 was not found under %s\n' "$library" >&2
+    printf 'Set BG3_STEAM_LIBRARY to the Steam library containing BG3.\n' >&2
+    exit 1
+  fi
+}
+
+require_game_stopped() {
+  if pgrep -fi '[/\\]bg3(_dx11)?\.exe' >/dev/null; then
+    printf 'BG3 is running. Close it before changing modes.\n' >&2
+    exit 1
+  fi
+}
+
+show_status() {
+  if [[ -f "$extender" && -f "$disabled_extender" ]]; then
+    printf 'Mode: ambiguous (both DWrite.dll files exist)\n' >&2
+    exit 1
+  elif [[ -f "$extender" ]]; then
+    printf 'Mode: modded (Script Extender enabled)\n'
+  elif [[ -f "$disabled_extender" ]]; then
+    printf 'Mode: vanilla (Script Extender disabled)\n'
+  else
+    printf 'Mode: vanilla (Script Extender is not installed)\n'
+  fi
+
+  local mods="$prefix/pfx/drive_c/users/steamuser/AppData/Local/Larian Studios/Baldur's Gate 3/Mods"
+  local native_mods="$game_dir/bin/NativeMods"
+  if [[ -d "$mods" ]] && find -L "$mods" -maxdepth 1 -type f -name '*.pak' -print -quit | grep -q .; then
+    printf 'Warning: deployed .pak mods are present (including Vortex symlinks).\n'
+  fi
+  if [[ -d "$native_mods" ]] && find -L "$native_mods" -mindepth 1 -type f -print -quit | grep -q .; then
+    printf 'Warning: deployed NativeMods are present.\n'
+  fi
+  printf 'BG3MM load order and Vortex profile deployment are not changed by this command.\n'
+}
+
+require_install
+
+case "${1:-}" in
+  modded)
+    require_game_stopped
+    if [[ -f "$extender" && -f "$disabled_extender" ]]; then
+      printf 'Refusing to continue: both extender files exist.\n' >&2
+      exit 1
+    elif [[ -f "$disabled_extender" ]]; then
+      mv -- "$disabled_extender" "$extender"
+      printf 'Script Extender enabled.\n'
+    elif [[ -f "$extender" ]]; then
+      printf 'Script Extender is already enabled.\n'
+    else
+      printf 'DWrite.dll is missing; reinstall Script Extender first.\n' >&2
+      exit 1
+    fi
+    ;;
+  vanilla)
+    require_game_stopped
+    if [[ -f "$extender" && -f "$disabled_extender" ]]; then
+      printf 'Refusing to continue: both extender files exist.\n' >&2
+      exit 1
+    elif [[ -f "$extender" ]]; then
+      mv -- "$extender" "$disabled_extender"
+      printf 'Script Extender disabled.\n'
+    else
+      printf 'Script Extender is already disabled.\n'
+    fi
+    ;;
+  status)
+    show_status
+    ;;
+  manager)
+    require_game_stopped
+    if [[ ! -f "$manager" ]]; then
+      printf 'BG3 Mod Manager was not found at %s\n' "$manager" >&2
+      exit 1
+    fi
+    exec protontricks-launch --appid "$app_id" "$manager"
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

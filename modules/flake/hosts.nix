@@ -159,8 +159,14 @@
   hushmicOverlay = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
   };
+  vortexOverlay = final: _prev: {
+    vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
+  };
   sharedOverlays = vars:
-    [hushmicOverlay]
+    [
+      hushmicOverlay
+      vortexOverlay
+    ]
     ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
     ++ lib.optionals (cheatengineEnabled vars) [

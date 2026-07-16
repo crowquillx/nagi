@@ -49,6 +49,7 @@
       "mkvtoolnix"
       "osu-lazer-bin"
       "hushmic"
+      "vortex"
     ];
     git = {
       name = "tan";

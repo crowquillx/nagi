@@ -5,10 +5,12 @@
     extra-substituters = [
       "https://cache.numtide.com"
       "https://codex-desktop-linux.cachix.org"
+      "https://vortex-nix.cachix.org"
     ];
     extra-trusted-public-keys = [
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
       "codex-desktop-linux.cachix.org-1:nX/xy6AdK9hQE24A8ALGjkCKj2ObFmcnemiL5Cid4nk="
+      "vortex-nix.cachix.org-1:7+ZVU0umNp8sz1JqZV/bRcbVgemNuNtzN5KiJxihFRY="
     ];
   };
 
@@ -90,6 +92,11 @@
 
     hushmic-nix = {
       url = "github:crowquillx/hushmic-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    vortex-nix = {
+      url = "github:crowquillx/vortex-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
