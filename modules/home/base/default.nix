@@ -191,7 +191,6 @@ in
       ];
     sessionVariables = {
       NAGI_FLAKE_DIR = flakeDirectory;
-      QT_STYLE_OVERRIDE = lib.mkForce "";
     };
   };
 
@@ -243,10 +242,6 @@ in
       defaultApplications = browserAssociations;
       associations.added = browserAssociations;
     };
-  };
-
-  systemd.user.sessionVariables = {
-    QT_STYLE_OVERRIDE = lib.mkForce "";
   };
 
   gtk = lib.mkIf (get [ "desktop" "enable" ] true) {

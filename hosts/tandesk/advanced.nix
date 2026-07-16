@@ -43,7 +43,8 @@
         codex.enable = true;
         opencode.enable = true;
         gemini.enable = true;
-        droid.enable = true;
+        pi.enable = true;
+        ohMyPi.enable = true;
       };
       nixTools.enable = true;
     };

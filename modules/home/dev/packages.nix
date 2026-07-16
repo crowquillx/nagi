@@ -15,7 +15,8 @@
   zedEnabled = editorsEnabled && get ["features" "codingTools" "editors" "zed" "enable"] true;
   aiCliEnabled = get ["features" "codingTools" "aiCli" "enable"] codingToolsEnabled;
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
-  droidEnabled = get ["features" "codingTools" "aiCli" "droid" "enable"] aiCliEnabled;
+  piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
+  ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
   nixToolsEnabled = get ["features" "codingTools" "nixTools" "enable"] codingToolsEnabled;
 
   llmAgent = name: lib.attrByPath ["llm-agents" name] null pkgs;
@@ -31,7 +32,8 @@
     else if sourcePkg != null
     then sourcePkg
     else binPkg;
-  droidPkg = llmAgent "droid";
+  piPkg = llmAgent "pi";
+  ohMyPiPkg = llmAgent "omp";
   antigravityPkg = let
     fhsPkg = lib.attrByPath ["antigravity-fhs"] null pkgs;
     nativePkg = lib.attrByPath ["antigravity"] null pkgs;
@@ -84,8 +86,12 @@ in {
       message = "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback.";
     }
     {
-      assertion = !(droidEnabled && droidPkg == null);
-      message = "features.codingTools.aiCli.droid.enable is true, but package 'droid' could not be resolved from llm-agents.nix.";
+      assertion = !(piEnabled && piPkg == null);
+      message = "features.codingTools.aiCli.pi.enable is true, but package 'pi' could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(ohMyPiEnabled && ohMyPiPkg == null);
+      message = "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(antigravityEnabled && antigravityPkg == null);
@@ -140,7 +146,8 @@ in {
   home.packages =
     lib.optionals (vscodeEnabled && vscodePkg != null) [vscodePkg]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
-    ++ lib.optionals (droidEnabled && droidPkg != null) [droidPkg]
+    ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
+    ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
     ++ lib.optionals (aiCliEnabled && uvPkg != null) [uvPkg]
     ++ lib.optionals (antigravityEnabled && antigravityPkg != null) [antigravityPkg]
     ++ lib.optionals (aiCliEnabled && bubblewrapPkg != null) [bubblewrapPkg]

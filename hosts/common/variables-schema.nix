@@ -326,8 +326,12 @@ in {
                     type = packageToggle "Gemini CLI";
                     default = {};
                   };
-                  droid = mkOption {
-                    type = packageToggle "Factory AI Droid";
+                  pi = mkOption {
+                    type = packageToggle "Pi coding agent";
+                    default = {};
+                  };
+                  ohMyPi = mkOption {
+                    type = packageToggle "Oh My Pi coding agent";
                     default = {};
                   };
                 };

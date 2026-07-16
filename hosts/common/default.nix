@@ -236,6 +236,22 @@ in {
     }
     {
       assertion = builtins.isBool (
+        get ["features" "codingTools" "aiCli" "pi" "enable"] (
+          get ["features" "codingTools" "aiCli" "enable"] (get ["features" "codingTools" "enable"] true)
+        )
+      );
+      message = "features.codingTools.aiCli.pi.enable must be a boolean.";
+    }
+    {
+      assertion = builtins.isBool (
+        get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] (
+          get ["features" "codingTools" "aiCli" "enable"] (get ["features" "codingTools" "enable"] true)
+        )
+      );
+      message = "features.codingTools.aiCli.ohMyPi.enable must be a boolean.";
+    }
+    {
+      assertion = builtins.isBool (
         get ["features" "codingTools" "nixTools" "enable"] (get ["features" "codingTools" "enable"] true)
       );
       message = "features.codingTools.nixTools.enable must be a boolean.";

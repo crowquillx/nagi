@@ -65,7 +65,8 @@ scalar values.
 - `features.codingTools.aiCli.codex.enable = true | false`
 - `features.codingTools.aiCli.opencode.enable = true | false`
 - `features.codingTools.aiCli.gemini.enable = true | false`
-- `features.codingTools.aiCli.droid.enable = true | false`
+- `features.codingTools.aiCli.pi.enable = true | false`
+- `features.codingTools.aiCli.ohMyPi.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
@@ -253,8 +254,12 @@ When both sessions are installed, portal routing remains session-specific.
 Niri uses the GNOME portal with GTK fallbacks, while Plasma uses the KDE portal
 with GTK fallbacks. Do not set `XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP`
 globally; SDDM sets the correct desktop identity for the selected session.
-When Niri is installed, Stylix keeps Qt applications on its qtct/Kvantum theme;
-a Plasma-only configuration uses Plasma's native KDE Qt integration instead.
+When Niri and Plasma are both installed, Qt theming is session-scoped. The
+login environment uses Plasma's native KDE integration with Breeze, while the
+Niri config overrides its child processes to use Stylix's qtct/Kvantum theme.
+Noctalia's `kcolorscheme` template additionally supplies KDE colors to KDE and
+Kirigami applications opened under Niri. Plasma-only configurations use native
+KDE integration, and Niri-only configurations use qtct/Kvantum directly.
 
 ### Noctalia shell
 
@@ -269,8 +274,16 @@ desktop.noctalia = {
 };
 ```
 
-This enables Home Manager's current `programs.noctalia.*` module. Only `enable` and `systemd.enable` are forwarded directly; `desktop.noctalia.command` is used by Niri startup and Noctalia IPC keybinds.
+This enables Home Manager's current `programs.noctalia.*` module. The module
+forwards `enable` and `systemd.enable`, enables the `kcolorscheme` theme
+template, and uses `desktop.noctalia.command` for Niri startup and Noctalia IPC
+keybinds.
 When `desktop.noctalia.command` is set to a wrapper such as `nagi-noctalia-shell`, Niri startup and keybinds use that command instead of plain `noctalia`.
+
+Noctalia's GUI-managed `~/.local/state/noctalia/settings.toml` is applied after
+the declarative config. If that file already contains
+`theme.templates.builtin_ids`, enable `KColorScheme` once in Noctalia's theme
+settings so the runtime override includes the template.
 
 `desktop.noctalia.assistantPanel.secrets` names optional `sops-nix` secrets that are exposed to the plugin through its documented environment variables. Set only the ones you actually use:
 

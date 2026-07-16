@@ -37,7 +37,8 @@
         codex.enable = true;
         opencode.enable = true;
         gemini.enable = false;
-        droid.enable = false;
+        pi.enable = true;
+        ohMyPi.enable = true;
       };
       nixTools.enable = true;
     };

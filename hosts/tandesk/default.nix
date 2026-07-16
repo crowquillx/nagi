@@ -32,6 +32,8 @@ in
     };
   };
 
+  services.teamviewer.enable = true;
+
   systemd.targets = {
     sleep.enable = false;
     suspend.enable = false;
