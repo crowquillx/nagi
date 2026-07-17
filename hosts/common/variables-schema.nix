@@ -308,6 +308,10 @@ in {
                     type = packageToggle "Zed";
                     default = {};
                   };
+                  limux = mkOption {
+                    type = packageToggle "Limux";
+                    default = {};
+                  };
                 };
                 default = {};
               };
@@ -316,6 +320,14 @@ in {
                   enable = enableOption "Enable AI CLI agents." true;
                   codex = mkOption {
                     type = packageToggle "OpenAI Codex CLI";
+                    default = {};
+                  };
+                  claude = mkOption {
+                    type = packageToggle "Anthropic Claude Code CLI";
+                    default = {};
+                  };
+                  cliProxyApi = mkOption {
+                    type = packageToggle "CLIProxyAPI";
                     default = {};
                   };
                   opencode = mkOption {

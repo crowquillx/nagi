@@ -19,11 +19,13 @@ in
     (final: prev: {
       inherit (prev.lixPackageSets.${lixPackageSet})
         colmena
-        nix-direnv
         nix-eval-jobs
         nix-fast-build
         nixpkgs-review
         ;
+      nix-direnv = prev.nix-direnv.override {
+        nix = final.lixPackageSets.${lixPackageSet}.lix;
+      };
     })
   ];
 }

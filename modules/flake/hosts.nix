@@ -162,10 +162,14 @@
   vortexOverlay = final: _prev: {
     vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
   };
+  limuxOverlay = final: _prev: {
+    limux = inputs.limux-nix.packages.${final.stdenv.hostPlatform.system}.default;
+  };
   sharedOverlays = vars:
     [
       hushmicOverlay
       vortexOverlay
+      limuxOverlay
     ]
     ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default

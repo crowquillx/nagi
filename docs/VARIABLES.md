@@ -63,6 +63,8 @@ scalar values.
 - `features.codingTools.editors.<name>.enable = true | false` for `vscode`, `antigravity`, `t3code`, `cursor`, and `zed`
 - `features.codingTools.aiCli.enable = true | false`
 - `features.codingTools.aiCli.codex.enable = true | false`
+- `features.codingTools.aiCli.claude.enable = true | false`
+- `features.codingTools.aiCli.cliProxyApi.enable = true | false`
 - `features.codingTools.aiCli.opencode.enable = true | false`
 - `features.codingTools.aiCli.gemini.enable = true | false`
 - `features.codingTools.aiCli.pi.enable = true | false`

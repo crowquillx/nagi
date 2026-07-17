@@ -473,6 +473,26 @@
         "type": "github"
       }
     },
+    "limux-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784246831,
+        "narHash": "sha256-Xd3EMzM4E8KH+yisHGtOUUeFYCmirT0QbDhWYczjyTI=",
+        "owner": "crowquillx",
+        "repo": "limux-nix",
+        "rev": "5114347d451f0a73852cad64bf558a17c72f0b73",
+        "type": "github"
+      },
+      "original": {
+        "owner": "crowquillx",
+        "repo": "limux-nix",
+        "type": "github"
+      }
+    },
     "llm-agents": {
       "inputs": {
         "bun2nix": "bun2nix",
@@ -720,6 +740,22 @@
         "url": "https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz"
       }
     },
+    "nixpkgs_4": {
+      "locked": {
+        "lastModified": 1784007870,
+        "narHash": "sha256-djcLt/JJphyNt4eDY9XTly+/WbCK5lqWq9lSgCmJkkQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "18b9261cb3294b6d2a06d03f96872827b8fe2698",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "noctalia": {
       "inputs": {
         "nixpkgs": "nixpkgs_3"
@@ -796,6 +832,7 @@
         "hushmic-nix": "hushmic-nix",
         "import-tree": "import-tree",
         "lanzaboote": "lanzaboote",
+        "limux-nix": "limux-nix",
         "llm-agents": "llm-agents",
         "mcp-servers-nix": "mcp-servers-nix",
         "millennium": "millennium",
@@ -1030,17 +1067,15 @@
     },
     "vortex-nix": {
       "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "nixpkgs": "nixpkgs_4",
         "vortex-src": "vortex-src"
       },
       "locked": {
-        "lastModified": 1784163014,
-        "narHash": "sha256-hgUIdaTlkhvoyiZZBVUEF014EgXIKz65dipHlcdThwM=",
+        "lastModified": 1784249311,
+        "narHash": "sha256-zPPEyCJL+CUmeFb03Tkl7LC9W0Lr4JQabCeercS7ILI=",
         "owner": "crowquillx",
         "repo": "vortex-nix",
-        "rev": "1b4312642d9b63ff53b9691076696c8aca4c0ac3",
+        "rev": "03f10744b2b32dced851be1dfae721f8626a1d40",
         "type": "github"
       },
       "original": {

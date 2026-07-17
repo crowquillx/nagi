@@ -13,7 +13,10 @@
   t3codeEnabled = editorsEnabled && get ["features" "codingTools" "editors" "t3code" "enable"] true;
   cursorEnabled = editorsEnabled && get ["features" "codingTools" "editors" "cursor" "enable"] true;
   zedEnabled = editorsEnabled && get ["features" "codingTools" "editors" "zed" "enable"] true;
+  limuxEnabled = editorsEnabled && get ["features" "codingTools" "editors" "limux" "enable"] true;
   aiCliEnabled = get ["features" "codingTools" "aiCli" "enable"] codingToolsEnabled;
+  claudeEnabled = get ["features" "codingTools" "aiCli" "claude" "enable"] aiCliEnabled;
+  cliProxyApiEnabled = get ["features" "codingTools" "aiCli" "cliProxyApi" "enable"] aiCliEnabled;
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
   piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
   ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
@@ -34,6 +37,9 @@
     else binPkg;
   piPkg = llmAgent "pi";
   ohMyPiPkg = llmAgent "omp";
+  claudeCodePkg = llmAgent "claude-code";
+  cliProxyApiPkg = llmAgent "cli-proxy-api";
+  bunPkg = lib.attrByPath ["bun"] null pkgs;
   antigravityPkg = let
     fhsPkg = lib.attrByPath ["antigravity-fhs"] null pkgs;
     nativePkg = lib.attrByPath ["antigravity"] null pkgs;
@@ -74,6 +80,7 @@
   cursorPkg = lib.attrByPath ["code-cursor"] null pkgs;
   cursorCliPkg = lib.attrByPath ["cursor-cli"] null pkgs;
   zedEditorPkg = lib.attrByPath ["zed-editor"] null pkgs;
+  limuxPkg = lib.attrByPath ["limux"] null pkgs;
   nilPkg = lib.attrByPath ["nil"] null pkgs;
 in {
   assertions = [
@@ -86,12 +93,24 @@ in {
       message = "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback.";
     }
     {
+      assertion = !(claudeEnabled && claudeCodePkg == null);
+      message = "features.codingTools.aiCli.claude.enable is true, but package 'claude-code' could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(cliProxyApiEnabled && cliProxyApiPkg == null);
+      message = "features.codingTools.aiCli.cliProxyApi.enable is true, but package 'cli-proxy-api' could not be resolved from llm-agents.nix.";
+    }
+    {
       assertion = !(piEnabled && piPkg == null);
       message = "features.codingTools.aiCli.pi.enable is true, but package 'pi' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(ohMyPiEnabled && ohMyPiPkg == null);
       message = "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(ohMyPiEnabled && bunPkg == null);
+      message = "features.codingTools.aiCli.ohMyPi.enable is true, but nixpkgs package 'bun' could not be resolved.";
     }
     {
       assertion = !(antigravityEnabled && antigravityPkg == null);
@@ -141,13 +160,20 @@ in {
       assertion = !(cursorEnabled && cursorCliPkg == null);
       message = "features.codingTools.editors.enable is true, but nixpkgs package 'cursor-cli' could not be resolved.";
     }
+    {
+      assertion = !(limuxEnabled && limuxPkg == null);
+      message = "features.codingTools.editors.limux.enable is true, but package 'limux' could not be resolved from limux-nix.";
+    }
   ];
 
   home.packages =
     lib.optionals (vscodeEnabled && vscodePkg != null) [vscodePkg]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
+    ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [claudeCodePkg]
+    ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [cliProxyApiPkg]
     ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
     ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
+    ++ lib.optionals (ohMyPiEnabled && bunPkg != null) [bunPkg]
     ++ lib.optionals (aiCliEnabled && uvPkg != null) [uvPkg]
     ++ lib.optionals (antigravityEnabled && antigravityPkg != null) [antigravityPkg]
     ++ lib.optionals (aiCliEnabled && bubblewrapPkg != null) [bubblewrapPkg]
@@ -162,7 +188,8 @@ in {
     ++ lib.optionals (cursorEnabled && cursorPkg != null) [cursorPkg]
     ++ lib.optionals (cursorEnabled && cursorCliPkg != null) [cursorCliPkg]
     ++ lib.optionals (zedEnabled && zedEditorPkg != null) [zedEditorPkg]
-    ++ lib.optionals (nixToolsEnabled && nilPkg != null) [nilPkg];
+    ++ lib.optionals (nixToolsEnabled && nilPkg != null) [nilPkg]
+    ++ lib.optionals (limuxEnabled && limuxPkg != null) [limuxPkg];
 
   xdg.desktopEntries = lib.optionalAttrs (t3codeEnabled && t3DesktopPkg != null) {
     t3code = {
