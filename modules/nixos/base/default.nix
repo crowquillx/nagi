@@ -17,6 +17,9 @@ in
     settings = binaryCaches // {
       experimental-features = [ "nix-command" "flakes" ];
       auto-optimise-store = false;
+      trusted-users = [
+        primaryUser
+      ];
     };
     gc = {
       automatic = maintenance.gc.enable;
