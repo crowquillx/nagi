@@ -8,51 +8,21 @@ let
   get = path: default: lib.attrByPath path default v;
   primaryUser = get [ "users" "primary" ] "nagi";
 
-  enabled = get [ "features" "ssh" "enable" ] true;
+  enabled = get [ "features" "ssh" "enable" ] false;
   openFirewall = get [ "features" "ssh" "openFirewall" ] true;
   port = get [ "features" "ssh" "port" ] 22;
-  passwordAuthentication = get [ "features" "ssh" "passwordAuthentication" ] true;
+  passwordAuthentication = get [ "features" "ssh" "passwordAuthentication" ] false;
   permitRootLogin = get [ "features" "ssh" "permitRootLogin" ] "prohibit-password";
   authorizedKeys = get [ "features" "ssh" "authorizedKeys" ] [ ];
-
-  # Root login must never be widened to "yes"; keep it at least as
-  # restrictive as the NixOS default ("prohibit-password").
-  validRootLogin = [
-    "prohibit-password"
-    "without-password"
-    "forced-commands-only"
-    "no"
-  ];
 in
 {
   config = lib.mkMerge [
     {
       assertions = [
         {
-          assertion = builtins.isBool enabled;
-          message = "features.ssh.enable must be a boolean.";
-        }
-        {
-          assertion = builtins.isBool openFirewall;
-          message = "features.ssh.openFirewall must be a boolean.";
-        }
-        {
-          assertion = builtins.isInt port && port > 0 && port <= 65535;
+          # types.port is u16 (0..65535); reject 0 so SSH always binds a real port.
+          assertion = !enabled || port > 0;
           message = "features.ssh.port must be an integer in 1..65535.";
-        }
-        {
-          assertion = builtins.isBool passwordAuthentication;
-          message = "features.ssh.passwordAuthentication must be a boolean.";
-        }
-        {
-          assertion = builtins.elem permitRootLogin validRootLogin;
-          message = "features.ssh.permitRootLogin must be one of: ${lib.concatStringsSep ", " validRootLogin} (never \"yes\").";
-        }
-        {
-          assertion =
-            builtins.isList authorizedKeys
-            && builtins.all (k: builtins.isString k && k != "") authorizedKeys;
-          message = "features.ssh.authorizedKeys must be a list of non-empty string public keys.";
         }
         {
           # Lockout guard: key-only mode requires at least one declared key,

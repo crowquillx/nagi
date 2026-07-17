@@ -12,7 +12,6 @@
         forceXwayland = true;
         equicord = {
           enable = true;
-          startupDelaySeconds = 4;
         };
       };
     };
@@ -114,7 +113,8 @@
 
       upower.enable = true;
       tlp.enable = false;
-      thermald.enable = true;
+      # thermald is Intel-oriented; power-profiles-daemon covers AMD on this host.
+      thermald.enable = false;
       powertop.enable = false;
       fwupd.enable = true;
 

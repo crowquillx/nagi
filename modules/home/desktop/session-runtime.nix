@@ -17,24 +17,14 @@ let
   idleSeconds = get [ "desktop" "session" "lock" "idleSeconds" ] 600;
   lockBeforeSleep = get [ "desktop" "session" "lock" "beforeSleep" ] true;
   startupCommand = get [ "desktop" "shellStartupCommand" ] null;
-  defaultStartupApps = [
-    "wl-paste --watch cliphist store"
-  ];
-  startupBackend = get [ "desktop" "startup" "backend" ] "systemd";
-  startupApps = get [ "desktop" "startup" "apps" ] defaultStartupApps;
-  chatClient = get [ "features" "chat" "client" ] "none";
-  chatStartupEnable = get [ "features" "chat" "startup" "enable" ] (chatClient != "none");
-  equicordEnabled = get [ "features" "chat" "discord" "equicord" "enable" ] false;
-  chatCommands =
-    if chatClient == "discord" then
-      [ "sleep 5 && discord" ]
-    else if chatClient == "equibop" then
-      [ "sleep 5 && equibop" ]
-    else
-      [ ];
-  effectiveStartupApps =
+  startup = import ./startup.nix { inherit lib vars; };
+  inherit (startup)
+    startupBackend
     startupApps
-    ++ lib.optionals chatStartupEnable chatCommands;
+    chatClient
+    equicordEnabled
+    effectiveStartupApps
+    ;
   effectiveShellStartupCommand = startupCommand;
   shellStartupEnable = effectiveShellStartupCommand != null;
   appStartupEnable = effectiveStartupApps != [ ];

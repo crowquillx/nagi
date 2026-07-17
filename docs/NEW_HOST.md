@@ -2,7 +2,7 @@
 
 ## 1) Copy an existing host profile
 
-Use `default` as a starting point unless you need laptop defaults.
+Use `default` as a starting point unless you need laptop defaults. The published `default` configuration is a CI/template profile: its root filesystem is temporary placeholder data and it is **not bootable as a real machine** until `hardware-configuration.nix` is replaced.
 
 ```bash
 cp -r hosts/default hosts/<newhost>
@@ -37,15 +37,15 @@ Option B: manually generate and place `hosts/<newhost>/hardware-configuration.ni
 
 ## 4) Register host in the flake host registry
 
-Add `<newhost>` in the `hosts` attrset in `modules/flake/hosts.nix` with its system, host module path, and ordered variable fragment list so both outputs are generated:
+Add `<newhost>` in `lib/host-registry.nix` with its system, host module path, and ordered variable fragment list so both outputs are generated:
 
 ```nix
 <newhost> = {
   system = "x86_64-linux";
-  module = ../../hosts/<newhost>/default.nix;
+  module = ../hosts/<newhost>/default.nix;
   variables = [
-    ../../hosts/<newhost>/variables.nix
-    ../../hosts/<newhost>/advanced.nix
+    ../hosts/<newhost>/variables.nix
+    ../hosts/<newhost>/advanced.nix
   ];
 };
 ```

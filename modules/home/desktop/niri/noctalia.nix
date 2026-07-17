@@ -3,14 +3,19 @@
   vars,
   plain,
   leaf,
+  colors,
   ...
 }:
 let
   get = path: default: lib.attrByPath path default vars;
-  noctaliaSystemdEnabled = get [ "desktop" "noctalia" "systemd" "enable" ] true;
-  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "noctalia-shell";
+  desktopEnabled = get [ "desktop" "enable" ] true;
+  compositor = get [ "desktop" "compositor" ] "niri";
+  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
+  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNiri);
+  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
 in
-lib.optionals (!noctaliaSystemdEnabled) [
+lib.optionals noctaliaEnable [
   (leaf "spawn-at-startup" [ noctaliaCommand ])
 
   (plain "layer-rule" [
@@ -27,8 +32,8 @@ lib.optionals (!noctaliaSystemdEnabled) [
 
   (plain "recent-windows" [
     (plain "highlight" [
-      (leaf "active-color" "#ebbcba")
-      (leaf "urgent-color" "#eb6f92")
+      (leaf "active-color" colors.active)
+      (leaf "urgent-color" colors.urgent)
     ])
   ])
 ]

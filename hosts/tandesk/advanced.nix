@@ -12,7 +12,6 @@
         forceXwayland = false;
         equicord = {
           enable = true;
-          startupDelaySeconds = 4;
         };
       };
     };
@@ -23,7 +22,11 @@
       # routing table. Keep the GUI package available, but use scoped tunnels.
       service.enable = false;
       splitTunnel = {
-        whonix.enable = true;
+        whonix = {
+          enable = true;
+          # Stable libvirt identity; name-based matching is not trusted.
+          vmUuid = "96658fbf-e814-4a6c-8c64-0647a54b16e4";
+        };
         browser.enable = true;
       };
     };

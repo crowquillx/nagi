@@ -11,9 +11,12 @@ let
   comfyuiEnabled = get [ "features" "ai" "comfyui" "enable" ] false;
   ollamaEnabled = get [ "features" "ai" "ollama" "enable" ] false;
   openWebuiEnabled = get [ "features" "ai" "openWebui" "enable" ] false;
-  comfyuiImage = "ghcr.io/utensils/comfyui-nix:latest-cuda";
-  ollamaImage = "docker.io/ollama/ollama:latest";
-  openWebuiImage = "ghcr.io/open-webui/open-webui:main";
+  # latest-cuda
+  comfyuiImage = "ghcr.io/utensils/comfyui-nix@sha256:d16e82bfa6036fe49faaaf9d36bf52dff03efdbb43676fb99d1a452181ccef0c";
+  # latest
+  ollamaImage = "docker.io/ollama/ollama@sha256:6345fbc18bd73a1e16404be681dbc6fd291a027cab43ed541abe78c4c81051b0";
+  # main
+  openWebuiImage = "ghcr.io/open-webui/open-webui@sha256:a26effeb220e132482bf7e0560b3404843e7bc40d23051144e062960df8df6b0";
 in
 {
   config = lib.mkMerge [

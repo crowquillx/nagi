@@ -9,7 +9,7 @@
 }:
 let
   get = path: default: lib.attrByPath path default vars;
-  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "noctalia";
+  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
   chatClient = get [ "features" "chat" "client" ] "none";
   mullvadBrowserVpnEnabled = get [ "features" "mullvad" "splitTunnel" "browser" "enable" ] false;
   packageNames = get [ "users" "extraPackages" ] [ ];

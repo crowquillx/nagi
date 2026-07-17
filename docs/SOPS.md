@@ -72,8 +72,8 @@ tcli rebuild switch <host>
 ## Optional: passphrase-protected age key ("password" option)
 
 To make `sops` CLI usage work via a passphrase (independent of any PGP
-Yubikey), generate a passphrase-protected age key and add it as a second
-key group in `.sops.yaml`:
+Yubikey), generate a passphrase-protected age key and add its *public*
+key to the same `key_groups` entry's `age:` list in `.sops.yaml`:
 
 ```bash
 nix shell nixpkgs#age --command age-keygen -p -o ~/.config/sops/age-passphrase.key
@@ -81,8 +81,10 @@ chmod 600 ~/.config/sops/age-passphrase.key
 age-keygen -y ~/.config/sops/age-passphrase.key
 ```
 
-Then in `.sops.yaml`, add a second `age` key group containing the new
-public key. sops will encrypt to both groups; you can decrypt with either.
+Within one `key_groups` entry, any listed recipient can decrypt (OR).
+Add the passphrase age public key next to the host age key under the
+same `age:` list — do **not** put it in a separate `key_groups`
+entry, or sops will require one key from every group (AND / threshold).
 
 Note: `sops-nix`'s runtime `sops.age.keyFile` does not prompt for a
 passphrase at boot, so a passphrase-protected age key only works for
@@ -102,10 +104,11 @@ manifest — they are mutually exclusive at boot. So the practical split
 is:
 
 - **Yubikey for sops CLI** (interactive): `gpg-agent` in your user
-  session talks to the Yubikey via `pcscd`. The sops file is encrypted
-  to a `pgp` key group containing the Yubikey's fingerprint, and `sops`
-  will tap the Yubikey (or fall through to the age key if the Yubikey
-  isn't plugged in / hasn't been tapped).
+  session talks to the Yubikey via `pcscd`. The sops file's single
+  `key_groups` entry lists both the host age key and the Yubikey PGP
+  fingerprint, so `sops` can use either recipient (OR). With the
+  Yubikey present, CLI decrypt taps it; with only the age key available,
+  that recipient decrypts instead.
 - **Age key for unattended boot**: `sops-install-secrets` reads
   `/var/lib/sops-nix/key.txt` and decrypts without any human
   interaction. This is what makes reboots work even when you're not at
@@ -145,24 +148,40 @@ the Yubikey plugged in.
 
 ### Wire the Yubikey into the repo
 
-In `.sops.yaml`, add a `pgp` key group alongside the existing `age`
-group. Each key group is an OR (any one can decrypt), and the keys
-within a group are an AND (all must be present to use that group):
+In `.sops.yaml`, put the Yubikey PGP fingerprint in the **same**
+`key_groups` entry as the host age key. Within one group, any listed
+recipient can decrypt (OR). Splitting `age` and `pgp` into separate
+`key_groups` entries would require one key from each group (AND) and
+break unattended boot when the Yubikey is absent.
+
+Committed shape (see `.sops.yaml`):
 
 ```yaml
 creation_rules:
+  - path_regex: secrets/tandesk\.ya?ml$
+    key_groups:
+      - age:
+          - age16x7tq5ndgm3hr55gqfh2ujecq4hypyjn3vrmm36vam7y0fu5ffes7qt20s
+        pgp:
+          - B7873777D243B2011C50F7B83DF8B7D2772745D9
+  - path_regex: secrets/tanlappy\.ya?ml$
+    key_groups:
+      - age:
+          - age1w65nqky3ur3q9vatn984z3l6jhkpvmx9fgv0e838tug7uzfjy55qrwj49y
+        pgp:
+          - B7873777D243B2011C50F7B83DF8B7D2772745D9
   - path_regex: secrets/.*\.ya?ml$
     key_groups:
       - age:
           - age16x7tq5ndgm3hr55gqfh2ujecq4hypyjn3vrmm36vam7y0fu5ffes7qt20s
-      - pgp:
-          - <FINGERPRINT>
+        pgp:
+          - B7873777D243B2011C50F7B83DF8B7D2772745D9
 ```
 
-Re-encrypt existing files to include the new recipient:
+After changing recipients, re-encrypt each affected file:
 
 ```bash
-sops updatekeys -y secrets/*.yaml
+sops updatekeys -y secrets/<host>.yaml
 ```
 
 ### Per-host configuration
@@ -210,64 +229,54 @@ key at build time, so it works in the Nix sandbox and in CI. This catches
 malformed sops files and missing declared keys *before* boot instead of
 failing silently at activation. Keep it on.
 
-## Per-host recipient separation (manual migration)
+## Per-host recipients (current `.sops.yaml`)
 
-Today `.sops.yaml` uses a single catch-all rule encrypted to one age key
-plus the Yubikey PGP key. Every host that has a sops file can decrypt
-every other host's file. True per-host recipient separation requires a
-**distinct age key per host**, and only one age public key is currently
-committed — so this migration is manual and must be done on each host.
+`.sops.yaml` already uses **per-host rules** for the hosts that have
+secret files:
 
-The `security.sops.agePublicKey` host variable is reserved as schema
-groundwork for this: set it to the host's age public key so the value is
-declarative and discoverable, then mirror it into `.sops.yaml`.
+- `secrets/tandesk.yaml` → tandesk age key + Yubikey PGP (one `key_groups` entry)
+- `secrets/tanlappy.yaml` → tanlappy age key + Yubikey PGP (one `key_groups` entry)
+- catch-all `secrets/.*\.ya?ml$` → tandesk age key + Yubikey PGP, for any
+  not-yet-migrated host file
 
-### Steps (per host, one at a time)
+There is **no** `secrets/default.yaml`; the `default` host profile sets
+`security.sops.defaultSopsFile = null`.
 
-1. **Ensure the host has its own age key** (skip if it already has a
-   distinct one you want to keep):
-   ```bash
-   sudo mkdir -p /var/lib/sops-nix
-   sudo nix shell nixpkgs#age --command age-keygen -o /var/lib/sops-nix/key.txt
-   sudo chmod 600 /var/lib/sops-nix/key.txt
-   sudo grep '^# public key:' /var/lib/sops-nix/key.txt | cut -d' ' -f4
-   ```
-2. **Record the public key** in that host's `variables.nix`:
+Age and PGP for a given file live in a **single** `key_groups` entry so
+either recipient can decrypt (OR). Do not split them into separate groups.
+
+`security.sops.agePublicKey` is optional schema groundwork: set it to the
+host's age public key for discoverability, then mirror that same public
+key into the matching `.sops.yaml` rule. Setting the variable alone does
+not change encryption recipients.
+
+### Adding another host's recipients
+
+1. Generate (or reuse) that host's age key at `/var/lib/sops-nix/key.txt`
+   and copy its public key.
+2. Optionally record it:
    ```nix
-   security.sops.agePublicKey = "age1<...that host's public key...>";
+   security.sops.agePublicKey = "age1...";
    ```
-3. **Add a per-host rule** in `.sops.yaml`, with the host's age key and the
-   Yubikey PGP fingerprint as separate `key_groups` (OR semantics — either
-   recipient can decrypt):
+3. Add a **path-specific rule above the catch-all** in `.sops.yaml`, with
+   the host age key and the Yubikey fingerprint in one `key_groups` entry:
    ```yaml
-   creation_rules:
-     - path_regex: secrets/tandesk\.ya?ml$
-       key_groups:
-         - age:
-             - age1<...tandesk public key...>
-         - pgp:
-             - B7873777D243B2011C50F7B83DF8B7D2772745D9
-     - path_regex: secrets/default\.ya?ml$
-       key_groups:
-         - age:
-             - age1<...default public key...>
-         - pgp:
-             - B7873777D243B2011C50F7B83DF8B7D2772745D9
-     # ...one rule per host...
+   - path_regex: secrets/<host>\.ya?ml$
+     key_groups:
+       - age:
+           - age1<...that host's public key...>
+         pgp:
+           - B7873777D243B2011C50F7B83DF8B7D2772745D9
    ```
-4. **Re-encrypt each host's file to its new recipient set**:
-   ```bash
-   sops updatekeys -y secrets/<host>.yaml
-   ```
-5. **Boot the host once** and confirm unattended decrypt still works
-   (`/run/secrets` populated, services start) **before** removing any old
-   recipient from `.sops.yaml`. Do not rotate or remove a recipient until
-   every host that needs it has been migrated and verified.
+4. Create/edit `secrets/<host>.yaml` with `sops`, or run
+   `sops updatekeys -y secrets/<host>.yaml` after changing recipients.
+5. Boot once and confirm `/run/secrets` populates **before** removing any
+   old recipient the host still needs.
 
 ### Safety invariants
 
-- Never remove a recipient without a verified migration path that
-  preserves unattended boot decryption.
+- Never remove a recipient without a verified path that preserves
+  unattended boot decryption.
 - `gnupgHome` and `ageKeyFile` are mutually exclusive at runtime in
   sops-nix; keep using `ageKeyFile` for unattended boot and the Yubikey
   PGP key only as a CLI/manual recipient.

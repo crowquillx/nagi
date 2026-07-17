@@ -15,9 +15,10 @@ jobs:
       - name: Enable binary cache
         uses: DeterminateSystems/magic-nix-cache-action@v13
 
-      # Blocking lint: statix failures now fail CI.
+      # Blocking lint: build the locked flake check (honors flake.lock +
+      # statix.toml) so CI does not float on an unpinned nixpkgs#statix.
       - name: Run statix
-        run: nix run nixpkgs#statix -- check .
+        run: nix build --accept-flake-config .#checks.x86_64-linux.statix
 
       # Eval-only flake validation (no expensive builds here; builds run in
       # the build-hosts job via the standard checks.x86_64-linux output).
@@ -29,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [tandesk, tanlappy, tanvm]
+        host: [tandesk, default, tanlappy]
     steps:
       - uses: actions/checkout@v4
 

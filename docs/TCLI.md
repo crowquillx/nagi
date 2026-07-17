@@ -86,7 +86,7 @@ The package name is normalized to `nixpkgs#<name>` if no flake ref is present. E
 
 ### `tcli hosts`
 
-Lists all available hosts, marking the current one with `*`. A host is defined as a directory under `hosts/` that contains both `default.nix` and `variables.nix`. Optional host-local variable fragments such as `advanced.nix` are registered in `modules/flake/hosts.nix`.
+Lists directories under `hosts/` that contain `variables.nix`, marking the current hostname with `*`. This skips helper trees such as `hosts/common`. Rebuild/update commands only require that `hosts/<host>` exists as a directory. Optional host-local variable fragments such as `advanced.nix` are registered in `lib/host-registry.nix` (consumed by `modules/flake/hosts.nix`).
 
 ### `tcli gc [-- <nh-args...>]`
 
@@ -149,7 +149,7 @@ Before every `nh os` invocation, `tcli` prints the current git HEAD sha and unco
 
 - If host is passed, use it
 - Otherwise use `/etc/hostname` (or `hostname` fallback)
-- Host must exist under `hosts/<host>`
+- Host directory must exist at `hosts/<host>`
 
 ### Flake path resolution
 
@@ -165,7 +165,7 @@ Before every `nh os` invocation, `tcli` prints the current git HEAD sha and unco
 Shell aliases are set by Home Manager (bash + fish):
 
 - `fu` -> `tcli update`
-- `fr` -> `tcli`
+- `fr` -> `tcli rebuild`
 - `ncg` -> `tcli gc`
 
 ## Bootstrap integration

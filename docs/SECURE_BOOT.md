@@ -7,7 +7,7 @@ boot.secureBoot = {
   enable = false;
   includeMicrosoftKeys = true;
   autoEnroll = false;
-  pkiBundle = "/etc/secureboot";
+  pkiBundle = "/var/lib/sbctl";
 };
 ```
 
@@ -16,6 +16,7 @@ boot.secureBoot = {
 - `enable = false` (safe default)
 - `includeMicrosoftKeys = true` (keeps Microsoft keys for common dual-boot/vendor compatibility)
 - `autoEnroll = false` (manual enrollment first, then optional automation)
+- `pkiBundle = "/var/lib/sbctl"` (Lanzaboote/sbctl conventional PKI location)
 
 ## Before enabling Secure Boot
 

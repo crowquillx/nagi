@@ -46,6 +46,7 @@
     stylix = {
       url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     lanzaboote = {
@@ -98,6 +99,7 @@
     comfyui-nix = {
       url = "github:utensils/comfyui-nix";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     hushmic-nix = {

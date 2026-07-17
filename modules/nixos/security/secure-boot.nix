@@ -3,7 +3,7 @@ let
   v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
   secureBootEnabled = get [ "boot" "secureBoot" "enable" ] false;
-  secureBootPkiBundle = get [ "boot" "secureBoot" "pkiBundle" ] "/etc/secureboot";
+  secureBootPkiBundle = get [ "boot" "secureBoot" "pkiBundle" ] "/var/lib/sbctl";
   secureBootAutoEnroll = get [ "boot" "secureBoot" "autoEnroll" ] false;
   secureBootIncludeMicrosoftKeys = get [ "boot" "secureBoot" "includeMicrosoftKeys" ] true;
 in

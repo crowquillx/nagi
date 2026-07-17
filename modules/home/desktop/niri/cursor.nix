@@ -1,8 +1,8 @@
-{ plain, leaf, flag, ... }:
+{ plain, leaf, flag, cursorTheme, ... }:
 [
   (plain "cursor" [
-    (leaf "xcursor-theme" "BreezeX-RosePine-Linux")
-    (leaf "xcursor-size" 32)
+    (leaf "xcursor-theme" cursorTheme.name)
+    (leaf "xcursor-size" cursorTheme.size)
     (flag "hide-when-typing")
   ])
 ]

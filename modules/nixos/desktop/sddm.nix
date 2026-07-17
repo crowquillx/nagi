@@ -10,8 +10,11 @@ let
   desktopEnabled = get [ "desktop" "enable" ] true;
   dm = get [ "desktop" "displayManager" ] "auto";
   compositor = get [ "desktop" "compositor" ] "niri";
+  sddmEnable = get [ "desktop" "sddm" "enable" ] true;
   sddmWaylandEnable = get [ "desktop" "sddm" "wayland" "enable" ] true;
+  sddmTheme = get [ "desktop" "sddm" "theme" ] "sddm-astronaut-theme";
   sddmBackground = get [ "desktop" "sddm" "background" ] null;
+  sddmThemeConfig = get [ "desktop" "sddm" "themeConfig" ] { };
   effectiveDm = if dm == "auto" then "sddm" else dm;
   defaultSession = if compositor == "plasma" then "plasma" else "niri";
 
@@ -55,7 +58,8 @@ let
     DropdownBackgroundColor = "#${bg}";
     HighlightBackgroundColor = "#${text}";
     FormBackgroundColor = "#${bg}";
-  };
+  }
+  // sddmThemeConfig;
 
   sddmAstronaut = pkgs.sddm-astronaut.override {
     embeddedTheme = "pixel_sakura";
@@ -63,7 +67,7 @@ let
   };
 in
 {
-  config = lib.mkIf (desktopEnabled && effectiveDm == "sddm") {
+  config = lib.mkIf (desktopEnabled && effectiveDm == "sddm" && sddmEnable) {
     services.xserver.enable = true;
 
     services.displayManager = {
@@ -73,7 +77,7 @@ in
         package = lib.mkDefault pkgs.kdePackages.sddm;
         wayland.enable = sddmWaylandEnable;
         extraPackages = [ sddmAstronaut ];
-        theme = "sddm-astronaut-theme";
+        theme = sddmTheme;
       };
     };
 

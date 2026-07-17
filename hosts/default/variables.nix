@@ -13,8 +13,8 @@
     includeMicrosoftKeys = true;
     # Set true after reading docs/SECURE_BOOT.md and confirming firmware setup steps.
     autoEnroll = false;
-    # Default sbctl/Lanzaboote PKI location.
-    pkiBundle = "/etc/secureboot";
+    # Lanzaboote/sbctl conventional PKI location.
+    pkiBundle = "/var/lib/sbctl";
   };
 
   users = {
@@ -49,12 +49,8 @@
     };
     noctalia = {
       enable = true;
-      systemd.enable = false;
+      command = "nagi-noctalia-shell";
       settings = {};
-      colors = {};
-      plugins = {};
-      pluginSettings = {};
-      userTemplates = {};
     };
     session = {
       enable = true;
@@ -66,10 +62,6 @@
         idleSeconds = 300;
         beforeSleep = true;
         onLidClose = true;
-      };
-      idle = {
-        screenOffSeconds = 600;
-        suspendSeconds = 1800;
       };
     };
     shellStartupCommand = null;
@@ -118,8 +110,10 @@
     audio.enable = true;
 
     ssh = {
-      enable = true;
-      passwordAuthentication = true;
+      # Keep SSH off in the copyable template until authorizedKeys are set.
+      # Enabling password auth with an empty key list would expose password SSH.
+      enable = false;
+      passwordAuthentication = false;
       authorizedKeys = [ ];
     };
 

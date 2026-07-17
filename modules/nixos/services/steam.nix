@@ -26,6 +26,8 @@ let
   ] true;
   millenniumEnable = get [ "features" "gaming" "steam" "millennium" "enable" ] false;
   cheatengineEnable = get [ "features" "gaming" "cheatengine" "enable" ] false;
+  primaryUser = get [ "users" "primary" ] "nagi";
+  cheatengineGroup = "cheatengine";
   lutrisPkg = pkgs.lutris or null;
   heroicPkg = pkgs.heroic or null;
   protonPlusPkg = pkgs.protonplus or pkgs."protonup-qt" or null;
@@ -128,12 +130,16 @@ in
       # capability set; the package's bin/cheatengine launcher execs this copy
       # after setting up LD_LIBRARY_PATH and cwd, so the capped process inherits
       # the full runtime env. Requires `switch` to materialize the wrapper.
+      # Restrict execution to a dedicated group so only the configured primary
+      # user (and any future explicit members) can invoke the privileged binary.
+      users.groups.${cheatengineGroup} = { };
+      users.users.${primaryUser}.extraGroups = lib.mkAfter [ cheatengineGroup ];
       security.wrappers.cheatengine-bin = {
         source = "${cheatenginePkg}/opt/cheatengine/cheatengine-x86_64";
         capabilities = "cap_sys_ptrace+ep";
         owner = "root";
-        group = "root";
-        permissions = "u+rx,g+rx,o+rx";
+        group = cheatengineGroup;
+        permissions = "0750";
       };
     })
   ];

@@ -1,4 +1,4 @@
-{ plain, leaf, flag, ... }:
+{ plain, leaf, flag, colors, ... }:
 [
   (plain "layout" [
     (leaf "gaps" 12)
@@ -16,34 +16,34 @@
 
     (plain "focus-ring" [
       (leaf "width" 2)
-      (leaf "active-color" "#ebbcba")
-      (leaf "inactive-color" "#191724")
-      (leaf "urgent-color" "#eb6f92")
+      (leaf "active-color" colors.active)
+      (leaf "inactive-color" colors.inactive)
+      (leaf "urgent-color" colors.urgent)
     ])
 
     (plain "border" [
       (flag "off")
       (leaf "width" 2)
-      (leaf "active-color" "#ebbcba")
-      (leaf "inactive-color" "#191724")
-      (leaf "urgent-color" "#eb6f92")
+      (leaf "active-color" colors.active)
+      (leaf "inactive-color" colors.inactive)
+      (leaf "urgent-color" colors.urgent)
     ])
 
     (plain "shadow" [
       (leaf "softness" 30)
       (leaf "spread" 5)
       (leaf "offset" { x = 0; y = 5; })
-      (leaf "color" "#19172470")
+      (leaf "color" colors.shadow)
     ])
 
     (plain "tab-indicator" [
-      (leaf "active-color" "#ebbcba")
-      (leaf "inactive-color" "#ce2b24")
-      (leaf "urgent-color" "#eb6f92")
+      (leaf "active-color" colors.active)
+      (leaf "inactive-color" colors.tabInactive)
+      (leaf "urgent-color" colors.urgent)
     ])
 
     (plain "insert-hint" [
-      (leaf "color" "#ebbcba80")
+      (leaf "color" colors.insertHint)
     ])
   ])
 ]

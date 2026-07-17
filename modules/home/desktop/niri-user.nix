@@ -1,3 +1,22 @@
+# Home-side Niri session wiring.
+#
+# Extension contract (desktop.niri.*):
+# 1. configBuilder (primary)
+#    Function `{ lib, pkgs, vars, inputs } -> KDL config` written to
+#    `programs.niri.config`. Default: ./niri/default.nix.
+#    Set to `null` to use the attrset settings path instead.
+# 2. outputs (additive)
+#    Structured per-connector overrides. Consumed by the default configBuilder
+#    via vars (`desktop.niri.outputs`). On the settings path, merged as
+#    `settings.outputs`.
+# 3. settings (additive, settings-path only)
+#    Opaque attrset for `programs.niri.settings` when `configBuilder == null`.
+#
+# Precedence when using the settings path:
+#   settings  <  outputs  (outputs fully replace the `outputs` key)
+#
+# When `configBuilder != null` (the default), only the KDL result is applied;
+# `settings` is ignored. `outputs` still affect the default builder through vars.
 { lib, pkgs, vars ? { }, inputs ? { }, ... }:
 let
   v = vars;
@@ -6,11 +25,12 @@ let
   compositor = get [ "desktop" "compositor" ] "niri";
   extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
+
   niriSettings = get [ "desktop" "niri" "settings" ] { };
   niriOutputs = get [ "desktop" "niri" "outputs" ] { };
-  niriSettingsBuilder = get [ "desktop" "niri" "settingsBuilder" ] null;
   defaultNiriConfigBuilder = import ./niri/default.nix;
   niriConfigBuilder = get [ "desktop" "niri" "configBuilder" ] defaultNiriConfigBuilder;
+
   callBuilder = builder:
     if builder == null then
       null
@@ -18,16 +38,19 @@ let
       builder { inherit lib pkgs vars inputs; }
     else
       builder;
-  builtNiriSettings = callBuilder niriSettingsBuilder;
+
   niriConfig = callBuilder niriConfigBuilder;
+
+  # Settings-path merge: base settings, then outputs replace settings.outputs.
   effectiveNiriSettings =
-    lib.recursiveUpdate
-      (lib.recursiveUpdate niriSettings (lib.optionalAttrs (niriOutputs != { }) { outputs = niriOutputs; }))
-      (if builtNiriSettings == null then { } else builtNiriSettings);
+    niriSettings // lib.optionalAttrs (niriOutputs != { }) { outputs = niriOutputs; };
+
   hasNiriSettings = effectiveNiriSettings != { };
   hasNiriConfig = niriConfig != null;
+
   niriPackage = lib.attrByPath [ "niri-unstable" ] null pkgs;
-  rosePineCursorPkg = lib.attrByPath [ "rose-pine-cursor" ] null pkgs;
+  cursorTheme = import ./cursor-theme.nix;
+  rosePineCursorPkg = lib.attrByPath [ cursorTheme.packageAttr ] null pkgs;
 in
 {
   config = lib.mkIf (desktopEnabled && hasNiri) (
@@ -36,14 +59,14 @@ in
         assertions = [
           {
             assertion = rosePineCursorPkg != null;
-            message = "Installing the Niri session requires the nixpkgs package 'rose-pine-cursor'.";
+            message = "Installing the Niri session requires the nixpkgs package '${cursorTheme.packageAttr}'.";
           }
         ];
 
         home.pointerCursor = lib.mkIf (rosePineCursorPkg != null) {
-          name = "BreezeX-RosePine-Linux";
+          enable = true;
+          inherit (cursorTheme) name size;
           package = rosePineCursorPkg;
-          size = 32;
           gtk.enable = true;
           x11.enable = true;
         };

@@ -8,6 +8,18 @@
 let
   get = path: default: lib.attrByPath path default vars;
   enabled = get [ "features" "mullvad" "splitTunnel" "browser" "enable" ] false;
+  # Reconstructs argv from a NUL-delimited file so runtime arguments never enter
+  # vopono's single APPLICATION shellwords string.
+  runner = pkgs.writeShellApplication {
+    name = "mullvad-browser-vpn-run";
+    text = ''
+      set -euo pipefail
+      argv_file="''${1:?missing argv file}"
+      mapfile -d $'\0' -t args < "$argv_file"
+      rm -f "$argv_file"
+      exec "''${args[@]}"
+    '';
+  };
   launcher = pkgs.writeShellApplication {
     name = "mullvad-browser-vpn";
     runtimeInputs = [
@@ -16,6 +28,7 @@ let
       pkgs.libnotify
       pkgs.mullvad-browser
       pkgs.vopono
+      runner
     ];
     text = ''
       set -euo pipefail
@@ -31,11 +44,15 @@ let
         exit 1
       fi
 
-      printf -v application '%q' ${pkgs.mullvad-browser}/bin/mullvad-browser
-      for argument in "$@"; do
-        printf -v quoted_argument ' %q' "$argument"
-        application+="$quoted_argument"
-      done
+      argv_file="$(mktemp "''${XDG_RUNTIME_DIR:-/tmp}/mullvad-browser-vpn-argv.XXXXXX")"
+      {
+        printf '%s\0' ${pkgs.mullvad-browser}/bin/mullvad-browser
+        printf '%s\0' "$@"
+      } >"$argv_file"
+
+      # Only the trusted runner path and argv-file path enter APPLICATION.
+      # Desktop/runtime arguments stay as separate NUL-delimited entries.
+      printf -v application '%q %q' ${runner}/bin/mullvad-browser-vpn-run "$argv_file"
 
       exec ${pkgs.vopono}/bin/vopono exec \
         --provider mullvad \

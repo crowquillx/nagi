@@ -13,7 +13,8 @@
       enable = false;
       includeMicrosoftKeys = true;
       autoEnroll = false;
-      pkiBundle = "/etc/secureboot";
+      # Lanzaboote/sbctl conventional PKI location.
+      pkiBundle = "/var/lib/sbctl";
     };
   };
 
@@ -93,12 +94,15 @@
     };
 
     swap = {
+      # Single deliberate design for this AMD laptop: compressed zram only.
+      # Disk swapfile is redundant alongside zram and was paired with a broken
+      # undeclared LUKS swap mapper in hardware-configuration.nix.
       zram = {
         enable = true;
         memoryPercent = 25;
       };
       disk = {
-        enable = true;
+        enable = false;
         path = "/var/lib/swapfile";
         sizeMiB = 4096;
       };

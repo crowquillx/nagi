@@ -55,12 +55,13 @@ let
           output ? variableRefreshRate
           && output.variableRefreshRate != null
           && output.variableRefreshRate != false
+          && output.variableRefreshRate != "off"
         )
         (
           if output.variableRefreshRate == "on-demand" then
             leaf "variable-refresh-rate" { on-demand = true; }
           else
-            leaf "variable-refresh-rate" output.variableRefreshRate
+            flag "variable-refresh-rate"
         )
       )
       (optionalNode (output.focusAtStartup or false) (flag "focus-at-startup"))
@@ -73,6 +74,9 @@ let
     editors = "^codex-desktop$|^ChatGPT$|^code$|^code-url-handler$|^com\\.visualstudio\\.code$|^code-oss$|^codium$|^vscodium$|^cursor$|^zed$|^dev\\.zed\\.Zed$|^t3-code$|^T3 Code.*$|^windsurf$|^jetbrains-.*$|^android-studio$|^neovide$|^emacs$|^micro$";
     mediaPlayers = "(?i)^spotify$";
   };
+
+  colors = import ./colors.nix;
+  cursorTheme = import ../cursor-theme.nix;
 
   context = {
     inherit
@@ -88,6 +92,8 @@ let
       normalize
       mkOutput
       rgbaApps
+      colors
+      cursorTheme
       ;
   };
 in

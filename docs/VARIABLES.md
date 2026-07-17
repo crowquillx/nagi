@@ -23,9 +23,11 @@ scalar values.
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
 - `desktop.browser.default = "zen" | "helium" | "mullvadBrowser"`
 - `desktop.browser.<name>.enable = true | false` for `zen`, `helium`, and `mullvadBrowser`
-- `desktop.niri.outputs = { "<output-name>" = { scale, position = { x, y; }, mode = { width, height, refresh; }, focusAtStartup, transform = { rotation, flipped; }, variableRefreshRate }; ... }`
-- `desktop.niri.settings = { ... }`
-- `desktop.noctalia = { enable, command, systemd.enable, assistantPanel.secrets }`
+- `desktop.niri.configBuilder` (primary; default KDL builder at `modules/home/desktop/niri/default.nix`; set `null` for the settings attrset path)
+- `desktop.niri.outputs = { "<output-name>" = { scale, position = { x, y; }, mode = { width, height, refresh; }, focusAtStartup, transform = { rotation, flipped; }, variableRefreshRate }; ... }` (additive; consumed by the default configBuilder)
+- `desktop.niri.settings = { ... }` (additive; applied only when `configBuilder = null`)
+- `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }`
+- `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
 - `graphics.profile = "auto" | "none" | "amd" | "intel" | "nvidia" | "vm"`
 - `graphics.enable32Bit = true | false`
 - `graphics.nvidia = { modesetting.enable, powerManagement.enable, open, nvidiaSettings, useLatestDriver }`
@@ -47,9 +49,9 @@ scalar values.
 - `features.nh = { enable, clean.enable, clean.extraArgs }`
 - `features.swap = { zram.enable, zram.memoryPercent, disk.enable, disk.path, disk.sizeMiB, swappiness }`
 - `features.nixMaintenance = { gc.enable, gc.dates, gc.options, optimise.enable, optimise.dates }`
-- `features.chat = { client = "none" | "discord" | "equibop"; startup.enable; discord.forceXwayland; discord.equicord = { enable; startupDelaySeconds; } }`
+- `features.chat = { client = "none" | "discord" | "equibop"; startup.enable; discord.forceXwayland; discord.equicord.enable }`
 - `features.localsend = { package.enable, openFirewall }`
-- `features.mullvad = { package = "none" | "cli" | "gui"; service.enable; splitTunnel = { whonix, browser }; }`
+- `features.mullvad = { package = "none" | "cli" | "gui"; service.enable; splitTunnel = { whonix = { enable, vmUuid, externalInterface, ipv4Subnet, ipv6Subnet }, browser }; }`
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
@@ -73,10 +75,10 @@ scalar values.
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys }`
-  - `enable` (bool, default `true`): enable the OpenSSH daemon.
+  - `enable` (bool, default `false`): enable the OpenSSH daemon. Keep disabled until `authorizedKeys` are set.
   - `openFirewall` (bool, default `true`): open the SSH port in the firewall.
   - `port` (int 1–65535, default `22`): the SSH listen port.
-  - `passwordAuthentication` (bool, default `true`): allow password auth. **Set `false` for key-only mode.** An assertion forbids `false` unless `authorizedKeys` is non-empty (lockout guard).
+  - `passwordAuthentication` (bool, default `false`): allow password auth. Keep `false` for key-only mode. An assertion forbids enabling SSH with `passwordAuthentication = false` unless `authorizedKeys` is non-empty (lockout guard).
   - `permitRootLogin` (one of `prohibit-password`, `without-password`, `forced-commands-only`, `no`; default `prohibit-password`): root login policy. `yes` is never allowed (root stays no less restrictive than the NixOS default).
   - `authorizedKeys` (list of non-empty string public keys, default `[]`): authorized for the primary user. Required when `passwordAuthentication = false`.
 - `features.fileManager.thunar.enable = true | false`
@@ -191,7 +193,13 @@ features.chat = {
 
 `client = "discord"` installs the official Discord package and binds `MouseForward` in Niri to a PipeWire microphone mute toggle using `wpctl`. This mutes the default microphone source system-wide, so Discord's in-app mute indicator may not change. `discord.forceXwayland = true` wraps Discord so its keybind recorder can receive focused key events under Niri if you still want to configure Discord keybinds. `discord.equicord.enable = true` patches the official Discord package with Equicord at build time; Equicord does not provide a runnable `equicord` binary. `client = "equibop"` installs Equibop and uses `equibop --toggle-mic` for the same Niri bind; Equicord is rejected with Equibop. If no chat client is selected but `users.extraPackages` contains `equibop`, the Niri bind still uses Equibop's toggle-mic action.
 
-### Niri monitor configuration
+### Niri extension contract
+
+`desktop.niri` has one primary builder plus additive overrides:
+
+1. **`configBuilder` (primary)** — function `{ lib, pkgs, vars, inputs } -> KDL config` written to `programs.niri.config`. Default: `modules/home/desktop/niri/default.nix`. Set to `null` to use the attrset settings path instead.
+2. **`outputs` (additive)** — per-connector monitor layout. Always consumed by the default configBuilder via vars. On the settings path, merged as `settings.outputs`.
+3. **`settings` (additive, settings-path only)** — opaque attrset for `programs.niri.settings` when `configBuilder = null`. Precedence: `settings` then `outputs` (outputs fully replace the `outputs` key).
 
 ```nix
 desktop.niri = {
@@ -205,14 +213,26 @@ desktop.niri = {
       };
     };
   };
-
-  settings = {
-    "prefer-no-csd" = true;
-  };
 };
 ```
 
 Use `niri msg outputs` from inside a running Niri session to discover the output names and supported modes.
+
+To bypass the KDL builder and drive upstream `programs.niri.settings` directly:
+
+```nix
+desktop.niri = {
+  configBuilder = null;
+  settings = {
+    prefer-no-csd = true;
+  };
+  outputs = {
+    "eDP-1" = {
+      scale = 2.0;
+    };
+  };
+};
+```
 
 ### Select desktop sessions
 
@@ -263,24 +283,35 @@ Noctalia's `kcolorscheme` template additionally supplies KDE colors to KDE and
 Kirigami applications opened under Niri. Plasma-only configurations use native
 KDE integration, and Niri-only configurations use qtct/Kvantum directly.
 
+### Hushmic tray
+
+```nix
+desktop.hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_...";
+desktop.startup.apps = [
+  "spotify"
+  "nagi-hushmic-tray"
+];
+```
+
+When `deviceId` is set, Home Manager installs `nagi-hushmic-tray`, which waits for the StatusNotifier watcher and a stable PipeWire node before `exec hushmic --tray`. Keep the node name host-scoped; leave `deviceId = null` on hosts without this tray.
+
 ### Noctalia shell
 
 ```nix
 desktop.noctalia = {
   enable = true;
   command = "nagi-noctalia-shell";
-  systemd.enable = false;
   assistantPanel.secrets = {
     googleApiKey = "noctalia-ap-google-api-key";
   };
 };
 ```
 
-This enables Home Manager's current `programs.noctalia.*` module. The module
-forwards `enable` and `systemd.enable`, enables the `kcolorscheme` theme
-template, and uses `desktop.noctalia.command` for Niri startup and Noctalia IPC
-keybinds.
-When `desktop.noctalia.command` is set to a wrapper such as `nagi-noctalia-shell`, Niri startup and keybinds use that command instead of plain `noctalia`.
+This enables Home Manager's current `programs.noctalia.*` module with
+`systemd.enable = false`. Noctalia starts only via Niri `spawn-at-startup`.
+The module enables the `kcolorscheme` theme template and uses
+`desktop.noctalia.command` (default `nagi-noctalia-shell`) for Niri startup
+and Noctalia IPC keybinds.
 
 Noctalia's GUI-managed `~/.local/state/noctalia/settings.toml` is applied after
 the declarative config. If that file already contains
@@ -356,7 +387,10 @@ features = {
     package = "gui";
     service.enable = false;
     splitTunnel = {
-      whonix.enable = true;
+      whonix = {
+        enable = true;
+        vmUuid = "96658fbf-e814-4a6c-8c64-0647a54b16e4";
+      };
       browser.enable = true;
     };
   };
@@ -372,10 +406,15 @@ Remove legacy `localsend`, `mullvad`, and `mullvad-vpn` entries from
 
 `splitTunnel.whonix.enable` routes only the configured Whonix-External bridge
 through a randomly selected relay from `modules/nixos/services/data/mullvad-relays.tsv`.
+`splitTunnel.whonix.vmUuid` is required when enabled and must match the
+Whonix-Gateway libvirt domain UUID; hooks fail closed on UUID mismatch.
 Its forwarding kill switch remains active even while the tunnel is down. The
 WireGuard profile is read from the `mullvad_whonix_config` sops secret and is
-never copied into the Nix store. Whonix-Gateway startup rotates the relay and
-fails if the tunnel cannot be configured; shutdown removes the tunnel.
+never copied into the Nix store. The tunnel unit hard-requires
+`sops-install-secrets.service`. A systemd timer checks the latest WireGuard
+handshake and restarts the oneshot setup service if the peer is dead.
+Whonix-Gateway startup rotates the relay and fails if the tunnel cannot be
+configured; shutdown removes the tunnel.
 
 `splitTunnel.browser.enable` replaces the Mullvad Browser desktop entry and
 Niri binding with a vopono namespace launcher. Run

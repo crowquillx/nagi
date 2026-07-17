@@ -94,6 +94,15 @@ features.flatpak = {
 };
 ```
 
+## CI
+
+Pull requests run `.github/workflows/ci.yml`:
+
+- **lint**: `nix build --accept-flake-config .#checks.x86_64-linux.statix`, then `nix flake check --no-build --accept-flake-config`
+- **build-hosts** (matrix `tandesk`, `default`, `tanlappy`): `nix build --accept-flake-config .#checks.x86_64-linux.nixos-<host>` and `nix build --accept-flake-config .#checks.x86_64-linux.home-<host>`
+
+Those host names match the registry in `lib/host-registry.nix`.
+
 ## Documentation
 
 - Host variable reference: `docs/VARIABLES.md`

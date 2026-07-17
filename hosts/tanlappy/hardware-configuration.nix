@@ -26,10 +26,13 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  swapDevices =
-    [ { device = "/dev/mapper/luks-ac3396b5-2913-41e7-9dde-67fd9ca8762f"; }
-    ];
+  # Deliberate swap design: zram only (see features.swap in variables.nix).
+  # The previous LUKS swap mapper had no boot.initrd.luks.devices entry, so it
+  # could never unlock; do not reintroduce it without a matching unlock path.
+  swapDevices = [ ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
-  hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+  # Explicit AMD firmware/microcode intent (do not leave this chained to an unset default).
+  hardware.enableRedistributableFirmware = true;
+  hardware.cpu.amd.updateMicrocode = true;
 }

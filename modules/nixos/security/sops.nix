@@ -1,5 +1,6 @@
 {
   lib,
+  config,
   vars ? { },
   ...
 }:
@@ -18,16 +19,46 @@ let
     privMode = get [ "security" "sops" "sshKey" "privateMode" ] "0600";
     pubMode = get [ "security" "sops" "sshKey" "publicMode" ] "0644";
   };
+  agePublicKey = get [ "security" "sops" "agePublicKey" ] null;
 in
 {
   config = lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = !enabled || defaultSopsFile != null;
+          message = "security.sops.enable = true requires security.sops.defaultSopsFile to be set to a secrets file path.";
+        }
+        {
+          # sops-nix rejects combining age.keyFile and gnupg.home in one manifest.
+          assertion = !enabled || ageKeyFile == null || gnupgHome == null;
+          message = "security.sops.ageKeyFile and security.sops.gnupgHome are mutually exclusive; unset one of them (set ageKeyFile = null for GnuPG/Yubikey-only runtime decryption).";
+        }
+        {
+          assertion =
+            !enabled
+            || (builtins.isString primaryUser
+              && primaryUser != ""
+              && builtins.hasAttr primaryUser config.users.users);
+          message = "security.sops.enable = true requires users.primary (\"${toString primaryUser}\") to exist as a NixOS user.";
+        }
+        {
+          assertion = !(enabled && sshKey.enable && sshKey.name == sshKey.pubName);
+          message = "security.sops.sshKey.name and pubName must differ.";
+        }
+        {
+          assertion = agePublicKey == null || agePublicKey != "";
+          message = "security.sops.agePublicKey must be null or a non-empty string (the host's age public key for future per-host .sops.yaml templating).";
+        }
+      ];
+    }
     (lib.optionalAttrs (defaultSopsFile != null) {
       sops.defaultSopsFile = defaultSopsFile;
     })
     (lib.mkIf enabled {
       sops = {
         age = {
-          keyFile = ageKeyFile;
+          keyFile = lib.mkIf (ageKeyFile != null) ageKeyFile;
           # We intentionally do not use host openssh keys for sops.
           # The host's openssh host key is unrelated to user secrets.
           sshKeyPaths = lib.mkForce [ ];
@@ -37,6 +68,7 @@ in
           # key. Loading it as a GPG identity fails decryption because the
           # host key is not a sops recipient. Disable the auto-import.
           sshKeyPaths = lib.mkForce [ ];
+          home = lib.mkIf (gnupgHome != null) gnupgHome;
         };
         # Decrypt at every boot via a systemd unit so /run/secrets survives
         # across reboots. Without this, secrets are only materialized at
@@ -52,11 +84,6 @@ in
         # of failing silently at activation.
         validateSopsFiles = true;
       };
-    })
-    (lib.optionalAttrs (gnupgHome != null) {
-      # When set, sops-nix will look here for GnuPG keys (PGP/Yubikey).
-      # Pair with a pgp recipient in .sops.yaml.
-      sops.gnupg.home = gnupgHome;
     })
     (lib.mkIf (enabled && sshKey.enable) {
       sops.secrets.${sshKey.name} = {
