@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Minimal multi-host NixOS flake with Home Manager, `nixpkgs-unstable`, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, `nixpkgs-unstable`, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
 
 ## Hosts
 
