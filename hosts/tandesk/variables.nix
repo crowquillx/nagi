@@ -87,6 +87,7 @@
     sddm.background = ../../wallpapers/1.png;
     browser = {
       default = "zen";
+      brave.passwordStore = "gnome-libsecret";
       zen.enable = true;
       helium.enable = true;
       mullvadBrowser.enable = true;
@@ -149,6 +150,7 @@
     noctalia = import ./noctalia;
     session = {
       enable = true;
+      killProcessesOnLogout = true;
       polkit.enable = false;
       keyring.enable = true;
       lock = {

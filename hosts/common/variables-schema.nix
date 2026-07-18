@@ -265,6 +265,16 @@ in {
                     type = packageToggle "Mullvad Browser" false;
                     default = {};
                   };
+                  brave = mkOption {
+                    type = strictSubmodule {
+                      passwordStore = mkOption {
+                        type = types.enum ["auto" "gnome-libsecret" "kwallet6" "basic"];
+                        default = "auto";
+                        description = "Brave credential encryption backend; basic stores credentials without secure keyring encryption.";
+                      };
+                    };
+                    default = {};
+                  };
                 };
                 default = {};
               };
@@ -352,6 +362,7 @@ in {
                     default = desktopArgs.config.enable;
                     description = "Enable desktop session helpers.";
                   };
+                  killProcessesOnLogout = enableOption "Terminate the session process scope on logout." false;
                   polkit = mkOption {
                     type = packageToggle "desktop polkit agent" true;
                     default = {};
@@ -548,34 +559,9 @@ in {
                     default = "none";
                   };
                   service = mkOption {
-                    type = packageToggle "Mullvad VPN service" false;
-                    default = {};
-                  };
-                  splitTunnel = mkOption {
                     type = strictSubmodule {
-                      browser = mkOption {
-                        type = packageToggle "Mullvad Browser vopono routing" false;
-                        default = {};
-                      };
-                      whonix = mkOption {
-                        type = strictSubmodule {
-                          enable = enableOption "Enable the Whonix Mullvad tunnel." false;
-                          externalInterface = mkOption {
-                            type = types.nonEmptyStr;
-                            default = "virbr1";
-                          };
-                          ipv4Subnet = mkOption {
-                            type = types.nonEmptyStr;
-                            default = "10.0.2.0/24";
-                          };
-                          ipv6Subnet = mkOption {
-                            type = types.nonEmptyStr;
-                            default = "fd19:c33d:98bc::/64";
-                          };
-                          vmUuid = nullableString "Stable libvirt UUID of the Whonix gateway VM.";
-                        };
-                        default = {};
-                      };
+                      enable = enableOption "Enable Mullvad VPN service." false;
+                      allowLan = enableOption "Allow local network traffic through the Mullvad firewall." false;
                     };
                     default = {};
                   };

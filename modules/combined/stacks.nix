@@ -27,6 +27,7 @@ let
     ../nixos/desktop/niri.nix
     ../nixos/desktop/kde.nix
     ../nixos/desktop/sddm.nix
+    ../nixos/desktop/session-lifecycle.nix
   ];
 
   nixosShells = [
@@ -48,7 +49,6 @@ let
     ../nixos/services/steam.nix
     ../nixos/services/virtualisation.nix
     ../nixos/services/mullvad-vpn.nix
-    ../nixos/services/mullvad-split-tunnel
     ../nixos/services/ai.nix
     ../nixos/services/keyring.nix
     ../nixos/services/tailscale.nix
@@ -105,7 +105,6 @@ let
     ../home/desktop/niri-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
-    ../home/desktop/mullvad-browser-vpn.nix
     ../home/desktop/hushmic-tray.nix
   ];
 

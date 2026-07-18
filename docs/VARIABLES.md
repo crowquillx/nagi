@@ -23,6 +23,7 @@ scalar values.
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
 - `desktop.browser.default = "zen" | "helium" | "mullvadBrowser"`
 - `desktop.browser.<name>.enable = true | false` for `zen`, `helium`, and `mullvadBrowser`
+- `desktop.browser.brave.passwordStore = "auto" | "gnome-libsecret" | "kwallet6" | "basic"` (`gnome-libsecret` provides one encrypted credential store across Plasma and Niri)
 - `desktop.niri.configBuilder` (primary; default KDL builder at `modules/home/desktop/niri/default.nix`; set `null` for the settings attrset path)
 - `desktop.niri.outputs = { "<output-name>" = { scale, position = { x, y; }, mode = { width, height, refresh; }, focusAtStartup, transform = { rotation, flipped; }, variableRefreshRate }; ... }` (additive; consumed by the default configBuilder)
 - `desktop.niri.settings = { ... }` (additive; applied only when `configBuilder = null`)
@@ -37,6 +38,7 @@ scalar values.
 - `desktop.shellStartupCommand = "<command>"`
 - `desktop.startup.backend = "systemd" | "niri"`
 - `desktop.startup.apps = [ "<cmd>" ... ]`
+- `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false`
 - `desktop.session.keyring.enable = true | false`
 - `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }`
@@ -51,7 +53,7 @@ scalar values.
 - `features.nixMaintenance = { gc.enable, gc.dates, gc.options, optimise.enable, optimise.dates }`
 - `features.chat = { client = "none" | "discord" | "equibop"; startup.enable; discord.forceXwayland; discord.equicord.enable }`
 - `features.localsend = { package.enable, openFirewall }`
-- `features.mullvad = { package = "none" | "cli" | "gui"; service.enable; splitTunnel = { whonix = { enable, vmUuid, externalInterface, ipv4Subnet, ipv6Subnet }, browser }; }`
+- `features.mullvad = { package = "none" | "cli" | "gui"; service = { enable, allowLan }; }`
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
@@ -385,13 +387,9 @@ features = {
 
   mullvad = {
     package = "gui";
-    service.enable = false;
-    splitTunnel = {
-      whonix = {
-        enable = true;
-        vmUuid = "96658fbf-e814-4a6c-8c64-0647a54b16e4";
-      };
-      browser.enable = true;
+    service = {
+      enable = true;
+      allowLan = true;
     };
   };
 };
@@ -404,23 +402,12 @@ starting the system daemon. The daemon requires `package = "gui"` and uses
 Remove legacy `localsend`, `mullvad`, and `mullvad-vpn` entries from
 `users.extraPackages` when migrating to these variables.
 
-`splitTunnel.whonix.enable` routes only the configured Whonix-External bridge
-through a randomly selected relay from `modules/nixos/services/data/mullvad-relays.tsv`.
-`splitTunnel.whonix.vmUuid` is required when enabled and must match the
-Whonix-Gateway libvirt domain UUID; hooks fail closed on UUID mismatch.
-Its forwarding kill switch remains active even while the tunnel is down. The
-WireGuard profile is read from the `mullvad_whonix_config` sops secret and is
-never copied into the Nix store. The tunnel unit hard-requires
-`sops-install-secrets.service`. A systemd timer checks the latest WireGuard
-handshake and restarts the oneshot setup service if the peer is dead.
-Whonix-Gateway startup rotates the relay and fails if the tunnel cannot be
-configured; shutdown removes the tunnel.
-
-`splitTunnel.browser.enable` replaces the Mullvad Browser desktop entry and
-Niri binding with a vopono namespace launcher. Run
-`vopono sync --protocol wireguard` once after activation to create a separate
-Mullvad device key and download the browser relay catalog. Each launch chooses
-a random WireGuard relay and vopono supplies a namespace-local kill switch.
+With `service.enable = true`, NixOS starts `services.mullvad-vpn` using the
+official Mullvad GUI/CLI package. Account login and tunnel control happen in
+the Mullvad app (or `mullvad` CLI) after activation. `service.allowLan` owns the
+app's local-network-sharing policy; enable it for libvirt networks such as
+Whonix-External. This also permits access to other local subnets while Mullvad
+is connected.
 
 ### Video editing
 

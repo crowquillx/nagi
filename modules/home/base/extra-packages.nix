@@ -6,6 +6,14 @@ let
   localsendEnabled = get [ "features" "localsend" "package" "enable" ] false;
   mullvadPackage = get [ "features" "mullvad" "package" ] "none";
   chatClient = get [ "features" "chat" "client" ] "none";
+  bravePasswordStore = get [ "desktop" "browser" "brave" "passwordStore" ] "auto";
+  bravePackage =
+    if bravePasswordStore == "auto" then
+      pkgs.brave
+    else
+      pkgs.brave.override {
+        commandLineArgs = "--password-store=${bravePasswordStore}";
+      };
   discordForceXwayland = get [ "features" "chat" "discord" "forceXwayland" ] true;
   equicordEnabled = get [ "features" "chat" "discord" "equicord" "enable" ] false;
   discordEquicordPackage = pkgs.runCommand "discord-equicord" { } ''
@@ -51,7 +59,11 @@ let
     else
       discordBasePackage;
 
-  resolvePkg = name: lib.attrByPath (lib.splitString "." name) null pkgs;
+  resolvePkg = name:
+    if name == "brave" then
+      bravePackage
+    else
+      lib.attrByPath (lib.splitString "." name) null pkgs;
   missingPackageNames = lib.filter (name: resolvePkg name == null) packageNames;
   resolvedPackages = lib.filter (pkg: pkg != null) (map resolvePkg packageNames);
   featurePackages =
