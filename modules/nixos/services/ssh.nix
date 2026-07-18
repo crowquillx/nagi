@@ -14,6 +14,7 @@ let
   passwordAuthentication = get [ "features" "ssh" "passwordAuthentication" ] false;
   permitRootLogin = get [ "features" "ssh" "permitRootLogin" ] "prohibit-password";
   authorizedKeys = get [ "features" "ssh" "authorizedKeys" ] [ ];
+  autoTmuxEnabled = get [ "features" "ssh" "autoTmux" "enable" ] false;
 in
 {
   config = lib.mkMerge [
@@ -29,6 +30,10 @@ in
           # otherwise disabling password auth would lock the user out.
           assertion = !(enabled && !passwordAuthentication && authorizedKeys == [ ]);
           message = "features.ssh.passwordAuthentication = false requires a non-empty features.ssh.authorizedKeys, otherwise the user is locked out of SSH.";
+        }
+        {
+          assertion = !autoTmuxEnabled || enabled;
+          message = "features.ssh.autoTmux.enable requires features.ssh.enable.";
         }
       ];
     }
@@ -48,7 +53,10 @@ in
         };
       };
 
-      users.users.${primaryUser}.openssh.authorizedKeys.keys = authorizedKeys;
+      users.users.${primaryUser} = {
+        linger = lib.mkIf autoTmuxEnabled true;
+        openssh.authorizedKeys.keys = authorizedKeys;
+      };
     })
   ];
 }

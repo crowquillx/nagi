@@ -98,6 +98,7 @@ let
   homeShell = [
     ../home/shell/zoxide.nix
     ../home/shell/kotomi.nix
+    ../home/shell/ssh-tmux.nix
   ];
 
   homeDesktop = [

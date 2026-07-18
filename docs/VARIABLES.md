@@ -76,13 +76,15 @@ scalar values.
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
-- `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys }`
+- `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys, autoTmux }`
   - `enable` (bool, default `false`): enable the OpenSSH daemon. Keep disabled until `authorizedKeys` are set.
   - `openFirewall` (bool, default `true`): open the SSH port in the firewall.
   - `port` (int 1–65535, default `22`): the SSH listen port.
   - `passwordAuthentication` (bool, default `false`): allow password auth. Keep `false` for key-only mode. An assertion forbids enabling SSH with `passwordAuthentication = false` unless `authorizedKeys` is non-empty (lockout guard).
   - `permitRootLogin` (one of `prohibit-password`, `without-password`, `forced-commands-only`, `no`; default `prohibit-password`): root login policy. `yes` is never allowed (root stays no less restrictive than the NixOS default).
   - `authorizedKeys` (list of non-empty string public keys, default `[]`): authorized for the primary user. Required when `passwordAuthentication = false`.
+  - `autoTmux.enable` (bool, default `false`): attach interactive SSH logins to a persistent tmux session. Enables user lingering and runs the tmux server as a user service so disconnects and logout cleanup do not terminate work.
+  - `autoTmux.sessionName` (letters, digits, `_`, or `-`; default `"ssh"`): shared tmux session name.
 - `features.fileManager.thunar.enable = true | false`
 - `features.services = { fstrim.enable, resolved.enable, powerProfilesDaemon.enable }`
 - `features.flatpak = { enable, packages = [ "<app-id>" ... ] }`
@@ -506,6 +508,10 @@ features.ssh = {
   # Requires a non-empty authorizedKeys (enforced by assertion).
   passwordAuthentication = false;
   permitRootLogin = "prohibit-password"; # "yes" is never allowed
+  autoTmux = {
+    enable = true;
+    sessionName = "ssh";
+  };
   authorizedKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... user@host"
   ];
@@ -513,6 +519,8 @@ features.ssh = {
 ```
 
 The SSH daemon is owned by `modules/nixos/services/ssh.nix` and is fully host-configurable. The lockout-guard assertion fails the build if `passwordAuthentication = false` is set without any `authorizedKeys`, so flipping to key-only is safe.
+
+With `autoTmux.enable = true`, interactive SSH logins from clients such as Termius automatically attach to the named session. Fish and Bash both avoid nesting when already inside tmux, and non-interactive SSH commands, SFTP, and SCP are unaffected. The prefix is `Ctrl+A`; detach with `Ctrl+A`, then `D`.
 
 ### Firewall port reference
 
