@@ -16,6 +16,15 @@
         "nofail"
       ];
     }
+    {
+      device = "/dev/disk/by-uuid/59ad586e-b4ed-4e44-bda1-2412e5e5b9e3";
+      mountPoint = "/mnt/games1";
+      fsType = "ext4";
+      options = [
+        "defaults"
+        "nofail"
+      ];
+    }
   ];
 
   boot = {
