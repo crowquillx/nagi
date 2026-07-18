@@ -592,6 +592,10 @@ in {
                     type = packageToggle "Foot" true;
                     default = {};
                   };
+                  ghostty = mkOption {
+                    type = packageToggle "Ghostty" true;
+                    default = {};
+                  };
                   kitty = mkOption {
                     type = strictSubmodule {
                       enable = enableOption "Enable Kitty." true;

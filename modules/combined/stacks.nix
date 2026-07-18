@@ -86,6 +86,7 @@ let
   ];
 
   homeTerminals = [
+    ../home/terminals/ghostty.nix
     ../home/terminals/kitty.nix
   ];
 
