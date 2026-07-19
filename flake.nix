@@ -12,6 +12,7 @@
       "https://cache.numtide.com"
       "https://codex-desktop-linux.cachix.org"
       "https://vortex-nix.cachix.org"
+      "https://nix-gaming.cachix.org"
     ];
     extra-trusted-public-keys = [
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
@@ -22,6 +23,7 @@
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
       "codex-desktop-linux.cachix.org-1:nX/xy6AdK9hQE24A8ALGjkCKj2ObFmcnemiL5Cid4nk="
       "vortex-nix.cachix.org-1:7+ZVU0umNp8sz1JqZV/bRcbVgemNuNtzN5KiJxihFRY="
+      "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
     ];
   };
 
@@ -111,10 +113,11 @@
       url = "github:crowquillx/vortex-nix";
     };
 
-    limux-nix = {
-      url = "github:crowquillx/limux-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+    # Do not follow nixpkgs: nix-gaming.cachix.org caches against upstream's pin.
+    nix-gaming = {
+      url = "github:fufexan/nix-gaming";
     };
+
   };
 
   outputs = inputs: inputs.flake-parts.lib.mkFlake {inherit inputs;} (inputs.import-tree ./modules/flake);

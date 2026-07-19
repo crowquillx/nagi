@@ -143,5 +143,10 @@
       name = "ssh_key";
       pubName = "ssh_key_pub";
     };
+    signingKey = {
+      enable = true;
+      name = "ssh_signing_key";
+      pubName = "ssh_signing_key_pub";
+    };
   };
 }

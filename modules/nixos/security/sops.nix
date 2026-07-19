@@ -19,6 +19,13 @@ let
     privMode = get [ "security" "sops" "sshKey" "privateMode" ] "0600";
     pubMode = get [ "security" "sops" "sshKey" "publicMode" ] "0644";
   };
+  signingKey = {
+    enable = get [ "security" "sops" "signingKey" "enable" ] false;
+    name = get [ "security" "sops" "signingKey" "name" ] "ssh_signing_key";
+    pubName = get [ "security" "sops" "signingKey" "pubName" ] "ssh_signing_key_pub";
+    privMode = get [ "security" "sops" "signingKey" "privateMode" ] "0600";
+    pubMode = get [ "security" "sops" "signingKey" "publicMode" ] "0644";
+  };
   agePublicKey = get [ "security" "sops" "agePublicKey" ] null;
 in
 {
@@ -45,6 +52,10 @@ in
         {
           assertion = !(enabled && sshKey.enable && sshKey.name == sshKey.pubName);
           message = "security.sops.sshKey.name and pubName must differ.";
+        }
+        {
+          assertion = !(enabled && signingKey.enable && signingKey.name == signingKey.pubName);
+          message = "security.sops.signingKey.name and pubName must differ.";
         }
         {
           assertion = agePublicKey == null || agePublicKey != "";
@@ -97,6 +108,20 @@ in
         group = "users";
         mode = sshKey.pubMode;
         path = "/run/secrets/${sshKey.pubName}";
+      };
+    })
+    (lib.mkIf (enabled && signingKey.enable) {
+      sops.secrets.${signingKey.name} = {
+        owner = primaryUser;
+        group = "users";
+        mode = signingKey.privMode;
+        path = "/run/secrets/${signingKey.name}";
+      };
+      sops.secrets.${signingKey.pubName} = {
+        owner = primaryUser;
+        group = "users";
+        mode = signingKey.pubMode;
+        path = "/run/secrets/${signingKey.pubName}";
       };
     })
     (lib.optionalAttrs (enabled && administrativeGroup != null) {

@@ -64,7 +64,7 @@ scalar values.
 - `features.portals.enable = true | false`
 - `features.codingTools.enable = true | false`
 - `features.codingTools.editors.enable = true | false`
-- `features.codingTools.editors.<name>.enable = true | false` for `vscode`, `antigravity`, `t3code`, `cursor`, and `zed`
+- `features.codingTools.editors.<name>.enable = true | false` for `t3code`, `cursor`, and `zed`
 - `features.codingTools.aiCli.enable = true | false`
 - `features.codingTools.aiCli.codex.enable = true | false`
 - `features.codingTools.aiCli.claude.enable = true | false`
@@ -73,6 +73,7 @@ scalar values.
 - `features.codingTools.aiCli.gemini.enable = true | false`
 - `features.codingTools.aiCli.pi.enable = true | false`
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
+- `features.codingTools.aiCli.paseo.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
@@ -112,6 +113,11 @@ scalar values.
 - `security.sops.sshKey.pubName = "<sops-file-key>"` (default `"ssh_key_pub"`)
 - `security.sops.sshKey.privateMode = "0600"` (octal mode for the materialized private key)
 - `security.sops.sshKey.publicMode = "0644"` (octal mode for the materialized public key)
+- `security.sops.signingKey.enable = true | false` (materialize an SSH commit-signing key from sops; enables git SSH signing)
+- `security.sops.signingKey.name = "<sops-file-key>"` (default `"ssh_signing_key"`)
+- `security.sops.signingKey.pubName = "<sops-file-key>"` (default `"ssh_signing_key_pub"`)
+- `security.sops.signingKey.privateMode = "0600"` (octal mode for the materialized private signing key)
+- `security.sops.signingKey.publicMode = "0644"` (octal mode for the materialized public signing key)
 
 ## Common snippets
 

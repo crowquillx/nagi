@@ -53,6 +53,7 @@ let
   pciutilsPkg = pkgs.pciutils or null;
   bottlesPkg = pkgs.bottles or null;
   cheatenginePkg = pkgs.cheatengine or null;
+  mo2LintPkg = pkgs.mo2-lint or null;
 in
 {
   config = lib.mkMerge [
@@ -95,6 +96,10 @@ in
           message = "features.gaming.enable is true, but nixpkgs package 'bottles' could not be resolved.";
         }
         {
+          assertion = !enabled || mo2LintPkg != null;
+          message = "features.gaming.enable is true, but the 'mo2-lint' package could not be resolved. Ensure the mo2LintOverlay is applied.";
+        }
+        {
           assertion = !cheatengineEnable || cheatenginePkg != null;
           message = "features.gaming.cheatengine.enable is true, but the 'cheatengine' package could not be resolved. Ensure the cheatengine-flake overlay is applied.";
         }
@@ -121,6 +126,7 @@ in
         vulkanToolsPkg
         pciutilsPkg
         bottlesPkg
+        mo2LintPkg
       ] ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
     })
     (lib.mkIf (enabled && cheatengineEnable) {

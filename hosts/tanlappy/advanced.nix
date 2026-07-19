@@ -25,8 +25,6 @@
       enable = true;
       editors = {
         enable = true;
-        vscode.enable = true;
-        antigravity.enable = false;
         t3code.enable = true;
         cursor.enable = true;
         zed.enable = true;

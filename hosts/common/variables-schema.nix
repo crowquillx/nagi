@@ -626,14 +626,6 @@ in {
                             default = codingToolsArgs.config.enable;
                             description = "Enable editor packages.";
                           };
-                          vscode = mkOption {
-                            type = packageToggle "VS Code" true;
-                            default = {};
-                          };
-                          antigravity = mkOption {
-                            type = packageToggle "Antigravity" true;
-                            default = {};
-                          };
                           t3code = mkOption {
                             type = packageToggle "T3 Code" true;
                             default = {};
@@ -644,10 +636,6 @@ in {
                           };
                           zed = mkOption {
                             type = packageToggle "Zed" true;
-                            default = {};
-                          };
-                          limux = mkOption {
-                            type = packageToggle "Limux" true;
                             default = {};
                           };
                         };
@@ -688,6 +676,10 @@ in {
                           };
                           ohMyPi = mkOption {
                             type = packageToggle "Oh My Pi" aiCliArgs.config.enable;
+                            default = {};
+                          };
+                          paseo = mkOption {
+                            type = packageToggle "Paseo" aiCliArgs.config.enable;
                             default = {};
                           };
                         };
@@ -1091,6 +1083,28 @@ in {
                     pubName = mkOption {
                       type = types.nonEmptyStr;
                       default = "ssh_key_pub";
+                    };
+                    privateMode = mkOption {
+                      type = types.strMatching "0[0-7]{3}";
+                      default = "0600";
+                    };
+                    publicMode = mkOption {
+                      type = types.strMatching "0[0-7]{3}";
+                      default = "0644";
+                    };
+                  };
+                  default = {};
+                };
+                signingKey = mkOption {
+                  type = strictSubmodule {
+                    enable = enableOption "Manage SSH commit-signing keys from SOPS." false;
+                    name = mkOption {
+                      type = types.nonEmptyStr;
+                      default = "ssh_signing_key";
+                    };
+                    pubName = mkOption {
+                      type = types.nonEmptyStr;
+                      default = "ssh_signing_key_pub";
                     };
                     privateMode = mkOption {
                       type = types.strMatching "0[0-7]{3}";

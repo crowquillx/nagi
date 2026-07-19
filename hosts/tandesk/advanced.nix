@@ -29,8 +29,6 @@
       enable = true;
       editors = {
         enable = true;
-        vscode.enable = true;
-        antigravity.enable = true;
         t3code.enable = true;
         cursor.enable = true;
         zed.enable = true;
@@ -86,7 +84,8 @@
         "org.upscayl.Upscayl"
         "ru.linux_gaming.PortProton"
         {
-          appId = "com.cakewallet.cake_wallet";
+          # Must match the bundle app-id exactly (uninstallUnmanaged).
+          appId = "com.cakewallet.CakeWallet";
           bundle = {
             url = "https://github.com/cake-tech/cake_wallet/releases/download/v6.2.1/Cake_Wallet_v6.2.0_Linux.flatpak";
             hash = "sha256-GBybiogmaL+3mDxjRQuhqwtVEgx4UOqigwpWHR8iEq4=";

@@ -38,6 +38,7 @@
         nagi-helium = heliumPkg;
         nagi-noctalia = noctaliaPkg;
         nagi-niri = niriPkg;
+        mo2-lint = pkgs.callPackage ../../pkgs/mo2-lint { };
         inherit tcli;
       };
 

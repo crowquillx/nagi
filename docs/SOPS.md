@@ -3,6 +3,9 @@
 This repo uses `sops-nix` with an age key stored on each target machine.
 A `home/security/ssh-key.nix` HM module materializes the user's SSH key from
 sops into `~/.ssh/` for hosts that opt in via `security.sops.sshKey.enable`.
+The same module materializes an SSH commit-signing key when
+`security.sops.signingKey.enable` is set, and configures git to sign commits
+and tags with `gpg.format = ssh`.
 
 ## 1) Generate host age key (if missing)
 
@@ -40,6 +43,23 @@ ssh_key: |
 ssh_key_pub: ssh-rsa AAAA... user@host
 ```
 
+For SSH commit signing (`security.sops.signingKey.enable = true`), add a
+separate signing key (recommended) and upload its public half to GitHub as
+a **signing** key (`gh ssh-key add ... --type signing`):
+
+```yaml
+ssh_signing_key: |
+  -----BEGIN OPENSSH PRIVATE KEY-----
+  ...
+  -----END OPENSSH PRIVATE KEY-----
+ssh_signing_key_pub: ssh-ed25519 AAAA... git-signing
+```
+
+The signing private key is symlinked into `~/.ssh/` but is **not** added as
+an SSH `IdentityFile` (auth stays on `ssh_key`). Git is configured with
+`gpg.format = ssh`, `commit.gpgsign = true`, and
+`gpg.ssh.allowedSignersFile = ~/.ssh/allowed_signers`.
+
 ## 3) Point host variables to that file
 
 In `hosts/<host>/variables.nix`, set:
@@ -53,6 +73,11 @@ security.sops = {
     enable = true;
     name = "ssh_key";
     pubName = "ssh_key_pub";
+  };
+  signingKey = {
+    enable = true;
+    name = "ssh_signing_key";
+    pubName = "ssh_signing_key_pub";
   };
 };
 ```
@@ -288,8 +313,11 @@ not change encryption recipients.
 - Bootstrap auto-creates `/var/lib/sops-nix/key.txt` if missing.
 - Keep `.sops.yaml` in sync with all host public keys that need decryption.
 - The HM module `modules/home/security/ssh-key.nix` is only active when
-  both `security.sops.enable` and `security.sops.sshKey.enable` are true.
+  both `security.sops.enable` and either `security.sops.sshKey.enable` or
+  `security.sops.signingKey.enable` are true.
   It enforces `~/.ssh` mode 0700 and symlinks the materialized secrets
-  into place.
+  into place. Auth keys get an `IdentityFile` entry; signing keys do not.
+  With `signingKey.enable`, git SSH signing is configured and
+  `~/.ssh/allowed_signers` is written from the signing pubkey + `users.git.email`.
 - `sops.validateSopsFiles` is on; builds fail on malformed sops files or
   missing declared keys. See the "Sops file validation" section above.

@@ -8,23 +8,20 @@
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get ["features" "codingTools" "enable"] true;
   editorsEnabled = get ["features" "codingTools" "editors" "enable"] codingToolsEnabled;
-  vscodeEnabled = editorsEnabled && get ["features" "codingTools" "editors" "vscode" "enable"] true;
-  antigravityEnabled = editorsEnabled && get ["features" "codingTools" "editors" "antigravity" "enable"] true;
   t3codeEnabled = editorsEnabled && get ["features" "codingTools" "editors" "t3code" "enable"] true;
   cursorEnabled = editorsEnabled && get ["features" "codingTools" "editors" "cursor" "enable"] true;
   zedEnabled = editorsEnabled && get ["features" "codingTools" "editors" "zed" "enable"] true;
-  limuxEnabled = editorsEnabled && get ["features" "codingTools" "editors" "limux" "enable"] true;
   aiCliEnabled = get ["features" "codingTools" "aiCli" "enable"] codingToolsEnabled;
   claudeEnabled = get ["features" "codingTools" "aiCli" "claude" "enable"] aiCliEnabled;
   cliProxyApiEnabled = get ["features" "codingTools" "aiCli" "cliProxyApi" "enable"] aiCliEnabled;
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
   piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
   ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
+  paseoEnabled = get ["features" "codingTools" "aiCli" "paseo" "enable"] aiCliEnabled;
   nixToolsEnabled = get ["features" "codingTools" "nixTools" "enable"] codingToolsEnabled;
 
   llmAgent = name: lib.attrByPath ["llm-agents" name] null pkgs;
 
-  vscodePkg = lib.attrByPath ["vscode"] null pkgs;
   geminiCliPkg = let
     llmPkg = llmAgent "gemini-cli";
     sourcePkg = lib.attrByPath ["gemini-cli"] null pkgs;
@@ -37,16 +34,10 @@
     else binPkg;
   piPkg = llmAgent "pi";
   ohMyPiPkg = llmAgent "omp";
+  paseoPkg = llmAgent "paseo-desktop";
   claudeCodePkg = llmAgent "claude-code";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
   bunPkg = lib.attrByPath ["bun"] null pkgs;
-  antigravityPkg = let
-    fhsPkg = lib.attrByPath ["antigravity-fhs"] null pkgs;
-    nativePkg = lib.attrByPath ["antigravity"] null pkgs;
-  in
-    if fhsPkg != null
-    then fhsPkg
-    else nativePkg;
   bubblewrapPkg = lib.attrByPath ["bubblewrap"] null pkgs;
   statixPkg = lib.attrByPath ["statix"] null pkgs;
   uvPkg = lib.attrByPath ["uv"] null pkgs;
@@ -66,28 +57,26 @@
     llmCodex = llmAgent "codex";
   in
     if base != null && llmCodex != null
-    then base.override { codex = llmCodex; }
+    then base.override {codex = llmCodex;}
     else base;
   t3DesktopProgram =
     if t3DesktopPkg == null
     then "t3code-desktop"
     else t3DesktopPkg.meta.mainProgram or "t3code-desktop";
   ghPkg = lib.attrByPath ["gh"] null pkgs;
+  graphiteCliPkg = lib.attrByPath ["graphite-cli"] null pkgs;
   skillsPkg = let
     llmPkg = llmAgent "skills";
   in
-    if llmPkg != null then llmPkg else lib.attrByPath ["skills"] null pkgs;
+    if llmPkg != null
+    then llmPkg
+    else lib.attrByPath ["skills"] null pkgs;
   cursorPkg = lib.attrByPath ["code-cursor"] null pkgs;
   cursorCliPkg = lib.attrByPath ["cursor-cli"] null pkgs;
   zedEditorPkg = lib.attrByPath ["zed-editor"] null pkgs;
-  limuxPkg = lib.attrByPath ["limux"] null pkgs;
   nilPkg = lib.attrByPath ["nil"] null pkgs;
 in {
   assertions = [
-    {
-      assertion = !(vscodeEnabled && vscodePkg == null);
-      message = "features.codingTools.editors.enable is true, but nixpkgs package 'vscode' could not be resolved.";
-    }
     {
       assertion = !(geminiEnabled && geminiCliPkg == null);
       message = "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback.";
@@ -109,12 +98,12 @@ in {
       message = "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix.";
     }
     {
-      assertion = !(ohMyPiEnabled && bunPkg == null);
-      message = "features.codingTools.aiCli.ohMyPi.enable is true, but nixpkgs package 'bun' could not be resolved.";
+      assertion = !(paseoEnabled && paseoPkg == null);
+      message = "features.codingTools.aiCli.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
     }
     {
-      assertion = !(antigravityEnabled && antigravityPkg == null);
-      message = "features.codingTools.editors.enable is true, but nixpkgs package 'antigravity-fhs' (preferred) or 'antigravity' could not be resolved.";
+      assertion = !(ohMyPiEnabled && bunPkg == null);
+      message = "features.codingTools.aiCli.ohMyPi.enable is true, but nixpkgs package 'bun' could not be resolved.";
     }
     {
       assertion = !(aiCliEnabled && bubblewrapPkg == null);
@@ -149,6 +138,10 @@ in {
       message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'gh' could not be resolved.";
     }
     {
+      assertion = !(nixToolsEnabled && graphiteCliPkg == null);
+      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'graphite-cli' could not be resolved.";
+    }
+    {
       assertion = !(aiCliEnabled && skillsPkg == null);
       message = "features.codingTools.aiCli.enable is true, but package 'skills' could not be resolved from llm-agents.nix or nixpkgs.";
     }
@@ -160,22 +153,18 @@ in {
       assertion = !(cursorEnabled && cursorCliPkg == null);
       message = "features.codingTools.editors.enable is true, but nixpkgs package 'cursor-cli' could not be resolved.";
     }
-    {
-      assertion = !(limuxEnabled && limuxPkg == null);
-      message = "features.codingTools.editors.limux.enable is true, but package 'limux' could not be resolved from limux-nix.";
-    }
   ];
 
   home.packages =
-    lib.optionals (vscodeEnabled && vscodePkg != null) [vscodePkg]
+    lib.optionals codingToolsEnabled [pkgs.nodejs]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [claudeCodePkg]
     ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [cliProxyApiPkg]
     ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
     ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
     ++ lib.optionals (ohMyPiEnabled && bunPkg != null) [bunPkg]
+    ++ lib.optionals (paseoEnabled && paseoPkg != null) [paseoPkg]
     ++ lib.optionals (aiCliEnabled && uvPkg != null) [uvPkg]
-    ++ lib.optionals (antigravityEnabled && antigravityPkg != null) [antigravityPkg]
     ++ lib.optionals (aiCliEnabled && bubblewrapPkg != null) [bubblewrapPkg]
     ++ lib.optionals (nixToolsEnabled && statixPkg != null) [statixPkg]
     ++ lib.optionals (nixToolsEnabled && deadnixPkg != null) [deadnixPkg]
@@ -184,12 +173,12 @@ in {
     ++ lib.optionals (nixToolsEnabled && nixLspPkg != null) [nixLspPkg]
     ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [t3DesktopPkg]
     ++ lib.optionals (nixToolsEnabled && ghPkg != null) [ghPkg]
+    ++ lib.optionals (nixToolsEnabled && graphiteCliPkg != null) [graphiteCliPkg]
     ++ lib.optionals (aiCliEnabled && skillsPkg != null) [skillsPkg]
     ++ lib.optionals (cursorEnabled && cursorPkg != null) [cursorPkg]
     ++ lib.optionals (cursorEnabled && cursorCliPkg != null) [cursorCliPkg]
     ++ lib.optionals (zedEnabled && zedEditorPkg != null) [zedEditorPkg]
-    ++ lib.optionals (nixToolsEnabled && nilPkg != null) [nilPkg]
-    ++ lib.optionals (limuxEnabled && limuxPkg != null) [limuxPkg];
+    ++ lib.optionals (nixToolsEnabled && nilPkg != null) [nilPkg];
 
   xdg.desktopEntries = lib.optionalAttrs (t3codeEnabled && t3DesktopPkg != null) {
     t3code = {

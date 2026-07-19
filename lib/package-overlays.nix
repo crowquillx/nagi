@@ -129,10 +129,19 @@
   vortexOverlay = final: _prev: {
     vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
   };
-  limuxOverlay = final: _prev: {
-    limux = inputs.limux-nix.packages.${final.stdenv.hostPlatform.system}.default;
+  # Prefer flake packages over nix-gaming's overlay so we stay on their
+  # binary cache instead of rebuilding against our nixpkgs.
+  nixGamingOverlay = final: _prev: let
+    ng = inputs.nix-gaming.packages.${final.stdenv.hostPlatform.system};
+  in {
+    osu-lazer-bin = ng.osu-lazer-bin;
   };
 
+  # Official Furglitch MO2-LINT v7 PyInstaller binary (replaces nix-gaming's
+  # stale rockerbacon mo2installer 5.x).
+  mo2LintOverlay = final: _prev: {
+    mo2-lint = final.callPackage ../pkgs/mo2-lint { };
+  };
   millenniumEnabled = vars: lib.attrByPath ["features" "gaming" "steam" "millennium" "enable"] false vars;
   gamingEnabled = vars: lib.attrByPath ["features" "gaming" "enable"] false vars;
   cheatengineEnabled = vars: lib.attrByPath ["features" "gaming" "cheatengine" "enable"] false vars;
@@ -149,7 +158,8 @@
     [
       hushmicOverlay
       vortexOverlay
-      limuxOverlay
+      nixGamingOverlay
+      mo2LintOverlay
     ]
     ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
