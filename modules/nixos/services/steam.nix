@@ -54,6 +54,31 @@ let
   bottlesPkg = pkgs.bottles or null;
   cheatenginePkg = pkgs.cheatengine or null;
   mo2LintPkg = pkgs.mo2-lint or null;
+  rustyPathOfBuildingPkg = pkgs.rusty-path-of-building or null;
+  # APT is Electron-based and still X11-only for overlays/hotkeys on Wayland
+  # compositors (Niri/Hyprland). Force X11/XWayland the same way Discord is
+  # forced, so desktop entries and the Mod+Alt+P bind both land on XWayland
+  # via niri's built-in xwayland-satellite integration.
+  awakenedPoeTradeBase = pkgs.awakened-poe-trade or null;
+  awakenedPoeTradePkg =
+    if awakenedPoeTradeBase == null then
+      null
+    else
+      pkgs.symlinkJoin {
+        name = "awakened-poe-trade-x11";
+        paths = [ awakenedPoeTradeBase ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          rm -f "$out/bin/awakened-poe-trade"
+          makeWrapper "${awakenedPoeTradeBase}/bin/awakened-poe-trade" "$out/bin/awakened-poe-trade" \
+            --unset NIXOS_OZONE_WL \
+            --unset ELECTRON_OZONE_PLATFORM_HINT \
+            --set XDG_SESSION_TYPE x11 \
+            --set GDK_BACKEND x11 \
+            --unset WAYLAND_DISPLAY \
+            --add-flags "--ozone-platform=x11"
+        '';
+      };
 in
 {
   config = lib.mkMerge [
@@ -100,6 +125,14 @@ in
           message = "features.gaming.enable is true, but the 'mo2-lint' package could not be resolved. Ensure the mo2LintOverlay is applied.";
         }
         {
+          assertion = !enabled || rustyPathOfBuildingPkg != null;
+          message = "features.gaming.enable is true, but nixpkgs package 'rusty-path-of-building' could not be resolved.";
+        }
+        {
+          assertion = !enabled || awakenedPoeTradePkg != null;
+          message = "features.gaming.enable is true, but nixpkgs package 'awakened-poe-trade' could not be resolved.";
+        }
+        {
           assertion = !cheatengineEnable || cheatenginePkg != null;
           message = "features.gaming.cheatengine.enable is true, but the 'cheatengine' package could not be resolved. Ensure the cheatengine-flake overlay is applied.";
         }
@@ -127,6 +160,8 @@ in
         pciutilsPkg
         bottlesPkg
         mo2LintPkg
+        rustyPathOfBuildingPkg
+        awakenedPoeTradePkg
       ] ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
     })
     (lib.mkIf (enabled && cheatengineEnable) {

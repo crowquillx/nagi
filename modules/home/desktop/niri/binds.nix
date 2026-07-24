@@ -76,8 +76,9 @@ in
     (node "Mod+M" { "hotkey-overlay-title" = "Task Manager"; } [
       (leaf "spawn" [ "dms" "ipc" "call" "processlist" "focusOrToggle" ])
     ])
+    # Package wrapper already forces Electron onto X11/XWayland; just spawn it.
     (node "Mod+Alt+P" { "hotkey-overlay-title" = "Awakened PoE Trade"; } [
-      (leaf "spawn" [ "sh" "-c" "XDG_SESSION_TYPE=x11 GDK_BACKEND=x11 exec env -u WAYLAND_DISPLAY awakened-poe-trade" ])
+      (leaf "spawn" [ "awakened-poe-trade" ])
     ])
     (node "Super+E" { "hotkey-overlay-title" = "File Manager"; } [
       (leaf "spawn" [ "thunar" ])
