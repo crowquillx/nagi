@@ -529,6 +529,8 @@ The SSH daemon is owned by `modules/nixos/services/ssh.nix` and is fully host-co
 
 With `autoTmux.enable = true`, interactive SSH logins from clients such as Termius automatically attach to the named session. Fish and Bash both avoid nesting when already inside tmux, and non-interactive SSH commands, SFTP, and SCP are unaffected. The prefix is `Ctrl+A`; detach with `Ctrl+A`, then `D`. Reattach manually with `tmux-ssh attach-session -t ssh`, replacing `ssh` with `autoTmux.sessionName`.
 
+The SSH tmux server uses a fixed absolute socket under `$XDG_RUNTIME_DIR/nagi-ssh.sock` so it stays consistent after reboot. Do not use bare `tmux` for these sessions; use `tmux-ssh` (or the automatic SSH attach).
+
 ### Firewall port reference
 
 `modules/nixos/services/firewall.nix` pins `networking.firewall.enable = true` explicitly and documents every exposed port. No port is opened or closed by that module; each feature module owns its own ports.
