@@ -682,6 +682,10 @@ in {
                             type = packageToggle "Paseo" aiCliArgs.config.enable;
                             default = {};
                           };
+                          herdr = mkOption {
+                            type = packageToggle "Herdr" aiCliArgs.config.enable;
+                            default = {};
+                          };
                         };
                       });
                       default = {};

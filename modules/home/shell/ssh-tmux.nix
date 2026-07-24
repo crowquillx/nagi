@@ -14,15 +14,13 @@ let
   attachTmuxFish = ''
     if set -q SSH_TTY; and not set -q TMUX
       ${systemctl} --user start nagi-ssh-tmux.service
-      ${tmux} -L ${socketName} has-session -t ${sessionName} 2>/dev/null; or ${tmux} -L ${socketName} new-session -d -s ${sessionName}
-      exec ${tmux} -L ${socketName} attach-session -t ${sessionName}
+      exec ${tmux} -L ${socketName} new-session -A -s ${sessionName}
     end
   '';
   attachTmuxBash = ''
     if test -n "$SSH_TTY" && test -z "$TMUX"; then
       ${systemctl} --user start nagi-ssh-tmux.service
-      ${tmux} -L ${socketName} has-session -t ${sessionName} 2>/dev/null || ${tmux} -L ${socketName} new-session -d -s ${sessionName}
-      exec ${tmux} -L ${socketName} attach-session -t ${sessionName}
+      exec ${tmux} -L ${socketName} new-session -A -s ${sessionName}
     fi
   '';
 in
@@ -37,9 +35,20 @@ in
         escapeTime = 0;
         historyLimit = 100000;
         terminal = "tmux-256color";
+        extraConfig = ''
+          set -g extended-keys on
+          set -g extended-keys-format csi-u
+          set -g remain-on-exit on
+        '';
       };
-      fish.interactiveShellInit = lib.mkAfter attachTmuxFish;
-      bash.initExtra = lib.mkAfter attachTmuxBash;
+      fish = {
+        interactiveShellInit = lib.mkAfter attachTmuxFish;
+        shellAliases.tmux-ssh = "${tmux} -L ${socketName}";
+      };
+      bash = {
+        initExtra = lib.mkAfter attachTmuxBash;
+        shellAliases.tmux-ssh = "${tmux} -L ${socketName}";
+      };
     };
 
     systemd.user.services.nagi-ssh-tmux = {

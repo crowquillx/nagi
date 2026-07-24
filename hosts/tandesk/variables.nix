@@ -59,6 +59,7 @@
       "osu-lazer-bin"
       "hushmic"
       "vortex"
+      "ntfs3g"
     ];
     git = {
       name = "tan";

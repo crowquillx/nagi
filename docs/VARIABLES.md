@@ -74,6 +74,7 @@ scalar values.
 - `features.codingTools.aiCli.pi.enable = true | false`
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
 - `features.codingTools.aiCli.paseo.enable = true | false`
+- `features.codingTools.aiCli.herdr.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
@@ -526,7 +527,7 @@ features.ssh = {
 
 The SSH daemon is owned by `modules/nixos/services/ssh.nix` and is fully host-configurable. The lockout-guard assertion fails the build if `passwordAuthentication = false` is set without any `authorizedKeys`, so flipping to key-only is safe.
 
-With `autoTmux.enable = true`, interactive SSH logins from clients such as Termius automatically attach to the named session. Fish and Bash both avoid nesting when already inside tmux, and non-interactive SSH commands, SFTP, and SCP are unaffected. The prefix is `Ctrl+A`; detach with `Ctrl+A`, then `D`.
+With `autoTmux.enable = true`, interactive SSH logins from clients such as Termius automatically attach to the named session. Fish and Bash both avoid nesting when already inside tmux, and non-interactive SSH commands, SFTP, and SCP are unaffected. The prefix is `Ctrl+A`; detach with `Ctrl+A`, then `D`. Reattach manually with `tmux-ssh attach-session -t ssh`, replacing `ssh` with `autoTmux.sessionName`.
 
 ### Firewall port reference
 

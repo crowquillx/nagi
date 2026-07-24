@@ -4,6 +4,12 @@ let
     app-id = "(?i)^electron$";
     title = "(?i)^.*discord.*$";
   };
+  # Paseo ships as unpackaged Electron under nix, so Wayland app_id is "electron"
+  # rather than StartupWMClass=Paseo. Title also tracks the active agent, so match
+  # by app-id only.
+  paseoElectronMatch = {
+    app-id = "(?i)^electron$";
+  };
   discordAppMatch = {
     app-id = "(?i)^(discord|com\\.discordapp\\.Discord)$";
   };
@@ -66,6 +72,7 @@ in
     (leaf "match" { app-id = rgbaApps.editors; })
     (leaf "match" { app-id = rgbaApps.mediaPlayers; })
     (leaf "match" discordElectronMatch)
+    (leaf "match" paseoElectronMatch)
     (leaf "opacity" 0.90)
     (leaf "draw-border-with-background" false)
     (plain "background-effect" [
@@ -81,6 +88,7 @@ in
     (leaf "match" { app-id = rgbaApps.editors; is-focused = true; })
     (leaf "match" { app-id = rgbaApps.mediaPlayers; is-focused = true; })
     (leaf "match" (discordElectronMatch // { is-focused = true; }))
+    (leaf "match" (paseoElectronMatch // { is-focused = true; }))
     (leaf "opacity" 0.96)
   ])
 
