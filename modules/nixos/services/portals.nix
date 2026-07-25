@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
@@ -6,6 +11,7 @@ let
   compositor = get [ "desktop" "compositor" ] "niri";
   extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
+  hasHyprland = builtins.elem "hyprland" ([ compositor ] ++ extraCompositors);
   hasPlasma = builtins.elem "plasma" ([ compositor ] ++ extraCompositors);
 in
 {
@@ -13,11 +19,8 @@ in
     xdg.portal = {
       enable = true;
       xdgOpenUsePortal = true;
-      # Install every backend referenced by common/session defaults:
-      # - gnome for Niri's default chain
-      # - kde for Plasma's default chain
-      # - gtk as the shared fallback (common.default + session fallbacks)
-      # Use backend packages only (not full desktop environments).
+      # Install every backend referenced by common/session defaults. The
+      # Hyprland NixOS module supplies xdg-desktop-portal-hyprland itself.
       extraPortals =
         lib.optionals hasNiri [ pkgs.xdg-desktop-portal-gnome ]
         ++ lib.optionals hasPlasma [ pkgs.kdePackages.xdg-desktop-portal-kde ]
@@ -27,7 +30,22 @@ in
       }
       // lib.optionalAttrs hasNiri {
         niri = {
-          default = [ "gnome" "gtk" ];
+          default = [
+            "gnome"
+            "gtk"
+          ];
+          "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+        };
+      }
+      // lib.optionalAttrs hasHyprland {
+        hyprland = {
+          default = [
+            "hyprland"
+            "gtk"
+          ];
           "org.freedesktop.impl.portal.Access" = [ "gtk" ];
           "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
           "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
@@ -35,7 +53,10 @@ in
         };
       }
       // lib.optionalAttrs hasPlasma {
-        kde.default = [ "kde" "gtk" ];
+        kde.default = [
+          "kde"
+          "gtk"
+        ];
       };
     };
   };

@@ -25,9 +25,10 @@ let
   noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] false;
   configuredFlakeDirectory = get [ "users" "flakeDirectory" ] null;
   flakeDirectory =
-    if configuredFlakeDirectory == null
-    then "${config.home.homeDirectory}/nagi"
-    else configuredFlakeDirectory;
+    if configuredFlakeDirectory == null then
+      "${config.home.homeDirectory}/nagi"
+    else
+      configuredFlakeDirectory;
 
   zenPkg = lib.attrByPath [ "zen-browser" "packages" system "default" ] null inputs;
   thunarPkg =
@@ -219,7 +220,7 @@ in
       functions = lib.mkIf noctaliaEnabled {
         restart-noctalia = {
           body = ''
-            if systemctl --user list-unit-files noctalia.service --no-legend 2>/dev/null | read -l _
+            if systemctl --user list-unit-files noctalia.service --no-legend 2>/dev/null | read -l unit
               systemctl --user restart noctalia.service
               return
             end

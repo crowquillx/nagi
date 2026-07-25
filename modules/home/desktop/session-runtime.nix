@@ -1,13 +1,22 @@
-{ lib, pkgs, vars ? { }, config, ... }:
+{
+  lib,
+  pkgs,
+  vars ? { },
+  config,
+  ...
+}:
 let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
   extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNiri);
-  noctaliaIdleManage = noctaliaEnable && hasNiri;
+  compositors = [ compositor ] ++ extraCompositors;
+  hasNiri = builtins.elem "niri" compositors;
+  hasHyprland = builtins.elem "hyprland" compositors;
+  hasNoctaliaCompositor = hasNiri || hasHyprland;
+  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
+  noctaliaIdleManage = noctaliaEnable && hasNoctaliaCompositor;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   waylandTarget = config.wayland.systemd.target;
 
@@ -55,17 +64,16 @@ let
     exec ${lockCommand}
   '';
 
-  swayidleArgs =
-    [
-      "-w"
-      "timeout"
-      (toString idleSeconds)
-      lockScript
-    ]
-    ++ lib.optionals lockBeforeSleep [
-      "before-sleep"
-      lockScript
-    ];
+  swayidleArgs = [
+    "-w"
+    "timeout"
+    (toString idleSeconds)
+    lockScript
+  ]
+  ++ lib.optionals lockBeforeSleep [
+    "before-sleep"
+    lockScript
+  ];
 in
 {
   config = lib.mkMerge [
@@ -90,8 +98,12 @@ in
           message = "desktop.startup.apps must be a list of non-empty command strings.";
         }
         {
-          assertion = builtins.elem startupBackend [ "systemd" "niri" ];
-          message = "desktop.startup.backend must be one of: systemd, niri.";
+          assertion = builtins.elem startupBackend [
+            "systemd"
+            "niri"
+            "hyprland"
+          ];
+          message = "desktop.startup.backend must be one of: systemd, niri, hyprland.";
         }
         {
           assertion = !equicordEnabled || chatClient == "discord";
@@ -100,6 +112,10 @@ in
         {
           assertion = !(appStartupEnable && startupBackend == "niri") || hasNiri;
           message = "desktop.startup.backend = \"niri\" requires Niri in desktop.compositor or desktop.extraCompositors.";
+        }
+        {
+          assertion = !(appStartupEnable && startupBackend == "hyprland") || hasHyprland;
+          message = "desktop.startup.backend = \"hyprland\" requires Hyprland in desktop.compositor or desktop.extraCompositors.";
         }
       ];
     }

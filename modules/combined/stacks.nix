@@ -25,6 +25,7 @@ let
 
   nixosDesktop = [
     ../nixos/desktop/niri.nix
+    ../nixos/desktop/hyprland.nix
     ../nixos/desktop/kde.nix
     ../nixos/desktop/sddm.nix
     ../nixos/desktop/session-lifecycle.nix
@@ -104,8 +105,10 @@ let
   homeDesktop = [
     ../home/desktop/session-runtime.nix
     ../home/desktop/niri-user.nix
+    ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
+    ../home/desktop/noctalia-hyprland-workspaces.nix
     ../home/desktop/hushmic-tray.nix
   ];
 
@@ -114,7 +117,8 @@ let
     ../home/security/sops-age-key.nix
     ../home/security/gpg-agent.nix
   ];
-in {
+in
+{
   inherit
     nixosBase
     nixosMounts

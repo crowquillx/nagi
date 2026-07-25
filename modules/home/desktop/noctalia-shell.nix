@@ -9,8 +9,14 @@ let
   desktopEnabled = get [ "desktop" "enable" ] true;
   compositor = get [ "desktop" "compositor" ] "niri";
   extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNiri);
+  hasNoctaliaCompositor = builtins.any (
+    candidate:
+    builtins.elem candidate [
+      "niri"
+      "hyprland"
+    ]
+  ) ([ compositor ] ++ extraCompositors);
+  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
   kdeThemeEnable = get [ "features" "theme" "qt" "enable" ] true;
   noctaliaSettings = get [ "desktop" "noctalia" "settings" ] { };
 
@@ -24,7 +30,7 @@ let
   };
 in
 {
-  config = lib.mkIf (desktopEnabled && hasNiri && noctaliaEnable) {
+  config = lib.mkIf (desktopEnabled && hasNoctaliaCompositor && noctaliaEnable) {
     programs.noctalia = {
       enable = true;
       systemd.enable = false;

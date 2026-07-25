@@ -81,8 +81,8 @@
 
   desktop = {
     enable = true;
-    compositor = "niri";
-    extraCompositors = [ "plasma" ];
+    compositor = "hyprland";
+    extraCompositors = [ "niri" ];
     displayManager = "auto";
     sddm.wayland.enable = false;
     sddm.background = ../../wallpapers/1.png;
@@ -148,6 +148,68 @@
       };
       settings = { };
     };
+    hyprland = {
+      outputs = {
+        "DP-3" = {
+          mode = {
+            width = 2560;
+            height = 1440;
+            refresh = 180.002;
+          };
+          scale = 1;
+          workspaceBase = 0;
+          transform = {
+            rotation = 0;
+            flipped = false;
+          };
+          position = {
+            x = 2560;
+            y = 1080;
+          };
+          variableRefreshRate = "on-demand";
+          bitDepth = 10;
+          colorManagement = "auto";
+          sdrBrightness = 1.2;
+          sdrSaturation = 0.98;
+          focusAtStartup = true;
+        };
+        "DP-2" = {
+          mode = {
+            width = 2560;
+            height = 1440;
+            refresh = 164.999;
+          };
+          scale = 1;
+          workspaceBase = 100;
+          transform = {
+            rotation = 0;
+            flipped = false;
+          };
+          position = {
+            x = 0;
+            y = 1080;
+          };
+        };
+        "DP-1" = {
+          mode = {
+            width = 1920;
+            height = 1080;
+            refresh = 144.001;
+          };
+          scale = 1;
+          workspaceBase = 200;
+          transform = {
+            rotation = 0;
+            flipped = false;
+          };
+          position = {
+            x = 2560;
+            y = 0;
+          };
+        };
+      };
+      settings = { };
+    };
     noctalia = import ./noctalia;
     session = {
       enable = true;
@@ -168,7 +230,7 @@
       "spotify"
       "nagi-hushmic-tray"
     ];
-    startup.backend = "niri";
+    startup.backend = "hyprland";
   };
 
   features = {

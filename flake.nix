@@ -1,5 +1,5 @@
 {
-  description = "Minimal multi-host NixOS + Home Manager setup with Niri/KDE, Noctalia, and sops-nix";
+  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, Noctalia, and sops-nix";
 
   # Keep synchronized with modules/nixos/base/binary-caches.nix.
   nixConfig = {
@@ -122,5 +122,6 @@
 
   };
 
-  outputs = inputs: inputs.flake-parts.lib.mkFlake {inherit inputs;} (inputs.import-tree ./modules/flake);
+  outputs =
+    inputs: inputs.flake-parts.lib.mkFlake { inherit inputs; } (inputs.import-tree ./modules/flake);
 }

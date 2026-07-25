@@ -55,28 +55,42 @@ let
   cheatenginePkg = pkgs.cheatengine or null;
   mo2LintPkg = pkgs.mo2-lint or null;
   rustyPathOfBuildingPkg = pkgs.rusty-path-of-building or null;
-  # APT is Electron-based and still X11-only for overlays/hotkeys on Wayland
-  # compositors (Niri/Hyprland). Force X11/XWayland the same way Discord is
-  # forced, so desktop entries and the Mod+Alt+P bind both land on XWayland
-  # via niri's built-in xwayland-satellite integration.
   awakenedPoeTradeBase = pkgs.awakened-poe-trade or null;
-  awakenedPoeTradePkg =
+  # Preserve APT's bundled Electron: the nixpkgs replacement is less reliable
+  # for its XWayland global hotkey and synthesized clipboard input path.
+  awakenedPoeTradeAppImage =
     if awakenedPoeTradeBase == null then
+      null
+    else
+      pkgs.appimageTools.wrapType2 {
+        pname = "awakened-poe-trade";
+        inherit (awakenedPoeTradeBase) version src meta;
+        extraInstallCommands = ''
+          install -m 444 -D \
+            ${awakenedPoeTradeBase.passthru.appImageContents}/awakened-poe-trade.desktop \
+            "$out/share/applications/awakened-poe-trade.desktop"
+          substituteInPlace "$out/share/applications/awakened-poe-trade.desktop" \
+            --replace-fail 'Exec=AppRun' 'Exec=awakened-poe-trade'
+          cp -r ${awakenedPoeTradeBase.passthru.appImageContents}/usr/share/icons "$out/share/"
+        '';
+      };
+  awakenedPoeTradePkg =
+    if awakenedPoeTradeAppImage == null then
       null
     else
       pkgs.symlinkJoin {
         name = "awakened-poe-trade-x11";
-        paths = [ awakenedPoeTradeBase ];
+        paths = [ awakenedPoeTradeAppImage ];
         nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
           rm -f "$out/bin/awakened-poe-trade"
-          makeWrapper "${awakenedPoeTradeBase}/bin/awakened-poe-trade" "$out/bin/awakened-poe-trade" \
+          makeWrapper "${awakenedPoeTradeAppImage}/bin/awakened-poe-trade" "$out/bin/awakened-poe-trade" \
             --unset NIXOS_OZONE_WL \
             --unset ELECTRON_OZONE_PLATFORM_HINT \
             --set XDG_SESSION_TYPE x11 \
             --set GDK_BACKEND x11 \
             --unset WAYLAND_DISPLAY \
-            --add-flags "--ozone-platform=x11"
+            --add-flags "--ozone-platform=x11 --force-device-scale-factor=1"
         '';
       };
 in
@@ -148,6 +162,11 @@ in
         localNetworkGameTransfers.openFirewall = localTransfersOpenFirewall;
       };
 
+      programs.gamescope = {
+        enable = true;
+        capSysNice = true;
+      };
+
       environment.systemPackages = [
         lutrisPkg
         heroicPkg
@@ -162,7 +181,8 @@ in
         mo2LintPkg
         rustyPathOfBuildingPkg
         awakenedPoeTradePkg
-      ] ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
+      ]
+      ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
     })
     (lib.mkIf (enabled && cheatengineEnable) {
       # Grant Cheat Engine cap_sys_ptrace so it can scan and debug other

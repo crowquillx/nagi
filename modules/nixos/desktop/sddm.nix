@@ -16,7 +16,13 @@ let
   sddmBackground = get [ "desktop" "sddm" "background" ] null;
   sddmThemeConfig = get [ "desktop" "sddm" "themeConfig" ] { };
   effectiveDm = if dm == "auto" then "sddm" else dm;
-  defaultSession = if compositor == "plasma" then "plasma" else "niri";
+  defaultSession =
+    if compositor == "plasma" then
+      "plasma"
+    else if compositor == "hyprland" then
+      "hyprland-uwsm"
+    else
+      "niri";
 
   stylixEnabled = config.stylix.enable or false;
   scheme = if stylixEnabled then config.stylix.base16Scheme else { };

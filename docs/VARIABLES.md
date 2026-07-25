@@ -16,8 +16,8 @@ scalar values.
 
 ## Key switches
 
-- `desktop.compositor = "niri" | "plasma"` (default session selected by SDDM)
-- `desktop.extraCompositors = [ "niri" "plasma" ... ]` (optional additional installed sessions)
+- `desktop.compositor = "niri" | "hyprland" | "plasma"` (default session selected by SDDM)
+- `desktop.extraCompositors = [ "niri" "hyprland" "plasma" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
 - `desktop.sddm.wayland.enable = true | false`
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
@@ -27,6 +27,9 @@ scalar values.
 - `desktop.niri.configBuilder` (primary; default KDL builder at `modules/home/desktop/niri/default.nix`; set `null` for the settings attrset path)
 - `desktop.niri.outputs = { "<output-name>" = { scale, position = { x, y; }, mode = { width, height, refresh; }, focusAtStartup, transform = { rotation, flipped; }, variableRefreshRate }; ... }` (additive; consumed by the default configBuilder)
 - `desktop.niri.settings = { ... }` (additive; applied only when `configBuilder = null`)
+- `desktop.hyprland.configBuilder` (primary; default Lua builder at `modules/home/desktop/hyprland/default.nix`; set `null` for the upstream Home Manager settings path)
+- `desktop.hyprland.outputs = { "<output-name>" = { scale, position, mode, transform, variableRefreshRate, workspaceBase, bitDepth, colorManagement, sdrBrightness, sdrSaturation, focusAtStartup }; ... }`
+- `desktop.hyprland.settings = { ... }` (applied only when `configBuilder = null`)
 - `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }`
 - `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
 - `graphics.profile = "auto" | "none" | "amd" | "intel" | "nvidia" | "vm"`
@@ -36,7 +39,7 @@ scalar values.
 - `storage.mounts = [ { device, mountPoint, fsType ? "auto", options ? [ ] } ... ]`
 - `boot.secureBoot = { enable, includeMicrosoftKeys, autoEnroll, pkiBundle }` (Lanzaboote-based secure boot)
 - `desktop.shellStartupCommand = "<command>"`
-- `desktop.startup.backend = "systemd" | "niri"`
+- `desktop.startup.backend = "systemd" | "niri" | "hyprland"`
 - `desktop.startup.apps = [ "<cmd>" ... ]`
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false`
@@ -185,7 +188,7 @@ desktop.startup = {
 ```
 
 This uses Niri `spawn-at-startup`, so the apps start when the session starts but are not bounced by Home Manager user-service reloads during rebuilds.
-Use `features.chat.startup.enable` to start the selected chat client instead of adding it directly to `desktop.startup.apps`.
+Hyprland hosts can use `backend = "hyprland"` for the equivalent `hyprland.start` hook. Use `features.chat.startup.enable` to start the selected chat client instead of adding it directly to `desktop.startup.apps`.
 
 ### Chat client and Niri mute
 
@@ -229,6 +232,35 @@ desktop.niri = {
 
 Use `niri msg outputs` from inside a running Niri session to discover the output names and supported modes.
 
+### Hyprland extension contract
+
+`desktop.hyprland` mirrors the Niri builder model while producing Hyprland's current Lua configuration:
+
+1. **`configBuilder` (primary)** — function `{ lib, pkgs, vars, inputs } -> string` written to `wayland.windowManager.hyprland.extraConfig`. The default composes the scrolling layout, Niri-equivalent binds and rules, Noctalia integration, and host outputs.
+2. **`outputs`** — per-connector monitor layout consumed by the default builder. `bitDepth = 10` plus `colorManagement = "auto"` enables wide-color output while retaining Hyprland's fullscreen auto-HDR behavior. Set a unique `workspaceBase` per output to reserve 99 workspace IDs for that monitor while keeping `Mod+1` through `Mod+9` monitor-local; for example, bases `0`, `100`, and `200`.
+3. **`settings` (settings-path only)** — freeform upstream Home Manager settings used when `configBuilder = null`.
+
+The NixOS module owns the Hyprland and XDG portal packages; Home Manager owns `hyprland.lua`. Hyprnix is intentionally not used because it replaces Home Manager's maintained module and still targets the deprecated Hyprlang format.
+
+```nix
+desktop.hyprland.outputs."DP-1" = {
+  mode = {
+    width = 2560;
+    height = 1440;
+    refresh = 180.0;
+  };
+  position = {
+    x = 0;
+    y = 0;
+  };
+  variableRefreshRate = "on-demand";
+  workspaceBase = 0;
+  bitDepth = 10;
+  colorManagement = "auto";
+  focusAtStartup = true;
+};
+```
+
 To bypass the KDL builder and drive upstream `programs.niri.settings` directly:
 
 ```nix
@@ -253,6 +285,24 @@ Niri only:
 desktop = {
   compositor = "niri";
   extraCompositors = [ ];
+};
+```
+
+Hyprland only:
+
+```nix
+desktop = {
+  compositor = "hyprland";
+  extraCompositors = [ ];
+};
+```
+
+Hyprland by default with Niri retained as a fallback:
+
+```nix
+desktop = {
+  compositor = "hyprland";
+  extraCompositors = [ "niri" ];
 };
 ```
 
@@ -283,10 +333,11 @@ desktop = {
 };
 ```
 
-When both sessions are installed, portal routing remains session-specific.
-Niri uses the GNOME portal with GTK fallbacks, while Plasma uses the KDE portal
-with GTK fallbacks. Do not set `XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP`
-globally; SDDM sets the correct desktop identity for the selected session.
+When multiple sessions are installed, portal routing remains session-specific.
+Niri uses the GNOME portal, Hyprland uses XDG Desktop Portal Hyprland, and
+Plasma uses the KDE portal; all retain GTK fallbacks. Do not set
+`XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP` globally; SDDM sets the correct
+desktop identity for the selected session.
 When Niri and Plasma are both installed, Qt theming is session-scoped. The
 login environment uses Plasma's native KDE integration with Breeze, while the
 Niri config overrides its child processes to use Stylix's qtct/Kvantum theme.
@@ -319,10 +370,10 @@ desktop.noctalia = {
 ```
 
 This enables Home Manager's current `programs.noctalia.*` module with
-`systemd.enable = false`. Noctalia starts only via Niri `spawn-at-startup`.
-The module enables the `kcolorscheme` theme template and uses
-`desktop.noctalia.command` (default `nagi-noctalia-shell`) for Niri startup
-and Noctalia IPC keybinds.
+`systemd.enable = false`. Noctalia starts through the selected Niri or Hyprland
+compositor startup hook. The module enables the `kcolorscheme` theme template
+and uses `desktop.noctalia.command` (default `nagi-noctalia-shell`) for startup
+and IPC keybinds.
 
 Noctalia's GUI-managed `~/.local/state/noctalia/settings.toml` is applied after
 the declarative config. If that file already contains
@@ -334,6 +385,25 @@ settings so the runtime override includes the template.
 - `NOCTALIA_AP_GOOGLE_API_KEY`
 - `NOCTALIA_AP_OPENAI_COMPATIBLE_API_KEY`
 - `NOCTALIA_AP_DEEPL_API_KEY`
+
+#### Hyprland local workspaces plugin
+
+When Hyprland is enabled and one or more `desktop.hyprland.outputs.*.workspaceBase`
+values are set, nagi installs the `nagi/hyprland-local-workspaces` Noctalia bar
+plugin and points the existing `workspaces` widget entry at it. Labels are
+monitor-local (`globalId - workspaceBase` → `1–99`) while clicks and scrolls
+dispatch the real global Hyprland IDs.
+
+```nix
+desktop.noctalia.hyprlandLocalWorkspaces = {
+  # null (default) auto-enables when Hyprland + workspaceBase exist.
+  # Set false to keep the built-in Noctalia workspaces widget.
+  enable = null;
+};
+```
+
+The plugin is installed under `~/.local/share/noctalia/plugins/` (Noctalia's
+built-in local source) and does not patch or recompile the Noctalia package.
 
 ### NH
 

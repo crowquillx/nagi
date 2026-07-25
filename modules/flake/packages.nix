@@ -39,17 +39,23 @@
         nagi-noctalia = noctaliaPkg;
         nagi-niri = niriPkg;
         mo2-lint = pkgs.callPackage ../../pkgs/mo2-lint { };
+        nagi-noctalia-hyprland-local-workspaces =
+          pkgs.callPackage ../../pkgs/noctalia-plugins/hyprland-local-workspaces
+            { };
         inherit tcli;
       };
 
       # Lightweight behavior check: help text only (no flake eval / rebuild).
-      checks.tcli-help = pkgs.runCommandLocal "tcli-help" {
-        nativeBuildInputs = [ tcli ];
-      } ''
-        export NAGI_FLAKE_DIR=${self}
-        tcli --help | grep -q 'nagi helper'
-        tcli -h | grep -q 'Usage:'
-        touch "$out"
-      '';
+      checks.tcli-help =
+        pkgs.runCommandLocal "tcli-help"
+          {
+            nativeBuildInputs = [ tcli ];
+          }
+          ''
+            export NAGI_FLAKE_DIR=${self}
+            tcli --help | grep -q 'nagi helper'
+            tcli -h | grep -q 'Usage:'
+            touch "$out"
+          '';
     };
 }

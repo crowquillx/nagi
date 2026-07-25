@@ -1,4 +1,4 @@
-# Shared desktop startup + chat launch resolution for systemd and Niri backends.
+# Shared desktop startup + chat launch resolution for compositor and systemd backends.
 { lib, vars }:
 let
   get = path: default: lib.attrByPath path default vars;

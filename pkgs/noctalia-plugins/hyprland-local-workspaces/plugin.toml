@@ -1,0 +1,80 @@
+# Monitor-local Hyprland workspace pills for Noctalia.
+# Shows 1–99 labels while focusing the real global workspace IDs that nagi
+# reserves per connector (workspaceBase + slot).
+
+id = "nagi/hyprland-local-workspaces"
+name = "Hyprland Local Workspaces"
+version = "1.0.2"
+# Installed noctalia 5.0.0 supports plugin API 3-12 (not 14).
+plugin_api = 12
+author = "nagi"
+license = "MIT"
+icon = "layout-grid"
+description = "Hyprland workspace pills with monitor-local labels (1–99) and global ID dispatch."
+tags = ["hyprland", "workspaces", "multi-monitor"]
+dependencies = ["hyprctl"]
+
+[[widget]]
+id = "bar"
+entry = "bar.luau"
+
+  # Scroll is handled in Luau via onScroll (monitor-local). Gesture defaults in
+  # the manifest require plugin_api >= 14, which this shell does not support.
+
+  [[widget.setting]]
+  key = "hide_when_empty"
+  type = "bool"
+  label_key = "settings.hide_when_empty.label"
+  description_key = "settings.hide_when_empty.description"
+  default = false
+
+  [[widget.setting]]
+  key = "gap"
+  type = "int"
+  label_key = "settings.gap.label"
+  description_key = "settings.gap.description"
+  default = 4
+  min = 0
+  max = 24
+
+  [[widget.setting]]
+  key = "poll_ms"
+  type = "int"
+  label_key = "settings.poll_ms.label"
+  description_key = "settings.poll_ms.description"
+  default = 250
+  min = 50
+  max = 2000
+
+  # Connector → global workspace base. Labels are id - base.
+  # Defaults match tandesk: DP-3=0, DP-2=100, DP-1=200.
+  [[widget.setting]]
+  key = "workspace_bases"
+  type = "string_map"
+  label_key = "settings.workspace_bases.label"
+  description_key = "settings.workspace_bases.description"
+  default = { "DP-3" = "0", "DP-2" = "100", "DP-1" = "200" }
+
+  [[widget.setting]]
+  key = "focused_color"
+  type = "color"
+  label_key = "settings.focused_color.label"
+  default = "primary"
+
+  [[widget.setting]]
+  key = "occupied_color"
+  type = "color"
+  label_key = "settings.occupied_color.label"
+  default = "secondary"
+
+  [[widget.setting]]
+  key = "empty_color"
+  type = "color"
+  label_key = "settings.empty_color.label"
+  default = "secondary"
+
+  [[widget.setting]]
+  key = "urgent_color"
+  type = "color"
+  label_key = "settings.urgent_color.label"
+  default = "error"

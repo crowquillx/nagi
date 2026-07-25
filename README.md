@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, `nixpkgs-unstable`, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, `nixpkgs-unstable`, Hyprland, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
 
 ## Hosts
 
@@ -119,3 +119,4 @@ Those host names match the registry in `lib/host-registry.nix`.
 - The shared host data model is `config.nagi.variables`.
 - This setup targets `nixpkgs-unstable`.
 - Niri support is intentional; per-host monitor layout lives under `desktop.niri.outputs`.
+- Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.

@@ -1,0 +1,14 @@
+{
+  "settings.hide_when_empty.label": "Hide empty workspaces",
+  "settings.hide_when_empty.description": "Only show workspaces that are active, occupied, or urgent on this monitor.",
+  "settings.gap.label": "Pill gap",
+  "settings.gap.description": "Horizontal gap between workspace pills in pixels.",
+  "settings.poll_ms.label": "Poll interval (ms)",
+  "settings.poll_ms.description": "How often to re-query Hyprland workspace state.",
+  "settings.workspace_bases.label": "Workspace bases",
+  "settings.workspace_bases.description": "Map of Hyprland connector name to workspaceBase (global ID offset).",
+  "settings.focused_color.label": "Active color",
+  "settings.occupied_color.label": "Occupied color",
+  "settings.empty_color.label": "Empty color",
+  "settings.urgent_color.label": "Urgent color"
+}
