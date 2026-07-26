@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, `nixpkgs-unstable`, Hyprland, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
 
 ## Hosts
 
@@ -13,7 +13,7 @@ The flake profile name and installed machine hostname are separate. For example,
 ## Layout
 
 - `flake.nix`: parts-wrapped flake entrypoint via `flake-parts`
-- `modules/flake/*`: host registry, external module injection, packages, and outputs
+- `modules/flake/*`: host registry, external module injection (including Determinate Nix), packages, and outputs
 - `modules/combined/stacks.nix`: shared NixOS and Home Manager stack wiring
 - `hosts/<host>/variables.nix`: host identity, toggles, and values
 - `hosts/<host>/default.nix`: host-specific system wiring
@@ -34,6 +34,31 @@ sudo ./install/bootstrap.sh default --user alice --hostname alice-pc --flake-dir
 ```
 
 Bootstrap writes those values into `hosts/<profile>/variables.nix`, generates hardware config when needed, runs `nixos-rebuild`, and activates Home Manager for the primary user.
+
+## Determinate Nix and FlakeHub
+
+Every NixOS host imports Determinate Systems' official NixOS module. It provides:
+
+- Determinate Nix, including parallel evaluation and lazy trees
+- `determinate-nixd` for daemon management and FlakeHub authentication
+- `fh`, the FlakeHub CLI
+- Determinate Nix compatibility for both integrated and standalone Home Manager
+
+The flake keeps custom daemon settings in the declaratively generated `/etc/nix/nix.custom.conf`; Determinate Nixd owns `/etc/nix/nix.conf`. The Determinate installer is not used on NixOS.
+
+Authenticate after activation when FlakeHub access is needed:
+
+```bash
+determinate-nixd login
+determinate-nixd status
+```
+
+Common FlakeHub commands:
+
+```bash
+fh search "nixos"
+fh add nixos/nixpkgs
+```
 
 ## tcli
 
@@ -96,7 +121,7 @@ features.flatpak = {
 
 ## CI
 
-Pull requests run `.github/workflows/ci.yml`:
+Pull requests run `.github/workflows/ci.yml` with Determinate Nix and FlakeHub Cache:
 
 - **lint**: `nix build --accept-flake-config .#checks.x86_64-linux.statix`, then `nix flake check --no-build --accept-flake-config`
 - **build-hosts** (matrix `tandesk`, `default`, `tanlappy`): `nix build --accept-flake-config .#checks.x86_64-linux.nixos-<host>` and `nix build --accept-flake-config .#checks.x86_64-linux.home-<host>`
@@ -117,6 +142,6 @@ Those host names match the registry in `lib/host-registry.nix`.
 - `default` is intended as a buildable reference host, not a private machine profile.
 - `hardware-configuration.nix` placeholders are overwritten by bootstrap when needed.
 - The shared host data model is `config.nagi.variables`.
-- This setup targets `nixpkgs-unstable`.
+- This setup targets `nixpkgs-unstable` and uses Determinate Nix as its only Nix distribution.
 - Niri support is intentional; per-host monitor layout lives under `desktop.niri.outputs`.
 - Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.

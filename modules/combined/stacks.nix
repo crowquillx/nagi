@@ -6,7 +6,7 @@
 let
   nixosBase = [
     ../nixos/base/default.nix
-    ../nixos/base/lix.nix
+    ../nixos/base/determinate.nix
   ];
 
   # Mounts stay early: before theme/hardware/desktop, as in the prior flat list.

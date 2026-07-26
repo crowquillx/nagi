@@ -5,6 +5,11 @@
 #   }
 # Feature gates read resolved nagi.variables. Builders stay in hosts.nix.
 { lib, inputs }: let
+  determinateNixOverlay = final: prev: {
+    nix-direnv = prev.nix-direnv.override {
+      nix = inputs.determinate-nix.packages.${final.stdenv.hostPlatform.system}.default;
+    };
+  };
   niriOverlay = lib.attrByPath ["niri" "overlays" "niri"] null inputs;
 
   # mcp-nixos-2.4.3 ships a flaky store test that scans /nix/store and
@@ -134,7 +139,7 @@
   nixGamingOverlay = final: _prev: let
     ng = inputs.nix-gaming.packages.${final.stdenv.hostPlatform.system};
   in {
-    osu-lazer-bin = ng.osu-lazer-bin;
+    inherit (ng) osu-lazer-bin;
   };
 
   # Official Furglitch MO2-LINT v7 PyInstaller binary (replaces nix-gaming's
@@ -156,6 +161,7 @@
 
   sharedOverlays = vars:
     [
+      determinateNixOverlay
       hushmicOverlay
       vortexOverlay
       nixGamingOverlay

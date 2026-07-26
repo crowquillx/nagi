@@ -9,11 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
 
-      - name: Enable binary cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Enable FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
 
       # Blocking lint: build the locked flake check (honors flake.lock +
       # statix.toml) so CI does not float on an unpinned nixpkgs#statix.
@@ -34,11 +34,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Nix
-        uses: cachix/install-nix-action@v31
+      - name: Install Determinate Nix
+        uses: DeterminateSystems/determinate-nix-action@v3
 
-      - name: Enable binary cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Enable FlakeHub Cache
+        uses: DeterminateSystems/flakehub-cache-action@main
 
       # Build the NixOS toplevel for this host from the standard checks
       # output. This also exercises sops file validation at build time.

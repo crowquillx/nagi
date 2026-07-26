@@ -1,9 +1,4 @@
-{
-  lib,
-  config,
-  pkgs,
-  ...
-}:
+{ lib, config, ... }:
 let
   v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
@@ -15,7 +10,4 @@ in
   ];
 
   networking.hostName = get [ "host" "name" ] "tanlappy";
-
-  # Avoid Lix's random-only temporary paths on this RDRAND-affected Ryzen 3500U.
-  nix.package = lib.mkForce pkgs.nixVersions.latest;
 }

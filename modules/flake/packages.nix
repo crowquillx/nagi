@@ -24,7 +24,7 @@
           pkgs.gnused
           pkgs.inetutils
           pkgs.nh
-          pkgs.nix
+          inputs.determinate-nix.packages.${system}.default
           pkgs.statix
         ];
         # SC2001: sed is the clear way to indent multi-line closure-diff output.

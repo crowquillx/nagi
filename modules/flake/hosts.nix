@@ -31,6 +31,7 @@
   niriNixosModule = lib.attrByPath ["niri" "nixosModules" "niri"] null inputs;
   niriHmConfigModule = lib.attrByPath ["niri" "homeModules" "config"] null inputs;
   stylixHmModule = lib.attrByPath ["stylix" "homeModules" "stylix"] null inputs;
+  determinateHmModule = inputs.determinate.homeManagerModules.default;
 
   # Niri and Stylix NixOS modules inject their Home Manager modules,
   # so standalone Home Manager appends those two modules below.
@@ -40,6 +41,7 @@
   homeModulesFor = {standalone ? false}:
     [homeModule]
     ++ sharedHomeModules
+    ++ lib.optional standalone determinateHmModule
     ++ lib.optionals (standalone && niriHmConfigModule != null) [niriHmConfigModule]
     ++ lib.optionals (standalone && stylixHmModule != null) [stylixHmModule];
 
@@ -68,6 +70,7 @@
             nixpkgs.hostPlatform = hostPlatform;
             nixpkgs.overlays = sharedOverlays vars;
           }
+          inputs.determinate.nixosModules.default
           inputs.home-manager.nixosModules.home-manager
           inputs.nix-flatpak.nixosModules.nix-flatpak
           inputs.sops-nix.nixosModules.sops
