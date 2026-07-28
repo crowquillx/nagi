@@ -147,6 +147,13 @@
   mo2LintOverlay = final: _prev: {
     mo2-lint = final.callPackage ../pkgs/mo2-lint { };
   };
+
+  # Keep existing t3code consumers on the official nightly AppImage without an
+  # uncached pnpm source build for every nightly release.
+  t3codeNightlyOverlay = final: _prev: {
+    t3code = final.callPackage ../pkgs/t3code-nightly { };
+  };
+
   millenniumEnabled = vars: lib.attrByPath ["features" "gaming" "steam" "millennium" "enable"] false vars;
   gamingEnabled = vars: lib.attrByPath ["features" "gaming" "enable"] false vars;
   cheatengineEnabled = vars: lib.attrByPath ["features" "gaming" "cheatengine" "enable"] false vars;
@@ -166,6 +173,7 @@
       vortexOverlay
       nixGamingOverlay
       mo2LintOverlay
+      t3codeNightlyOverlay
     ]
     ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default

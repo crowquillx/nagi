@@ -39,6 +39,7 @@
         nagi-noctalia = noctaliaPkg;
         nagi-niri = niriPkg;
         mo2-lint = pkgs.callPackage ../../pkgs/mo2-lint { };
+        t3code-nightly = pkgs.callPackage ../../pkgs/t3code-nightly { };
         nagi-noctalia-hyprland-local-workspaces =
           pkgs.callPackage ../../pkgs/noctalia-plugins/hyprland-local-workspaces
             { };

@@ -159,6 +159,11 @@ let
       type = types.number;
       default = 1.0;
     };
+    sdrMaxLuminance = mkOption {
+      type = types.ints.positive;
+      default = 80;
+      description = "Maximum SDR luminance in nits when mapping SDR content to HDR.";
+    };
     focusAtStartup = enableOption "Focus this output when Hyprland starts." false;
   };
   mountSubmodule = strictSubmodule {
@@ -857,10 +862,6 @@ in
                             };
                             ohMyPi = mkOption {
                               type = packageToggle "Oh My Pi" aiCliArgs.config.enable;
-                              default = { };
-                            };
-                            paseo = mkOption {
-                              type = packageToggle "Paseo" aiCliArgs.config.enable;
                               default = { };
                             };
                             herdr = mkOption {

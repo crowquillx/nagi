@@ -17,7 +17,6 @@
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
   piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
   ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
-  paseoEnabled = get ["features" "codingTools" "aiCli" "paseo" "enable"] aiCliEnabled;
   herdrEnabled = get ["features" "codingTools" "aiCli" "herdr" "enable"] aiCliEnabled;
   nixToolsEnabled = get ["features" "codingTools" "nixTools" "enable"] codingToolsEnabled;
 
@@ -35,7 +34,6 @@
     else binPkg;
   piPkg = llmAgent "pi";
   ohMyPiPkg = llmAgent "omp";
-  paseoPkg = llmAgent "paseo-desktop";
   herdrPkg = llmAgent "herdr";
   claudeCodePkg = llmAgent "claude-code";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
@@ -98,10 +96,6 @@ in {
     {
       assertion = !(ohMyPiEnabled && ohMyPiPkg == null);
       message = "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(paseoEnabled && paseoPkg == null);
-      message = "features.codingTools.aiCli.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(herdrEnabled && herdrPkg == null);
@@ -169,7 +163,6 @@ in {
     ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
     ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
     ++ lib.optionals (ohMyPiEnabled && bunPkg != null) [bunPkg]
-    ++ lib.optionals (paseoEnabled && paseoPkg != null) [paseoPkg]
     ++ lib.optionals (herdrEnabled && herdrPkg != null) [herdrPkg]
     ++ lib.optionals (aiCliEnabled && uvPkg != null) [uvPkg]
     ++ lib.optionals (aiCliEnabled && bubblewrapPkg != null) [bubblewrapPkg]

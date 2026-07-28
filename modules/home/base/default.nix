@@ -199,12 +199,15 @@ in
     home-manager.enable = true;
     git = {
       enable = true;
-      settings.push.autoSetupRemote = true;
-    }
-    // lib.optionalAttrs (gitUserName != null && gitUserEmail != null) {
-      settings.user = {
-        name = gitUserName;
-        email = gitUserEmail;
+      settings = {
+        push.autoSetupRemote = true;
+        init.defaultBranch = "main";
+      }
+      // lib.optionalAttrs (gitUserName != null && gitUserEmail != null) {
+        user = {
+          name = gitUserName;
+          email = gitUserEmail;
+        };
       };
     };
     bash.enable = true;

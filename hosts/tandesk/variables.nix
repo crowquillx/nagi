@@ -168,9 +168,10 @@
           };
           variableRefreshRate = "on-demand";
           bitDepth = 10;
-          colorManagement = "auto";
-          sdrBrightness = 1.2;
-          sdrSaturation = 0.98;
+          colorManagement = "srgb";
+          sdrBrightness = 1.0;
+          sdrSaturation = 1.0;
+          sdrMaxLuminance = 250;
           focusAtStartup = true;
         };
         "DP-2" = {

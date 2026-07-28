@@ -81,6 +81,9 @@ in
 ''
   local mainMod = "SUPER"
   local layout = function(message) return hl.dsp.layout(message) end
+  local scratchpadName = "scratchpad"
+  local toggleScratchpad = hl.dsp.workspace.toggle_special(scratchpadName)
+  local moveActiveWindowToScratchpad = hl.dsp.window.move({ workspace = "special:" .. scratchpadName })
 
   local function focusFirstColumn()
     for _ = 1, 64 do hl.dispatch(layout("move -col")) end
@@ -119,6 +122,8 @@ in
 
   hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("ghostty"), { description = "Open terminal" })
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"), { description = "Open terminal" })
+  hl.bind(mainMod .. " + S", toggleScratchpad, { description = "Toggle scratchpad", dont_inhibit = true })
+  hl.bind(mainMod .. " + SHIFT + S", moveActiveWindowToScratchpad, { description = "Move window to scratchpad", dont_inhibit = true })
   hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(${quote (noctalia "panel-toggle clipboard")}), { description = "Clipboard manager" })
   hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ghostty -e htop"), { description = "Task manager" })
   hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("awakened-poe-trade"), { description = "Awakened PoE Trade", dont_inhibit = true })

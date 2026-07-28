@@ -28,7 +28,7 @@ scalar values.
 - `desktop.niri.outputs = { "<output-name>" = { scale, position = { x, y; }, mode = { width, height, refresh; }, focusAtStartup, transform = { rotation, flipped; }, variableRefreshRate }; ... }` (additive; consumed by the default configBuilder)
 - `desktop.niri.settings = { ... }` (additive; applied only when `configBuilder = null`)
 - `desktop.hyprland.configBuilder` (primary; default Lua builder at `modules/home/desktop/hyprland/default.nix`; set `null` for the upstream Home Manager settings path)
-- `desktop.hyprland.outputs = { "<output-name>" = { scale, position, mode, transform, variableRefreshRate, workspaceBase, bitDepth, colorManagement, sdrBrightness, sdrSaturation, focusAtStartup }; ... }`
+- `desktop.hyprland.outputs = { "<output-name>" = { scale, position, mode, transform, variableRefreshRate, workspaceBase, bitDepth, colorManagement, sdrBrightness, sdrSaturation, sdrMaxLuminance, focusAtStartup }; ... }`
 - `desktop.hyprland.settings = { ... }` (applied only when `configBuilder = null`)
 - `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }`
 - `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
@@ -76,7 +76,6 @@ scalar values.
 - `features.codingTools.aiCli.gemini.enable = true | false`
 - `features.codingTools.aiCli.pi.enable = true | false`
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
-- `features.codingTools.aiCli.paseo.enable = true | false`
 - `features.codingTools.aiCli.herdr.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
 - `features.mcp.nixos.enable = true | false`
@@ -237,7 +236,7 @@ Use `niri msg outputs` from inside a running Niri session to discover the output
 `desktop.hyprland` mirrors the Niri builder model while producing Hyprland's current Lua configuration:
 
 1. **`configBuilder` (primary)** — function `{ lib, pkgs, vars, inputs } -> string` written to `wayland.windowManager.hyprland.extraConfig`. The default composes the scrolling layout, Niri-equivalent binds and rules, Noctalia integration, and host outputs.
-2. **`outputs`** — per-connector monitor layout consumed by the default builder. `bitDepth = 10` plus `colorManagement = "auto"` enables wide-color output while retaining Hyprland's fullscreen auto-HDR behavior. Set a unique `workspaceBase` per output to reserve 99 workspace IDs for that monitor while keeping `Mod+1` through `Mod+9` monitor-local; for example, bases `0`, `100`, and `200`.
+2. **`outputs`** — per-connector monitor layout consumed by the default builder. `bitDepth = 10` plus `colorManagement = "auto"` enables wide-color output, while `colorManagement = "srgb"` provides an sRGB desktop; both retain Hyprland's fullscreen auto-HDR behavior. `sdrMaxLuminance` sets the SDR white level in nits while mapping SDR content to HDR. Set a unique `workspaceBase` per output to reserve 99 workspace IDs for that monitor while keeping `Mod+1` through `Mod+9` monitor-local; for example, bases `0`, `100`, and `200`.
 3. **`settings` (settings-path only)** — freeform upstream Home Manager settings used when `configBuilder = null`.
 
 The NixOS module owns the Hyprland and XDG portal packages; Home Manager owns `hyprland.lua`. Hyprnix is intentionally not used because it replaces Home Manager's maintained module and still targets the deprecated Hyprlang format.

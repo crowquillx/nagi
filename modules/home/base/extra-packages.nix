@@ -11,9 +11,11 @@ let
     if bravePasswordStore == "auto" then
       pkgs.brave
     else
-      pkgs.brave.override {
-        commandLineArgs = "--password-store=${bravePasswordStore}";
-      };
+      pkgs.brave.overrideAttrs (old: {
+        preFixup = (old.preFixup or "") + ''
+          gappsWrapperArgs+=(--add-flags "--password-store=${bravePasswordStore}")
+        '';
+      });
   discordForceXwayland = get [ "features" "chat" "discord" "forceXwayland" ] true;
   equicordEnabled = get [ "features" "chat" "discord" "equicord" "enable" ] false;
   discordEquicordPackage = pkgs.runCommand "discord-equicord" { } ''

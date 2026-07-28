@@ -66,6 +66,7 @@ let
           cm = ${quote output.colorManagement},
           sdrbrightness = ${toString output.sdrBrightness},
           sdrsaturation = ${toString output.sdrSaturation},
+          sdr_max_luminance = ${toString output.sdrMaxLuminance},
         })
       '';
   monitorConfig = lib.concatStringsSep "\n" (lib.mapAttrsToList mkMonitor outputs);

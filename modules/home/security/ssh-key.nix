@@ -128,6 +128,14 @@ in
           IdentityFile ~/.ssh/${privName}
         '';
       };
+
+      # OpenSSH requires the user's config to be owned by the user or root.
+      # Keep Home Manager's generated config in the store-backed source path,
+      # then materialize it as a user-owned file for the SSH client.
+      home.file.".ssh/config".target = ".ssh/config.hm-source";
+      home.activation.materializeSshConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+        run install -m 600 -T "$HOME/.ssh/config.hm-source" "$HOME/.ssh/config"
+      '';
     })
 
     (lib.mkIf signingEnabled {
