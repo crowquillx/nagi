@@ -104,6 +104,11 @@ in
     hl.dispatch(hl.dsp.focus({ window = target }))
   end
 
+  local function toggleColumnWidth()
+    hl.dispatch(layout("colresize +conf"))
+    hl.dispatch(layout("colresize +conf"))
+  end
+
   local shortcutsInhibitDisabled = false
   local function toggleShortcutsInhibit()
     shortcutsInhibitDisabled = not shortcutsInhibitDisabled
@@ -146,7 +151,7 @@ in
   hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(${quote (noctalia "brightness-down")}), { locked = true, repeating = true })
 
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
-  hl.bind(mainMod .. " + F", layout("fit active"), { description = "Maximize column" })
+  hl.bind(mainMod .. " + F", toggleColumnWidth, { description = "Toggle column between 50% and 100%" })
   hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
   hl.bind(mainMod .. " + SHIFT + T", hl.dsp.window.float({ action = "toggle" }))
   hl.bind(mainMod .. " + SHIFT + V", switchFloatingFocus)

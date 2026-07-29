@@ -83,6 +83,7 @@
       packages = [
         "org.upscayl.Upscayl"
         "ru.linux_gaming.PortProton"
+        "org.freedesktop.Platform.VulkanLayer.gamescope//25.08"
         {
           # Must match the bundle app-id exactly (uninstallUnmanaged).
           appId = "com.cakewallet.CakeWallet";
@@ -96,7 +97,7 @@
     gaming = {
       enable = true;
       steam = {
-        gamescopeSession.enable = false;
+        gamescopeSession.enable = true;
         remotePlay.openFirewall = true;
         dedicatedServer.openFirewall = true;
         localNetworkGameTransfers.openFirewall = true;
