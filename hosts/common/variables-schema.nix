@@ -856,6 +856,10 @@ in
                               type = packageToggle "Gemini CLI" aiCliArgs.config.enable;
                               default = { };
                             };
+                            grok = mkOption {
+                              type = packageToggle "Grok Build" aiCliArgs.config.enable;
+                              default = { };
+                            };
                             pi = mkOption {
                               type = packageToggle "Pi" aiCliArgs.config.enable;
                               default = { };

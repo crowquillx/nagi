@@ -15,6 +15,7 @@
   claudeEnabled = get ["features" "codingTools" "aiCli" "claude" "enable"] aiCliEnabled;
   cliProxyApiEnabled = get ["features" "codingTools" "aiCli" "cliProxyApi" "enable"] aiCliEnabled;
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
+  grokEnabled = get ["features" "codingTools" "aiCli" "grok" "enable"] aiCliEnabled;
   piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
   ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
   herdrEnabled = get ["features" "codingTools" "aiCli" "herdr" "enable"] aiCliEnabled;
@@ -23,9 +24,9 @@
   llmAgent = name: lib.attrByPath ["llm-agents" name] null pkgs;
 
   geminiCliPkg = let
-    llmPkg = llmAgent "gemini-cli";
-    sourcePkg = lib.attrByPath ["gemini-cli"] null pkgs;
-    binPkg = lib.attrByPath ["gemini-cli-bin"] null pkgs;
+    llmPkg = llmAgent "antigravity-cli";
+    sourcePkg = lib.attrByPath ["antigravity-cli"] null pkgs;
+    binPkg = lib.attrByPath ["antigravity-cli-bin"] null pkgs;
   in
     if llmPkg != null
     then llmPkg
@@ -35,6 +36,7 @@
   piPkg = llmAgent "pi";
   ohMyPiPkg = llmAgent "omp";
   herdrPkg = llmAgent "herdr";
+  grokPkg = llmAgent "grok";
   claudeCodePkg = llmAgent "claude-code";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
   bunPkg = lib.attrByPath ["bun"] null pkgs;
@@ -88,6 +90,10 @@ in {
     {
       assertion = !(cliProxyApiEnabled && cliProxyApiPkg == null);
       message = "features.codingTools.aiCli.cliProxyApi.enable is true, but package 'cli-proxy-api' could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(grokEnabled && grokPkg == null);
+      message = "features.codingTools.aiCli.grok.enable is true, but package 'grok' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(piEnabled && piPkg == null);
@@ -160,6 +166,7 @@ in {
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [claudeCodePkg]
     ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [cliProxyApiPkg]
+    ++ lib.optionals (grokEnabled && grokPkg != null) [grokPkg]
     ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
     ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
     ++ lib.optionals (ohMyPiEnabled && bunPkg != null) [bunPkg]

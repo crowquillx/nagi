@@ -1,6 +1,6 @@
 { lib, config, pkgs, ... }: let
   cfg = config.nagi.variables.features.mullvad;
-  mullvadPackage = lib.getAttr "mullvad-vpn" pkgs;
+  mullvadCliPackage = lib.getAttr "mullvad" pkgs;
   lanMode =
     if cfg.service.allowLan
     then "allow"
@@ -8,7 +8,7 @@
   # mullvad-daemon reports active before the management socket is ready.
   setLanSharing = pkgs.writeShellScript "mullvad-lan-sharing" ''
     set -eu
-    mullvad="${mullvadPackage}/bin/mullvad"
+    mullvad="${mullvadCliPackage}/bin/mullvad"
     for _ in $(${pkgs.coreutils}/bin/seq 1 30); do
       if "$mullvad" lan set ${lanMode}; then
         exit 0
@@ -31,7 +31,7 @@ in {
     (lib.mkIf cfg.service.enable {
       services.mullvad-vpn = {
         enable = true;
-        package = mullvadPackage;
+        gui.enable = cfg.package == "gui";
       };
 
       systemd.services.mullvad-lan-sharing = {

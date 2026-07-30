@@ -74,6 +74,7 @@ scalar values.
 - `features.codingTools.aiCli.cliProxyApi.enable = true | false`
 - `features.codingTools.aiCli.opencode.enable = true | false`
 - `features.codingTools.aiCli.gemini.enable = true | false`
+- `features.codingTools.aiCli.grok.enable = true | false`
 - `features.codingTools.aiCli.pi.enable = true | false`
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
 - `features.codingTools.aiCli.herdr.enable = true | false`
@@ -476,13 +477,14 @@ features = {
 LocalSend is installed through Home Manager; `openFirewall` independently owns
 TCP and UDP port 53317. Mullvad `package = "cli"` installs `mullvad` without
 starting the system daemon. The daemon requires `package = "gui"` and uses
-`mullvad-vpn`, preventing both package variants from being installed together.
+the NixOS module's default daemon package with its GUI enabled, preventing both
+package variants from being installed together.
 Remove legacy `localsend`, `mullvad`, and `mullvad-vpn` entries from
 `users.extraPackages` when migrating to these variables.
 
-With `service.enable = true`, NixOS starts `services.mullvad-vpn` using the
-official Mullvad GUI/CLI package. Account login and tunnel control happen in
-the Mullvad app (or `mullvad` CLI) after activation. `service.allowLan` owns the
+With `service.enable = true`, NixOS starts `services.mullvad-vpn` and enables
+the official Mullvad GUI. Account login and tunnel control happen in the
+Mullvad app (or `mullvad` CLI) after activation. `service.allowLan` owns the
 app's local-network-sharing policy; enable it for libvirt networks such as
 Whonix-External. This also permits access to other local subnets while Mullvad
 is connected.
