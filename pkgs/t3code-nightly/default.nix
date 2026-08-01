@@ -7,6 +7,7 @@
   makeBinaryWrapper,
   symlinkJoin,
   codex,
+  grok ? null,
   enableCodex ? true,
   enableGitHub ? true,
   enableGit ? true,
@@ -46,6 +47,7 @@ let
   };
   runtimePackages =
     lib.optionals enableCodex [ codex ]
+    ++ lib.optional (grok != null) grok
     ++ lib.optionals enableGitHub [ gh ]
     ++ lib.optionals enableGit [ git ];
 in

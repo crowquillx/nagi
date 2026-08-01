@@ -77,6 +77,13 @@
       resolved.enable = true;
       powerProfilesDaemon.enable = true;
     };
+    razer = {
+      openrazer = {
+        enable = true;
+        users = [ "tan" ];
+      };
+      inputRemapper.enable = true;
+    };
     printing.enable = false;
     flatpak = {
       enable = true;

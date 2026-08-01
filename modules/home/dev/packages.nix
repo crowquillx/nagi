@@ -2,11 +2,13 @@
   lib,
   pkgs,
   vars ? {},
+  inputs,
   ...
 }: let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get ["features" "codingTools" "enable"] true;
+  orcaEnabled = get ["features" "codingTools" "orca" "enable"] codingToolsEnabled;
   editorsEnabled = get ["features" "codingTools" "editors" "enable"] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get ["features" "codingTools" "editors" "t3code" "enable"] true;
   cursorEnabled = editorsEnabled && get ["features" "codingTools" "editors" "cursor" "enable"] true;
@@ -20,6 +22,9 @@
   ohMyPiEnabled = get ["features" "codingTools" "aiCli" "ohMyPi" "enable"] aiCliEnabled;
   herdrEnabled = get ["features" "codingTools" "aiCli" "herdr" "enable"] aiCliEnabled;
   nixToolsEnabled = get ["features" "codingTools" "nixTools" "enable"] codingToolsEnabled;
+  system = pkgs.stdenv.hostPlatform.system;
+
+  orcaPkg = lib.attrByPath ["orca-nix" "packages" system "default"] null inputs;
 
   llmAgent = name: lib.attrByPath ["llm-agents" name] null pkgs;
 
@@ -36,7 +41,34 @@
   piPkg = llmAgent "pi";
   ohMyPiPkg = llmAgent "omp";
   herdrPkg = llmAgent "herdr";
-  grokPkg = llmAgent "grok";
+  grokUpstreamPkg = llmAgent "grok";
+  # The upstream Linux package uses bubblewrap to synthesize /bin/bash and
+  # /bin/zsh. That is useful for the standalone CLI, but T3 Code launches
+  # `grok agent stdio` from an already-managed desktop process, where the
+  # nested mount namespace can fail before ACP initialization. The official
+  # binary itself works when its shell is pinned to NixOS's /bin/sh.
+  grokPkg =
+    if grokUpstreamPkg == null
+    then null
+    else pkgs.symlinkJoin {
+      name = "${grokUpstreamPkg.name}-direct";
+      paths = [grokUpstreamPkg];
+      nativeBuildInputs = [pkgs.makeWrapper];
+      postBuild = ''
+        rm -f "$out/bin/grok" "$out/bin/agent"
+        makeShellWrapper "${grokUpstreamPkg}/libexec/grok/grok" "$out/bin/grok" \
+          --argv0 grok \
+          --set SHELL /bin/sh \
+          --add-flags "--no-auto-update"
+        makeShellWrapper "${grokUpstreamPkg}/libexec/grok/grok" "$out/bin/agent" \
+          --argv0 agent \
+          --set SHELL /bin/sh \
+          --add-flags "--no-auto-update"
+      '';
+      meta = grokUpstreamPkg.meta // {
+        description = "Grok Build official binary with a T3 Code-compatible launcher";
+      };
+    };
   claudeCodePkg = llmAgent "claude-code";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
   bunPkg = lib.attrByPath ["bun"] null pkgs;
@@ -59,7 +91,10 @@
     llmCodex = llmAgent "codex";
   in
     if base != null && llmCodex != null
-    then base.override {codex = llmCodex;}
+    then base.override {
+      codex = llmCodex;
+      grok = if grokEnabled then grokPkg else null;
+    }
     else base;
   t3DesktopProgram =
     if t3DesktopPkg == null
@@ -79,6 +114,10 @@
   nilPkg = lib.attrByPath ["nil"] null pkgs;
 in {
   assertions = [
+    {
+      assertion = !(orcaEnabled && orcaPkg == null);
+      message = "features.codingTools.orca.enable is true, but the orca-nix package could not be resolved from the flake input.";
+    }
     {
       assertion = !(geminiEnabled && geminiCliPkg == null);
       message = "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback.";
@@ -163,6 +202,7 @@ in {
 
   home.packages =
     lib.optionals codingToolsEnabled [pkgs.nodejs]
+    ++ lib.optionals (orcaEnabled && orcaPkg != null) [orcaPkg]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [claudeCodePkg]
     ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [cliProxyApiPkg]

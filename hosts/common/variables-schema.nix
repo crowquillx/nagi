@@ -804,6 +804,10 @@ in
                   type = types.submodule (codingToolsArgs: {
                     options = {
                       enable = enableOption "Enable coding tools." true;
+                      orca = mkOption {
+                        type = packageToggle "Orca" codingToolsArgs.config.enable;
+                        default = { };
+                      };
                       editors = mkOption {
                         type = types.submodule {
                           options = {
@@ -1029,6 +1033,30 @@ in
                 portals = mkOption {
                   type = packageToggle "desktop portals" true;
                   default = { };
+                };
+                razer = mkOption {
+                  type = strictSubmodule {
+                    openrazer = mkOption {
+                      type = strictSubmodule {
+                        enable = enableOption "Enable OpenRazer driver and daemon." false;
+                        users = mkOption {
+                          type = types.listOf types.nonEmptyStr;
+                          default = [ config.users.primary ];
+                          description = "Users added to the openrazer group so they can run the daemon.";
+                        };
+                      };
+                      default = { };
+                    };
+                    inputRemapper = mkOption {
+                      type = strictSubmodule {
+                        enable = enableOption "Enable input-remapper for mouse macros and key rebinding." false;
+                        enableUdevRules = enableOption "Enable input-remapper udev rules for hotplugged devices." false;
+                      };
+                      default = { };
+                    };
+                  };
+                  default = { };
+                  description = "Razer peripheral support: OpenRazer driver/daemon plus input-remapper for macros.";
                 };
                 services = mkOption {
                   type = types.submodule {

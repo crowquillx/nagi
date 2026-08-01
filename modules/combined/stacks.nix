@@ -54,6 +54,7 @@ let
     ../nixos/services/keyring.nix
     ../nixos/services/tailscale.nix
     ../nixos/services/localsend.nix
+    ../nixos/services/razer.nix
   ];
 
   nixosSecurity = [

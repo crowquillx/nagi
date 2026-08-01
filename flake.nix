@@ -15,6 +15,7 @@
       "https://vortex-nix.cachix.org"
       "https://nix-gaming.cachix.org"
       "https://hushmic-nix.cachix.org"
+      "https://kevinpita.cachix.org"
     ];
     extra-trusted-public-keys = [
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
@@ -28,6 +29,7 @@
       "vortex-nix.cachix.org-1:7+ZVU0umNp8sz1JqZV/bRcbVgemNuNtzN5KiJxihFRY="
       "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "hushmic-nix.cachix.org-1:29j1XWTAAnb869spxlZ937ITJI9MCU1Wre+z7+1HJUM="
+      "kevinpita.cachix.org-1:Cu9UtCDSfDq3/WDnI7N1N/LzAh90SPS+1R+nWao/hz0="
     ];
   };
 
@@ -116,6 +118,8 @@
       url = "github:crowquillx/hushmic-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    orca-nix.url = "github:kevinpita/orca-nix";
 
     vortex-nix = {
       url = "github:crowquillx/vortex-nix";

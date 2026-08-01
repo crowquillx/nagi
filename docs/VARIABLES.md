@@ -68,6 +68,7 @@ scalar values.
 - `features.codingTools.enable = true | false`
 - `features.codingTools.editors.enable = true | false`
 - `features.codingTools.editors.<name>.enable = true | false` for `t3code`, `cursor`, and `zed`
+- `features.codingTools.orca.enable = true | false`
 - `features.codingTools.aiCli.enable = true | false`
 - `features.codingTools.aiCli.codex.enable = true | false`
 - `features.codingTools.aiCli.claude.enable = true | false`
