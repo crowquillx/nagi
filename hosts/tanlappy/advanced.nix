@@ -33,6 +33,7 @@
         enable = true;
         codex.enable = true;
         opencode.enable = true;
+        opencode2.enable = true;
         gemini.enable = false;
         pi.enable = true;
         ohMyPi.enable = true;

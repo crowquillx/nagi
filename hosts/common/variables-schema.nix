@@ -856,6 +856,10 @@ in
                               type = packageToggle "OpenCode" aiCliArgs.config.enable;
                               default = { };
                             };
+                            opencode2 = mkOption {
+                              type = packageToggle "OpenCode 2 beta" false;
+                              default = { };
+                            };
                             gemini = mkOption {
                               type = packageToggle "Gemini CLI" aiCliArgs.config.enable;
                               default = { };

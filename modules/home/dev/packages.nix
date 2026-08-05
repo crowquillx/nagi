@@ -16,6 +16,7 @@
   aiCliEnabled = get ["features" "codingTools" "aiCli" "enable"] codingToolsEnabled;
   claudeEnabled = get ["features" "codingTools" "aiCli" "claude" "enable"] aiCliEnabled;
   cliProxyApiEnabled = get ["features" "codingTools" "aiCli" "cliProxyApi" "enable"] aiCliEnabled;
+  opencode2Enabled = get ["features" "codingTools" "aiCli" "opencode2" "enable"] false;
   geminiEnabled = get ["features" "codingTools" "aiCli" "gemini" "enable"] aiCliEnabled;
   grokEnabled = get ["features" "codingTools" "aiCli" "grok" "enable"] aiCliEnabled;
   piEnabled = get ["features" "codingTools" "aiCli" "pi" "enable"] aiCliEnabled;
@@ -71,6 +72,9 @@
     };
   claudeCodePkg = llmAgent "claude-code";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
+  # OpenCode 2 is intentionally packaged as the separate `opencode2` binary,
+  # so it can coexist with the v1 `programs.opencode` package.
+  opencode2Pkg = llmAgent "opencode2";
   bunPkg = lib.attrByPath ["bun"] null pkgs;
   bubblewrapPkg = lib.attrByPath ["bubblewrap"] null pkgs;
   statixPkg = lib.attrByPath ["statix"] null pkgs;
@@ -129,6 +133,10 @@ in {
     {
       assertion = !(cliProxyApiEnabled && cliProxyApiPkg == null);
       message = "features.codingTools.aiCli.cliProxyApi.enable is true, but package 'cli-proxy-api' could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(opencode2Enabled && opencode2Pkg == null);
+      message = "features.codingTools.aiCli.opencode2.enable is true, but package 'opencode2' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(grokEnabled && grokPkg == null);
@@ -206,6 +214,7 @@ in {
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [geminiCliPkg]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [claudeCodePkg]
     ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [cliProxyApiPkg]
+    ++ lib.optionals (opencode2Enabled && opencode2Pkg != null) [opencode2Pkg]
     ++ lib.optionals (grokEnabled && grokPkg != null) [grokPkg]
     ++ lib.optionals (piEnabled && piPkg != null) [piPkg]
     ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ohMyPiPkg]
@@ -219,7 +228,7 @@ in {
     ++ lib.optionals (nixToolsEnabled && nixfmtPkg != null) [nixfmtPkg]
     ++ lib.optionals (nixToolsEnabled && nixLspPkg != null) [nixLspPkg]
     ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [t3DesktopPkg]
-    ++ lib.optionals (nixToolsEnabled && ghPkg != null) [ghPkg]
+    # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
     ++ lib.optionals (nixToolsEnabled && graphiteCliPkg != null) [graphiteCliPkg]
     ++ lib.optionals (aiCliEnabled && skillsPkg != null) [skillsPkg]
     ++ lib.optionals (cursorEnabled && cursorPkg != null) [cursorPkg]

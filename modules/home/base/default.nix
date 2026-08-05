@@ -202,12 +202,23 @@ in
       settings = {
         push.autoSetupRemote = true;
         init.defaultBranch = "main";
+        # Prefer SSH for GitHub so headless agents never fall back to the
+        # x11-ssh-askpass "Username for 'https://github.com'" dialog.
+        url."git@github.com:".insteadOf = "https://github.com/";
       }
       // lib.optionalAttrs (gitUserName != null && gitUserEmail != null) {
         user = {
           name = gitUserName;
           email = gitUserEmail;
         };
+      };
+    };
+    # Keep `gh` clone/fork URLs on SSH. Also wires `gh auth git-credential`
+    # as the HTTPS safety net via gitCredentialHelper (default-enabled).
+    gh = {
+      enable = true;
+      settings = {
+        git_protocol = "ssh";
       };
     };
     bash.enable = true;

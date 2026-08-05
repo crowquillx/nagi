@@ -106,12 +106,24 @@ in
       # lives at ~/.ssh/<privName> which is not one of ssh's default
       # identity filenames (id_rsa, id_ed25519, ...), so ssh will not try
       # it unless explicitly listed. We intentionally do NOT set
-      # IdentitiesOnly=yes: that would suppress default-name keys and
+      # IdentitiesOnly=yes globally: that would suppress default-name keys and
       # anything in ssh-agent, breaking unrelated git/server access.
+      # GitHub is special-cased below so agent git ops skip the YubiKey
+      # gpg-agent identity (which GitHub rejects) and avoid pinentry spam.
       # The signing key is intentionally omitted from IdentityFile.
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false;
+        matchBlocks."github.com" = {
+          host = "github.com";
+          hostname = "github.com";
+          user = "git";
+          identityFile = "~/.ssh/${privName}";
+          identitiesOnly = true;
+          extraOptions = {
+            IdentityAgent = "none";
+          };
+        };
         settings."*" = {
           ForwardAgent = lib.mkDefault false;
           AddKeysToAgent = lib.mkDefault "no";

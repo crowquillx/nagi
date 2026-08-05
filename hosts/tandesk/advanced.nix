@@ -6,12 +6,12 @@
     };
 
     chat = {
-      client = "discord";
+      client = "equibop";
       startup.enable = true;
       discord = {
         forceXwayland = false;
         equicord = {
-          enable = true;
+          enable = false;
         };
       };
     };
@@ -37,6 +37,7 @@
         enable = true;
         codex.enable = true;
         opencode.enable = true;
+        opencode2.enable = true;
         gemini.enable = true;
         pi.enable = true;
         ohMyPi.enable = true;

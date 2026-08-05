@@ -74,6 +74,7 @@ scalar values.
 - `features.codingTools.aiCli.claude.enable = true | false`
 - `features.codingTools.aiCli.cliProxyApi.enable = true | false`
 - `features.codingTools.aiCli.opencode.enable = true | false`
+- `features.codingTools.aiCli.opencode2.enable = true | false` (OpenCode 2 beta; installs the `opencode2` command alongside v1's `opencode`)
 - `features.codingTools.aiCli.gemini.enable = true | false`
 - `features.codingTools.aiCli.grok.enable = true | false`
 - `features.codingTools.aiCli.pi.enable = true | false`
