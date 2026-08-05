@@ -16,6 +16,7 @@
       "https://nix-gaming.cachix.org"
       "https://hushmic-nix.cachix.org"
       "https://kevinpita.cachix.org"
+      "https://hyprland.cachix.org"
     ];
     extra-trusted-public-keys = [
       "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
@@ -30,6 +31,7 @@
       "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "hushmic-nix.cachix.org-1:29j1XWTAAnb869spxlZ937ITJI9MCU1Wre+z7+1HJUM="
       "kevinpita.cachix.org-1:Cu9UtCDSfDq3/WDnI7N1N/LzAh90SPS+1R+nWao/hz0="
+      "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
   };
 
@@ -69,6 +71,11 @@
     niri = {
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Do not follow nixpkgs: hyprland.cachix.org caches against upstream's pin.
+    hyprland = {
+      url = "github:hyprwm/Hyprland";
     };
 
     noctalia = {

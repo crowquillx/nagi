@@ -22,6 +22,16 @@
     });
   };
 
+  # Use the upstream hyprland flake (hyprwm/Hyprland) instead of the nixpkgs
+  # package. This replaces pkgs.hyprland, its hyprwm dependency libs, and
+  # pkgs.xdg-desktop-portal-hyprland with the flake builds so sessions,
+  # portals, and plugins all share one ABI, and pulls binaries from
+  # hyprland.cachix.org (see nixConfig in flake.nix). hyprland-packages is
+  # the flake's own self-sufficient overlay set; hyprland-extras adds the
+  # portal package, mirroring how the flake assembles its packages.
+  hyprlandOverlay = lib.attrByPath ["hyprland" "overlays" "hyprland-packages"] null inputs;
+  hyprlandExtrasOverlay = lib.attrByPath ["hyprland" "overlays" "hyprland-extras"] null inputs;
+
   # patool's pytestCheckPhase fails on recent nixos-unstable: libmagic
   # reports `application/x-bzip2` for `*.tar.bz2.foo` instead of
   # `application/x-tar`, and several tar/pytarfile tests can't locate the
@@ -175,6 +185,8 @@
       mo2LintOverlay
       t3codeNightlyOverlay
     ]
+    ++ lib.optionals (hyprlandOverlay != null) [hyprlandOverlay]
+    ++ lib.optionals (hyprlandExtrasOverlay != null) [hyprlandExtrasOverlay]
     ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
     ++ lib.optionals (cheatengineEnabled vars) [
