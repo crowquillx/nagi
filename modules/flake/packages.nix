@@ -12,7 +12,6 @@
         in
         if fromPackages != null then fromPackages else fromLegacy;
       noctaliaPkg = lib.attrByPath [ "noctalia" "packages" system "default" ] null inputs;
-      niriPkg = lib.attrByPath [ "niri" "packages" system "niri-unstable" ] null inputs;
 
       tcli = pkgs.writeShellApplication {
         name = "tcli";
@@ -37,7 +36,6 @@
         nagi-zen = zenPkg;
         nagi-helium = heliumPkg;
         nagi-noctalia = noctaliaPkg;
-        nagi-niri = niriPkg;
         mo2-lint = pkgs.callPackage ../../pkgs/mo2-lint { };
         t3code-nightly = pkgs.callPackage ../../pkgs/t3code-nightly { };
         nagi-noctalia-hyprland-local-workspaces =

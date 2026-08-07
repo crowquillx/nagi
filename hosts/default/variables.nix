@@ -33,7 +33,7 @@
 
   desktop = {
     enable = true;
-    compositor = "niri";
+    compositor = "hyprland";
     extraCompositors = [];
     displayManager = "auto";
     browser = {
@@ -42,8 +42,7 @@
       helium.enable = false;
       mullvadBrowser.enable = true;
     };
-    niri = {
-      # Populate output names with `niri msg outputs`.
+    hyprland = {
       outputs = {};
       settings = {};
     };

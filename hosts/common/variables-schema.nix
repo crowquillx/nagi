@@ -323,7 +323,8 @@ in
                     "hyprland"
                     "plasma"
                   ];
-                  default = "niri";
+                  # Default hyprland while niri-flake is unwired (libdisplay-info_0_2).
+                  default = "hyprland";
                 };
                 extraCompositors = mkOption {
                   type = types.listOf (
@@ -892,6 +893,34 @@ in
                               default = codingToolsArgs.config.enable;
                               description = "Enable Nix development tools.";
                             };
+                          };
+                        };
+                        default = { };
+                      };
+                      repoSync = mkOption {
+                        type = strictSubmodule {
+                          enable = enableOption "Synchronize committed Git work through a remote bare repository." false;
+                          directory = nullableString "Absolute local repository directory. Defaults to ~/REPOS.";
+                          remoteHost = mkOption {
+                            type = types.nonEmptyStr;
+                            default = "codebox";
+                          };
+                          remoteUser = mkOption {
+                            type = types.nonEmptyStr;
+                            default = config.users.primary;
+                          };
+                          remoteName = mkOption {
+                            type = types.nonEmptyStr;
+                            default = "codebox";
+                          };
+                          mirrorDirectory = mkOption {
+                            type = types.nonEmptyStr;
+                            default = "git-mirrors";
+                          };
+                          interval = mkOption {
+                            type = types.nonEmptyStr;
+                            default = "2m";
+                            description = "systemd calendar duration between synchronization runs.";
                           };
                         };
                         default = { };

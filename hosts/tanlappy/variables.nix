@@ -39,7 +39,7 @@
 
   desktop = {
     enable = true;
-    compositor = "niri";
+    compositor = "hyprland";
     extraCompositors = [ ];
     displayManager = "auto";
     sddm.wayland.enable = false;
@@ -50,7 +50,7 @@
       helium.enable = true;
       mullvadBrowser.enable = false;
     };
-    niri = {
+    hyprland = {
       outputs = { };
       settings = { };
     };
@@ -71,7 +71,7 @@
     startup.apps = [
       "spotify"
     ];
-    startup.backend = "niri";
+    startup.backend = "hyprland";
   };
 
   features = {

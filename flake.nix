@@ -1,10 +1,9 @@
 {
-  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, Noctalia, and sops-nix";
+  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Plasma, Noctalia, and sops-nix";
 
   # Keep synchronized with modules/nixos/base/binary-caches.nix.
   nixConfig = {
     extra-substituters = [
-      "https://niri.cachix.org"
       "https://noctalia.cachix.org"
       "https://comfyui.cachix.org"
       "https://cache.nixos-cuda.org"
@@ -19,7 +18,6 @@
       "https://hyprland.cachix.org"
     ];
     extra-trusted-public-keys = [
-      "niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
       "comfyui.cachix.org-1:33mf9VzoIjzVbp0zwj+fT51HG0y31ZTK3nzYZAX0rec="
       "cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M="
@@ -68,10 +66,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    niri = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    # Niri (sodiboo/niri-flake) is temporarily unwired: host nixpkgs removed
+    # libdisplay-info_0_2 which niri-flake still requires. Module sources under
+    # modules/*/desktop/niri* remain for re-enable later.
 
     # Do not follow nixpkgs: hyprland.cachix.org caches against upstream's pin.
     hyprland = {

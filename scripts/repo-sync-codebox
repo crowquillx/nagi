@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+root="${NAGI_REPO_SYNC_ROOT:-$HOME/Development/projects}"
+mirror_root="${NAGI_REPO_SYNC_MIRROR_ROOT:-$HOME/git-mirrors}"
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+failures=0
+
+mkdir -p "$root"
+
+if [[ -d "$mirror_root" ]]; then
+  for mirror in "$mirror_root"/*.git; do
+    [[ -d "$mirror" ]] || continue
+    name="${mirror##*/}"
+    name="${name%.git}"
+    target="$root/$name"
+
+    if [[ ! -e "$target" ]]; then
+      printf 'repo-sync: cloning %s\n' "$name"
+      if ! git clone "$mirror" "$target"; then
+        printf 'repo-sync: warning: clone failed for %s\n' "$name" >&2
+        failures=$((failures + 1))
+      fi
+    elif ! git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      printf 'repo-sync: warning: %s exists but is not a Git worktree\n' "$target" >&2
+      failures=$((failures + 1))
+    fi
+  done
+fi
+
+export NAGI_REPO_SYNC_ROOT="$root"
+export NAGI_REPO_SYNC_REMOTE_NAME="${NAGI_REPO_SYNC_REMOTE_NAME:-origin}"
+unset NAGI_REPO_SYNC_REMOTE_HOST
+
+if ! "$script_dir/nagi-repo-sync"; then
+  failures=$((failures + 1))
+fi
+
+if (( failures > 0 )); then
+  exit 1
+fi

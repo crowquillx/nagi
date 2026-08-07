@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Niri via `sodiboo/niri-flake`, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Plasma, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
 
 ## Hosts
 
@@ -143,5 +143,5 @@ Those host names match the registry in `lib/host-registry.nix`.
 - `hardware-configuration.nix` placeholders are overwritten by bootstrap when needed.
 - The shared host data model is `config.nagi.variables`.
 - This setup targets `nixpkgs-unstable` and uses Determinate Nix as its only Nix distribution.
-- Niri support is intentional; per-host monitor layout lives under `desktop.niri.outputs`.
+- Niri module sources remain under `modules/*/desktop/niri*`, but the `sodiboo/niri-flake` input is temporarily unwired (upstream still needs removed `libdisplay-info_0_2`).
 - Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.

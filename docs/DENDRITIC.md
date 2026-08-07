@@ -26,7 +26,7 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
   - builds `nixosConfigurations`, `ciNixosConfigurations`, `homeConfigurations`
 - `modules/flake/packages.nix`
   - defines `perSystem.packages` for wrapped/custom packages
-  - includes wrapped + upstream package outputs (`nagi-niri`, `nagi-noctalia`, `nagi-zen`, `nagi-helium`)
+  - includes wrapped + upstream package outputs (`nagi-noctalia`, `nagi-zen`, `nagi-helium`)
 
 ## 3) Shared NixOS + Home stack wiring
 

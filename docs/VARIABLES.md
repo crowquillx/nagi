@@ -16,8 +16,8 @@ scalar values.
 
 ## Key switches
 
-- `desktop.compositor = "niri" | "hyprland" | "plasma"` (default session selected by SDDM)
-- `desktop.extraCompositors = [ "niri" "hyprland" "plasma" ... ]` (optional additional installed sessions)
+- `desktop.compositor = "hyprland" | "plasma" | "niri"` (default session selected by SDDM; default is `hyprland`. `niri` is schema-supported but the flake input is temporarily unwired)
+- `desktop.extraCompositors = [ "hyprland" "plasma" "niri" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
 - `desktop.sddm.wayland.enable = true | false`
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
@@ -81,6 +81,8 @@ scalar values.
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
 - `features.codingTools.aiCli.herdr.enable = true | false`
 - `features.codingTools.nixTools.enable = true | false`
+- `features.codingTools.repoSync = { enable, directory, remoteHost, remoteUser, remoteName, mirrorDirectory, interval }`
+  - Synchronizes committed branches through private bare repositories on the remote host. It never auto-commits, rebases, resets, or overwrites dirty worktrees.
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys, autoTmux }`

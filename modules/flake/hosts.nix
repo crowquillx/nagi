@@ -28,13 +28,11 @@
   hostVars = lib.mapAttrs (_: spec: resolveVariables (importVariables spec.variables)) hosts;
   nixosHostModules = lib.mapAttrs (_: spec: import spec.module) hosts;
 
-  niriNixosModule = lib.attrByPath ["niri" "nixosModules" "niri"] null inputs;
-  niriHmConfigModule = lib.attrByPath ["niri" "homeModules" "config"] null inputs;
   stylixHmModule = lib.attrByPath ["stylix" "homeModules" "stylix"] null inputs;
   determinateHmModule = inputs.determinate.homeManagerModules.default;
 
-  # Niri and Stylix NixOS modules inject their Home Manager modules,
-  # so standalone Home Manager appends those two modules below.
+  # Stylix NixOS module injects its Home Manager module; standalone HM needs
+  # that module appended explicitly below.
   sharedHomeModules =
     lib.optionals (noctaliaHmModule != null) [noctaliaHmModule]
     ++ lib.optionals (codexDesktopHmModule != null) [codexDesktopHmModule];
@@ -42,7 +40,6 @@
     [homeModule]
     ++ sharedHomeModules
     ++ lib.optional standalone determinateHmModule
-    ++ lib.optionals (standalone && niriHmConfigModule != null) [niriHmConfigModule]
     ++ lib.optionals (standalone && stylixHmModule != null) [stylixHmModule];
 
   comfyuiEnabled = vars:
@@ -51,7 +48,6 @@
 
   mkHost = hostName: hostPlatform: let
     vars = hostVars.${hostName};
-    niriNixosModule' = niriNixosModule;
   in
     lib.nixosSystem {
       specialArgs = {
@@ -78,8 +74,7 @@
           inputs.lanzaboote.nixosModules.lanzaboote
           nixosHostModules.${hostName}
         ]
-        ++ lib.optionals (comfyuiEnabled vars) [inputs.comfyui-nix.nixosModules.default]
-        ++ lib.optionals (niriNixosModule' != null) [niriNixosModule'];
+        ++ lib.optionals (comfyuiEnabled vars) [inputs.comfyui-nix.nixosModules.default];
     };
 
   mkCiHost = hostName: hostPlatform:

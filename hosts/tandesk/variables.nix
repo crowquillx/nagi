@@ -82,7 +82,7 @@
   desktop = {
     enable = true;
     compositor = "hyprland";
-    extraCompositors = [ "niri" ];
+    extraCompositors = [ ];
     displayManager = "auto";
     sddm.wayland.enable = false;
     sddm.background = ../../wallpapers/1.png;
@@ -92,61 +92,6 @@
       zen.enable = true;
       helium.enable = true;
       mullvadBrowser.enable = true;
-    };
-    niri = {
-      outputs = {
-        "DP-3" = {
-          mode = {
-            width = 2560;
-            height = 1440;
-            refresh = 180.002;
-          };
-          scale = 1;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 2560;
-            y = 1080;
-          };
-          variableRefreshRate = "on-demand";
-          focusAtStartup = true;
-        };
-        "DP-2" = {
-          mode = {
-            width = 2560;
-            height = 1440;
-            refresh = 164.999;
-          };
-          scale = 1;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 0;
-            y = 1080;
-          };
-        };
-        "DP-1" = {
-          mode = {
-            width = 1920;
-            height = 1080;
-            refresh = 144.001;
-          };
-          scale = 1;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 2560;
-            y = 0;
-          };
-        };
-      };
-      settings = { };
     };
     hyprland = {
       outputs = {
@@ -258,6 +203,12 @@
     shell = {
       fish.enable = true;
       starship.enable = true;
+    };
+
+    codingTools.repoSync = {
+      enable = true;
+      remoteHost = "codebox";
+      remoteUser = "tan";
     };
 
     nh = {

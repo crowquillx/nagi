@@ -10,8 +10,6 @@
       nix = inputs.determinate-nix.packages.${final.stdenv.hostPlatform.system}.default;
     };
   };
-  niriOverlay = lib.attrByPath ["niri" "overlays" "niri"] null inputs;
-
   # mcp-nixos-2.4.3 ships a flaky store test that scans /nix/store and
   # asserts a random text file does not contain the word "Error". The
   # upstream package disables it on Darwin but not Linux. Mirror the
@@ -187,7 +185,6 @@
     ]
     ++ lib.optionals (hyprlandOverlay != null) [hyprlandOverlay]
     ++ lib.optionals (hyprlandExtrasOverlay != null) [hyprlandExtrasOverlay]
-    ++ lib.optionals (niriOverlay != null) [niriOverlay]
     ++ lib.optional (millenniumEnabled vars) inputs.millennium.overlays.default
     ++ lib.optionals (cheatengineEnabled vars) [
       inputs.cheatengine-flake.overlays.default

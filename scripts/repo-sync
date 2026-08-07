@@ -1,0 +1,184 @@
+#!/usr/bin/env bash
+set -uo pipefail
+
+root="${NAGI_REPO_SYNC_ROOT:-$HOME/REPOS}"
+remote_name="${NAGI_REPO_SYNC_REMOTE_NAME:-codebox}"
+remote_host="${NAGI_REPO_SYNC_REMOTE_HOST:-}"
+mirror_dir="${NAGI_REPO_SYNC_MIRROR_DIR:-git-mirrors}"
+export GIT_SSH_COMMAND="${NAGI_REPO_SYNC_SSH_COMMAND:-ssh -o BatchMode=yes}"
+failures=0
+
+log() {
+  printf 'repo-sync: %s\n' "$*"
+}
+
+warn() {
+  printf 'repo-sync: warning: %s\n' "$*" >&2
+}
+
+valid_component() {
+  [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]
+}
+
+valid_relative_path() {
+  [[ "$1" =~ ^[A-Za-z0-9._/-]+$ ]] && [[ "$1" != /* ]] && [[ "$1" != *..* ]]
+}
+
+operation_in_progress() {
+  local repo="$1"
+  local marker
+
+  for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+    marker="$(git -C "$repo" rev-parse --git-path "$marker")"
+    if [[ -e "$marker" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+ensure_remote() {
+  local repo="$1"
+  local name="$2"
+  local branch="$3"
+  local mirror_path
+
+  if git -C "$repo" remote get-url "$remote_name" >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [[ -z "$remote_host" ]]; then
+    warn "$name has no '$remote_name' remote"
+    return 1
+  fi
+  if ! valid_component "$name" || ! valid_relative_path "$branch" || ! valid_relative_path "$mirror_dir"; then
+    warn "$name cannot be enrolled because its name, branch, or mirror path is unsafe"
+    return 1
+  fi
+
+  mirror_path="$mirror_dir/$name.git"
+  log "creating $remote_host:$mirror_path"
+  if ! ssh -o BatchMode=yes "$remote_host" mkdir -p "$mirror_dir"; then
+    warn "could not create $remote_host:$mirror_dir"
+    return 1
+  fi
+  if ! ssh -o BatchMode=yes "$remote_host" git init --bare "$mirror_path" >/dev/null; then
+    warn "could not initialize $remote_host:$mirror_path"
+    return 1
+  fi
+  if ! git -C "$repo" remote add "$remote_name" "$remote_host:$mirror_path"; then
+    warn "could not add the '$remote_name' remote to $name"
+    return 1
+  fi
+  if ! git -C "$repo" push "$remote_name" --all; then
+    warn "initial branch push failed for $name"
+    return 1
+  fi
+  if ! git -C "$repo" push "$remote_name" --tags; then
+    warn "initial tag push failed for $name"
+    return 1
+  fi
+  if ! ssh -o BatchMode=yes "$remote_host" git --git-dir="$mirror_path" symbolic-ref HEAD "refs/heads/$branch"; then
+    warn "could not set the default branch for $name"
+    return 1
+  fi
+}
+
+sync_repo() {
+  local repo="$1"
+  local name="${repo##*/}"
+  local branch
+  local local_ref
+  local remote_ref
+  local local_oid
+  local remote_oid
+
+  if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 0
+  fi
+  if operation_in_progress "$repo"; then
+    warn "$name has a Git operation in progress; skipping"
+    return 0
+  fi
+  if ! git -C "$repo" rev-parse --verify HEAD >/dev/null 2>&1; then
+    warn "$name has no commits yet; commit it before synchronization"
+    return 0
+  fi
+  if ! branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
+    branch="$(git -C "$repo" symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+    branch="${branch#origin/}"
+    if [[ -z "$branch" ]]; then
+      warn "$name has a detached HEAD and no known default branch; skipping"
+      return 0
+    fi
+    if ! ensure_remote "$repo" "$name" "$branch"; then
+      return 1
+    fi
+    warn "$name is mirrored, but its detached HEAD will not be advanced automatically"
+    return 0
+  fi
+  if ! ensure_remote "$repo" "$name" "$branch"; then
+    return 1
+  fi
+
+  if ! git -C "$repo" fetch --prune "$remote_name"; then
+    warn "fetch failed for $name"
+    return 1
+  fi
+
+  local_ref="refs/heads/$branch"
+  remote_ref="refs/remotes/$remote_name/$branch"
+  if ! git -C "$repo" show-ref --verify --quiet "$remote_ref"; then
+    log "publishing $name:$branch"
+    git -C "$repo" push "$remote_name" "$local_ref:refs/heads/$branch"
+    return
+  fi
+
+  local_oid="$(git -C "$repo" rev-parse "$local_ref")"
+  remote_oid="$(git -C "$repo" rev-parse "$remote_ref")"
+  if [[ "$local_oid" == "$remote_oid" ]]; then
+    return 0
+  fi
+
+  if git -C "$repo" merge-base --is-ancestor "$remote_ref" "$local_ref"; then
+    log "pushing $name:$branch"
+    if ! git -C "$repo" push "$remote_name" "$local_ref:refs/heads/$branch"; then
+      warn "push failed for $name:$branch; another host may have updated it"
+      return 1
+    fi
+    return 0
+  fi
+
+  if git -C "$repo" merge-base --is-ancestor "$local_ref" "$remote_ref"; then
+    if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+      warn "$name:$branch is behind $remote_name but has uncommitted changes; fast-forward deferred"
+      return 0
+    fi
+    log "fast-forwarding $name:$branch"
+    if ! git -C "$repo" merge --ff-only "$remote_ref"; then
+      warn "fast-forward failed for $name:$branch"
+      return 1
+    fi
+    return 0
+  fi
+
+  warn "$name:$branch diverged from $remote_name/$branch; resolve it manually"
+  return 1
+}
+
+if [[ ! -d "$root" ]]; then
+  warn "repository root does not exist: $root"
+  exit 0
+fi
+
+for repo in "$root"/*; do
+  [[ -d "$repo" ]] || continue
+  if ! sync_repo "$repo"; then
+    failures=$((failures + 1))
+  fi
+done
+
+if (( failures > 0 )); then
+  warn "$failures repository operation(s) need attention"
+  exit 1
+fi
