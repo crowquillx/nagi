@@ -240,14 +240,21 @@ in {
     t3code = {
       name = "T3 Code";
       comment = "T3 Code desktop build";
-      exec = "${t3DesktopProgram} --no-sandbox %U";
+      exec = "${t3DesktopProgram} --no-sandbox --password-store=gnome-libsecret %U";
       terminal = false;
       type = "Application";
       categories = ["Development"];
       icon = "t3code";
+      mimeType = ["x-scheme-handler/t3code"];
       settings = {
         StartupWMClass = "t3-code-desktop";
       };
     };
+  };
+
+  xdg.mimeApps = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
+    enable = true;
+    defaultApplications."x-scheme-handler/t3code" = ["t3code.desktop"];
+    associations.added."x-scheme-handler/t3code" = ["t3code.desktop"];
   };
 }
