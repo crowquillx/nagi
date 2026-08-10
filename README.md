@@ -15,6 +15,9 @@ The flake profile name and installed machine hostname are separate. For example,
 - `flake.nix`: parts-wrapped flake entrypoint via `flake-parts`
 - `modules/flake/*`: host registry, external module injection (including Determinate Nix), packages, and outputs
 - `modules/combined/stacks.nix`: shared NixOS and Home Manager stack wiring
+- `lib/host-registry.nix`: authoritative host profiles, platforms, entry modules, and ordered variable fragments
+- `hosts/common/variables-schema/*`: typed `config.nagi.variables` schema by domain
+- `hosts/profiles/*`: ordered variable fragments shared by selected hosts
 - `hosts/<host>/variables.nix`: host identity, toggles, and values
 - `hosts/<host>/default.nix`: host-specific system wiring
 - `modules/nixos/*`: NixOS modules
@@ -33,7 +36,13 @@ This repo assumes base NixOS is already installed.
 sudo ./install/bootstrap.sh default --user alice --hostname alice-pc --flake-dir /home/alice/nagi
 ```
 
-Bootstrap writes those values into `hosts/<profile>/variables.nix`, generates hardware config when needed, runs `nixos-rebuild`, and activates Home Manager for the primary user.
+Bootstrap validates the profile through `lib/host-registry.nix`, writes those values into `hosts/<profile>/variables.nix`, generates hardware config when needed, and activates the system plus integrated Home Manager through one `nixos-rebuild` path.
+
+The standalone `homeConfigurations.<profile>` outputs remain available for manual recovery:
+
+```bash
+home-manager switch --flake .#default
+```
 
 ## Determinate Nix and FlakeHub
 
@@ -72,6 +81,7 @@ Commands:
 - `tcli gc`
 - `tcli nh home [switch|build] [host]`
 - `tcli check`
+- `nix fmt -- --check`
 
 Defaults:
 
@@ -121,12 +131,25 @@ features.flatpak = {
 
 ## CI
 
-Pull requests run `.github/workflows/ci.yml` with Determinate Nix and FlakeHub Cache:
+Pull requests run a fast, unprivileged validation tier with Determinate Nix and FlakeHub Cache:
 
-- **lint**: `nix build --accept-flake-config .#checks.x86_64-linux.statix`, then `nix flake check --no-build --accept-flake-config`
-- **build-hosts** (matrix `tandesk`, `default`, `tanlappy`): `nix build --accept-flake-config .#checks.x86_64-linux.nixos-<host>` and `nix build --accept-flake-config .#checks.x86_64-linux.home-<host>`
+- Nix formatting, Statix, ShellCheck, and syntax parsing for every tracked Nix file
+- focused tcli, orphan-scanner, and Codex Desktop transformation tests
+- `nix flake check --no-build --accept-flake-config`, which evaluates every published NixOS and standalone Home Manager configuration
 
-Those host names match the registry in `lib/host-registry.nix`.
+Pushes to `main` and manual dispatches can additionally build the full NixOS and Home Manager matrix on a trusted runner labelled `self-hosted`, `linux`, `x64`, and `nagi`. Set the repository variable `NAGI_FULL_BUILD_RUNNER=true` only after that runner exists. Pull requests never execute on it. The matrix is read from `nagiHostMetadata`, which is derived from `lib/host-registry.nix`.
+
+## Updating local binary packages
+
+T3 Code nightly and MO2-LINT expose `passthru.updateScript` and can be updated reproducibly with `nix-update`:
+
+```bash
+nix run nixpkgs#nix-update -- --flake t3code-nightly
+nix build .#t3code-nightly
+
+nix run nixpkgs#nix-update -- --flake mo2-lint
+nix build .#mo2-lint
+```
 
 ## Documentation
 
@@ -136,6 +159,7 @@ Those host names match the registry in `lib/host-registry.nix`.
 - adding a host: `docs/NEW_HOST.md`
 - flake-parts structure: `docs/DENDRITIC.md`
 - secure boot setup: `docs/SECURE_BOOT.md`
+- local compatibility patches and upstream trackers: `docs/WORKAROUNDS.md`
 
 ## Notes
 
@@ -143,5 +167,5 @@ Those host names match the registry in `lib/host-registry.nix`.
 - `hardware-configuration.nix` placeholders are overwritten by bootstrap when needed.
 - The shared host data model is `config.nagi.variables`.
 - This setup targets `nixpkgs-unstable` and uses Determinate Nix as its only Nix distribution.
-- Niri module sources remain under `modules/*/desktop/niri*`, but the `sodiboo/niri-flake` input is temporarily unwired (upstream still needs removed `libdisplay-info_0_2`).
+- Niri module sources remain under `modules/*/desktop/niri*` and are parse/format/orphan checked, but the `sodiboo/niri-flake` input is temporarily unwired while [upstream issue #1851](https://github.com/sodiboo/niri-flake/issues/1851) remains open.
 - Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.

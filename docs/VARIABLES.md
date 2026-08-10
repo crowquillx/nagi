@@ -1,7 +1,9 @@
 # Host Variables Reference
 
-Primary host configuration is composed from `hosts/<host>/variables.nix` and
-`hosts/<host>/advanced.nix`.
+Primary host configuration is composed from the ordered fragments in
+`lib/host-registry.nix`. A host normally uses `hosts/<host>/variables.nix` and
+`hosts/<host>/advanced.nix`; closely related hosts may place a shared profile
+such as `hosts/profiles/tan-common.nix` first.
 
 - `variables.nix` is for core host identity, boot, graphics, desktop/session,
   users, core maintenance toggles, and security settings.
@@ -12,10 +14,17 @@ Primary host configuration is composed from `hosts/<host>/variables.nix` and
 
 The files are merged into the same `config.nagi.variables` attrset before
 modules consume them. Later fragments override earlier fragments for duplicate
-scalar values.
+scalar values. This is still `lib.recursiveUpdate`, so lists replace rather
+than append.
+
+The schema entrypoint is `hosts/common/variables-schema.nix`; domain modules
+live under `hosts/common/variables-schema/`. This document keeps the useful
+examples and operational explanation that generated option listings do not
+capture.
 
 ## Key switches
 
+- `host.stateVersion = { nixos = "25.05"; home = "25.05"; }` (host-specific migration baselines; copy existing values and do not casually upgrade them)
 - `desktop.compositor = "hyprland" | "plasma" | "niri"` (default session selected by SDDM; default is `hyprland`. `niri` is schema-supported but the flake input is temporarily unwired)
 - `desktop.extraCompositors = [ "hyprland" "plasma" "niri" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
@@ -57,7 +66,8 @@ scalar values.
 - `features.chat = { client = "none" | "discord" | "equibop"; startup.enable; discord.forceXwayland; discord.equicord.enable }`
 - `features.localsend = { package.enable, openFirewall }`
 - `features.mullvad = { package = "none" | "cli" | "gui"; service = { enable, allowLan }; }`
-- `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, and `kitty`
+- `features.terminals.default = "alacritty" | "foot" | "ghostty" | "kitty"`
+- `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, `ghostty`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
 - `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }`
@@ -80,6 +90,7 @@ scalar values.
 - `features.codingTools.aiCli.pi.enable = true | false`
 - `features.codingTools.aiCli.ohMyPi.enable = true | false`
 - `features.codingTools.aiCli.herdr.enable = true | false`
+- `features.codingTools.aiCli.primeAgent.enable = true | false` (Prime Agent from llm-agents.nix)
 - `features.codingTools.nixTools.enable = true | false`
 - `features.codingTools.repoSync = { enable, directory, remoteHost, remoteUser, remoteName, mirrorDirectory, interval }`
   - Synchronizes committed branches through private bare repositories on the remote host. It never auto-commits, rebases, resets, or overwrites dirty worktrees.

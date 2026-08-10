@@ -14,6 +14,7 @@ Edit `hosts/<newhost>/variables.nix` and at minimum set:
 
 - `host.name = "<newhost>"`
 - `host.isVm = true|false`
+- `host.stateVersion.nixos` and `host.stateVersion.home` copied from the source host (never set these to a newer release merely because one is available)
 - `users.primary = "<username>"`
 - `users.flakeDirectory = "/home/<username>/<flake-dir>"` or `null` to use `/home/<username>/nagi`
 - core desktop, graphics, and maintenance toggles for that machine
@@ -50,8 +51,11 @@ Add `<newhost>` in `lib/host-registry.nix` with its system, host module path, an
 };
 ```
 
+Shared fragments such as `../hosts/profiles/tan-common.nix` go before host-specific fragments. Merging currently uses `lib.recursiveUpdate`: later scalar values override earlier ones, and lists replace rather than append.
+
 - `nixosConfigurations.<newhost>`
 - `homeConfigurations.<newhost>`
+- `nagiHostMetadata.<newhost>` (used by tcli, bootstrap documentation, and CI)
 
 ## 5) Build and switch
 

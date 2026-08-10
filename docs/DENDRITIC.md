@@ -21,9 +21,10 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
 ## 2) Flake logic lives in `modules/flake/`
 
 - `modules/flake/hosts.nix`
-  - defines the host registry (`hosts`) and the generic Home Manager user module
+  - consumes the authoritative registry from `lib/host-registry.nix`
   - publishes `flake.nixosModules.<host>` and `flake.homeModules.default`
-  - builds `nixosConfigurations`, `ciNixosConfigurations`, `homeConfigurations`
+  - builds the real `nixosConfigurations` and `homeConfigurations`
+  - publishes serializable `nagiHostMetadata` for tooling and CI
 - `modules/flake/packages.nix`
   - defines `perSystem.packages` for wrapped/custom packages
   - includes wrapped + upstream package outputs (`nagi-noctalia`, `nagi-zen`, `nagi-helium`)
@@ -82,7 +83,7 @@ Fallback:
 ### Add a new host
 
 1. Create `hosts/<newhost>/` files.
-2. Register `<newhost>` in the `hosts` attrset in `modules/flake/hosts.nix`.
+2. Register `<newhost>` in `lib/host-registry.nix`.
 3. Build with `tcli rebuild build <newhost>`.
 
 ### Add/modify shared feature modules
@@ -100,5 +101,5 @@ Fallback:
 
 ## Notes
 
-- KDE + Niri remain fully supported; this refactor changes structure/composition, not desktop feature intent.
+- Plasma remains supported and dormant Niri modules are retained for re-enablement; every tracked Nix file is parsed and format-checked even when it is not in the active stack.
 - If lockfile updates are required for new inputs, run `nix flake lock --update-input <name>` in a Nix-enabled environment.

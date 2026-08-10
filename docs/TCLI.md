@@ -41,7 +41,7 @@ This keeps Home Manager on the NixOS-integrated path. `tcli` performs the flake 
 Runs three pre-build validation checks:
 
 1. **statix check** — Nix lint on the flake directory.
-2. **Orphan module scan** — finds `.nix` files under `modules/nixos` and `modules/home` that are not referenced by any other `.nix` file (not in `stacks.nix`, not imported by a parent). Catches modules that exist but were never wired into the module stack.
+2. **Orphan module scan** — follows exact relative Nix paths from real module entrypoints. It is path-aware, ignores comments/strings, handles directory imports and duplicate basenames, and explicitly roots the intentionally dormant Niri modules.
 3. **nix flake check --no-build** — eval-only flake validation.
 
 Exits non-zero if any check fails. Safe to run before any build or switch.
@@ -86,7 +86,7 @@ The package name is normalized to `nixpkgs#<name>` if no flake ref is present. E
 
 ### `tcli hosts`
 
-Lists directories under `hosts/` that contain `variables.nix`, marking the current hostname with `*`. This skips helper trees such as `hosts/common`. Rebuild/update commands only require that `hosts/<host>` exists as a directory. Optional host-local variable fragments such as `advanced.nix` are registered in `lib/host-registry.nix` (consumed by `modules/flake/hosts.nix`).
+Lists profiles from `lib/host-registry.nix`, marking the current profile with `*`. Host validation uses the same registry rather than accepting arbitrary `hosts/` directories.
 
 ### `tcli gc [-- <nh-args...>]`
 
@@ -149,7 +149,8 @@ Before every `nh os` invocation, `tcli` prints the current git HEAD sha and unco
 
 - If host is passed, use it
 - Otherwise use `/etc/hostname` (or `hostname` fallback)
-- Host directory must exist at `hosts/<host>`
+- If the installed hostname differs from the profile name, map it through `nagiHostMetadata.<profile>.configuredHostName`
+- The resolved profile must exist in `lib/host-registry.nix`
 
 ### Flake path resolution
 
@@ -175,10 +176,6 @@ Fish and Zsh also define `codebox`, `tanime`, and `tanmedia` as SSH shortcuts.
 
 ## Bootstrap integration
 
-`install/bootstrap.sh` still explicitly runs both:
+`install/bootstrap.sh` and normal tcli system commands both use one NixOS activation path. Integrated Home Manager activates through `home-manager.users`; bootstrap does not separately run the standalone activation package.
 
-1. `nixos-rebuild`
-2. Home Manager activation package (`homeConfigurations.<host>.activationPackage`)
-
-So bootstrap and `tcli` both enforce full system + HM activation, but via different command paths.
-Both paths consume the same published user module entrypoint from `flake.homeModules`.
+`homeConfigurations.<profile>.activationPackage` remains available for manual Home Manager recovery and `tcli nh home`, but is not part of normal bootstrap.

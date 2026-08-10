@@ -18,23 +18,23 @@ Agents should preserve that structure. Do not collapse this repo back into a mon
 - Host-specific wiring belongs in `hosts/<host>/`.
 - User-specific Home Manager wiring belongs in `users/<user>/`.
 
-Read [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md) before changing flake structure, module loading, or host composition.
+Read [docs/DENDRITIC.md](/home/tan/nagi/docs/DENDRITIC.md) before changing flake structure, module loading, or host composition.
 
 ### Key paths
-- [flake.nix](/home/tan/tanos/flake.nix): flake inputs and `flake-parts` bootstrap only.
-- [modules/flake/hosts.nix](/home/tan/tanos/modules/flake/hosts.nix): host map, `nixosConfigurations`, `homeConfigurations`, special args, and shared module injection.
-- [modules/flake/packages.nix](/home/tan/tanos/modules/flake/packages.nix): custom and wrapped package outputs.
-- [modules/combined/stacks.nix](/home/tan/tanos/modules/combined/stacks.nix): authoritative shared module stack for NixOS and Home Manager.
-- [hosts/common/default.nix](/home/tan/tanos/hosts/common/default.nix): shared host wiring and Home Manager integration.
-- [hosts/common/variables-schema.nix](/home/tan/tanos/hosts/common/variables-schema.nix): variable schema and defaults.
-- [hosts/<host>/variables.nix](/home/tan/tanos/hosts/tandesk/variables.nix): host toggles and values.
-- [users/default/home.nix](/home/tan/tanos/users/default/home.nix): primary user Home Manager entrypoint.
+- [flake.nix](/home/tan/nagi/flake.nix): flake inputs and `flake-parts` bootstrap only.
+- [modules/flake/hosts.nix](/home/tan/nagi/modules/flake/hosts.nix): host registry outputs, `nixosConfigurations`, `homeConfigurations`, special args, and shared module injection.
+- [modules/flake/packages.nix](/home/tan/nagi/modules/flake/packages.nix): custom and wrapped package outputs.
+- [modules/combined/stacks.nix](/home/tan/nagi/modules/combined/stacks.nix): authoritative shared module stack for NixOS and Home Manager.
+- [hosts/common/default.nix](/home/tan/nagi/hosts/common/default.nix): shared host wiring and Home Manager integration.
+- [hosts/common/variables-schema.nix](/home/tan/nagi/hosts/common/variables-schema.nix): variable schema entrypoint and defaults.
+- [hosts/<host>/variables.nix](/home/tan/nagi/hosts/tandesk/variables.nix): host toggles and values.
+- [users/default/home.nix](/home/tan/nagi/users/default/home.nix): primary user Home Manager entrypoint.
 
 ## Working Rules
 
 ### Preserve the composition model
 - Prefer adding a focused module under `modules/nixos/` or `modules/home/` over putting unrelated logic into host files.
-- If a new shared feature is introduced, wire it through [modules/combined/stacks.nix](/home/tan/tanos/modules/combined/stacks.nix).
+- If a new shared feature is introduced, wire it through [modules/combined/stacks.nix](/home/tan/nagi/modules/combined/stacks.nix).
 - If a change is host-specific, keep it in that host’s `variables.nix` or host module rather than baking it into shared defaults.
 - Keep NixOS and Home Manager responsibilities separated. System services belong in `modules/nixos`; user session behavior belongs in `modules/home`.
 
@@ -68,8 +68,8 @@ Read [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md) before changing flak
 ### Before editing
 - Read the relevant module and the related host variables first.
 - Check whether the repo already has a module or option for the behavior you need.
-- For structural changes, read [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md).
-- For host variable changes, read [docs/VARIABLES.md](/home/tan/tanos/docs/VARIABLES.md).
+- For structural changes, read [docs/DENDRITIC.md](/home/tan/nagi/docs/DENDRITIC.md).
+- For host variable changes, read [docs/VARIABLES.md](/home/tan/nagi/docs/VARIABLES.md).
 
 ### Preferred commands
 - `tcli rebuild build <host>`: build only.
@@ -101,18 +101,18 @@ Fallback commands:
 - Keep comments brief and high-signal.
 
 ## Docs Map
-- [README.md](/home/tan/tanos/README.md): repo overview and common workflows.
-- [docs/DENDRITIC.md](/home/tan/tanos/docs/DENDRITIC.md): flake-parts and parts-wrapped structure.
-- [docs/VARIABLES.md](/home/tan/tanos/docs/VARIABLES.md): host variable reference and examples.
-- [docs/TCLI.md](/home/tan/tanos/docs/TCLI.md): `tcli` behavior and command mapping.
-- [docs/NEW_HOST.md](/home/tan/tanos/docs/NEW_HOST.md): adding a host.
-- [docs/SOPS.md](/home/tan/tanos/docs/SOPS.md): secrets workflow.
-- [docs/SECURE_BOOT.md](/home/tan/tanos/docs/SECURE_BOOT.md): secure boot setup.
+- [README.md](/home/tan/nagi/README.md): repo overview and common workflows.
+- [docs/DENDRITIC.md](/home/tan/nagi/docs/DENDRITIC.md): flake-parts and parts-wrapped structure.
+- [docs/VARIABLES.md](/home/tan/nagi/docs/VARIABLES.md): host variable reference and examples.
+- [docs/TCLI.md](/home/tan/nagi/docs/TCLI.md): `tcli` behavior and command mapping.
+- [docs/NEW_HOST.md](/home/tan/nagi/docs/NEW_HOST.md): adding a host.
+- [docs/SOPS.md](/home/tan/nagi/docs/SOPS.md): secrets workflow.
+- [docs/SECURE_BOOT.md](/home/tan/nagi/docs/SECURE_BOOT.md): secure boot setup.
 
 ## Useful reminders for agents
 - This repo may have unrelated local changes; do not revert them unless asked.
 - Prefer `rg` for searches.
 - Prefer targeted module edits over broad rewrites.
 - If adding a new flake input, keep the change minimal and justify why an upstream module or package is needed.
-- If changing host composition, verify [modules/flake/hosts.nix](/home/tan/tanos/modules/flake/hosts.nix) and [modules/combined/stacks.nix](/home/tan/tanos/modules/combined/stacks.nix) still reflect the intended composition.
+- If changing host composition, verify [lib/host-registry.nix](/home/tan/nagi/lib/host-registry.nix), [modules/flake/hosts.nix](/home/tan/nagi/modules/flake/hosts.nix), and [modules/combined/stacks.nix](/home/tan/nagi/modules/combined/stacks.nix) still reflect the intended composition.
 - If you touch docs, keep them consistent with the actual wiring in code.
