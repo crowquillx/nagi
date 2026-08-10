@@ -4,6 +4,7 @@
   fetchurl,
   autoPatchelfHook,
   makeWrapper,
+  nix-update-script,
   zlib,
   coreutils,
   procps,
@@ -51,6 +52,8 @@ stdenv.mkDerivation (finalAttrs: {
         ]
       }
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = {
     description = "Mod Organizer 2 Linux Installer (MO2-LINT)";

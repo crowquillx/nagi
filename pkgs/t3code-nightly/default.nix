@@ -5,6 +5,7 @@
   git,
   lib,
   makeBinaryWrapper,
+  nix-update-script,
   symlinkJoin,
   codex,
   grok ? null,
@@ -63,6 +64,7 @@ symlinkJoin {
 
   passthru = {
     inherit appImage appImageContents src;
+    updateScript = nix-update-script { };
   };
 
   inherit (appImage) meta;

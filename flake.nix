@@ -1,7 +1,9 @@
 {
   description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Plasma, Noctalia, and sops-nix";
 
-  # Keep synchronized with modules/nixos/base/binary-caches.nix.
+  # This literal is the source of truth for both --accept-flake-config and the
+  # installed Nix daemon settings. Nix rejects imported/thunked nixConfig
+  # values, so modules/nixos/base/binary-caches.nix reads this attribute.
   nixConfig = {
     extra-substituters = [
       "https://noctalia.cachix.org"
