@@ -22,6 +22,7 @@ let
   alacrittyEnabled = get [ "features" "terminals" "alacritty" "enable" ] true;
   footEnabled = get [ "features" "terminals" "foot" "enable" ] true;
   fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
+  zshEnabled = get [ "features" "shell" "zsh" "enable" ] false;
   noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] false;
   configuredFlakeDirectory = get [ "users" "flakeDirectory" ] null;
   flakeDirectory =
@@ -246,6 +247,18 @@ in
         };
       };
     };
+    zsh.initContent = lib.mkIf (zshEnabled && noctaliaEnabled) ''
+      restart-noctalia() {
+        if systemctl --user list-unit-files noctalia.service --no-legend 2>/dev/null | read -r _; then
+          systemctl --user restart noctalia.service
+          return
+        fi
+
+        pkill -u "$USER" -x noctalia 2>/dev/null
+        nohup nagi-noctalia-shell >/dev/null 2>&1 &
+        disown
+      }
+    '';
   };
 
   xdg = {

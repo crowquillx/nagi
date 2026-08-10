@@ -1,4 +1,9 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   v = config.nagi.variables;
   get = path: default: lib.attrByPath path default v;
@@ -18,8 +23,7 @@ in
     mode = "0400";
   };
 
-  programs.fish.shellAliases.pango =
-    "ssh tan@(${pkgs.coreutils}/bin/cat /run/secrets/pango_host)";
+  programs.zsh.shellAliases.pango = "ssh tan@$(${pkgs.coreutils}/bin/cat /run/secrets/pango_host)";
 
   services.logind.settings = {
     Login = {

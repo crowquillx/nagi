@@ -9,13 +9,24 @@ let
   get = path: default: lib.attrByPath path default v;
   primaryUser = get [ "users" "primary" ] "nagi";
   fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
+  zshEnabled = get [ "features" "shell" "zsh" "enable" ] false;
   maintenance = v.features.nixMaintenance;
   binaryCaches = import ./binary-caches.nix;
 in
 {
+  assertions = [
+    {
+      assertion = !(fishEnabled && zshEnabled);
+      message = "features.shell.fish.enable and features.shell.zsh.enable cannot both be true.";
+    }
+  ];
+
   nix = {
     settings = binaryCaches // {
-      experimental-features = [ "nix-command" "flakes" ];
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
       auto-optimise-store = false;
       trusted-users = [
         primaryUser
@@ -76,7 +87,13 @@ in
       "video"
       "input"
     ];
-    shell = if fishEnabled then pkgs.fish else pkgs.bashInteractive;
+    shell =
+      if zshEnabled then
+        pkgs.zsh
+      else if fishEnabled then
+        pkgs.fish
+      else
+        pkgs.bashInteractive;
   };
 
   fonts = {

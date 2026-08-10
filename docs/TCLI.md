@@ -162,11 +162,16 @@ Before every `nh os` invocation, `tcli` prints the current git HEAD sha and unco
 
 ## Aliases
 
-Shell aliases are set by Home Manager (bash + fish):
+Shell aliases are set by Home Manager:
 
 - `fu` -> `tcli update`
 - `fr` -> `tcli rebuild`
 - `ncg` -> `tcli gc`
+- `winblows` -> reboot into the Windows boot entry
+- `enterbios` -> reboot into firmware setup
+- `uc` -> `jellyfin-uc`
+
+Fish and Zsh also define `codebox`, `tanime`, and `tanmedia` as SSH shortcuts.
 
 ## Bootstrap integration
 

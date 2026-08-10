@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Plasma, Noctalia shell, SDDM, Stylix, fish + starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Plasma, Noctalia shell, SDDM, Stylix, Fish/Zsh + Starship, NH, and `sops-nix`.
 
 ## Hosts
 

@@ -33,6 +33,7 @@ let
 
   nixosShells = [
     ../nixos/shells/fish-starship.nix
+    ../nixos/shells/zsh.nix
   ];
 
   nixosServices = [
@@ -99,6 +100,7 @@ let
   ];
 
   homeShell = [
+    ../home/shell/zsh.nix
     ../home/shell/zoxide.nix
     ../home/shell/kotomi.nix
     ../home/shell/ssh-tmux.nix

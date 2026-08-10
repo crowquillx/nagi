@@ -1,5 +1,25 @@
-{ pkgs, inputs, self, ... }:
+{
+  lib,
+  pkgs,
+  inputs,
+  self,
+  vars ? { },
+  ...
+}:
 let
+  fishEnabled = lib.attrByPath [ "features" "shell" "fish" "enable" ] true vars;
+  zshEnabled = lib.attrByPath [ "features" "shell" "zsh" "enable" ] false vars;
+  sharedAliases = {
+    fu = "tcli update";
+    fr = "tcli rebuild";
+    ncg = "tcli gc";
+    winblows = "systemctl reboot --boot-loader-entry=auto-windows";
+    enterbios = "systemctl reboot --boot-loader-entry=auto-reboot-to-firmware-setup";
+    codebox = "ssh tan@codebox";
+    tanime = "ssh root@192.168.0.85";
+    tanmedia = "ssh tan@192.168.0.116";
+    uc = "jellyfin-uc";
+  };
   homeManagerPkg =
     let
       pkgsBySystem = inputs.home-manager.packages.${pkgs.stdenv.hostPlatform.system};
@@ -7,11 +27,11 @@ let
     pkgsBySystem.home-manager or pkgsBySystem.default;
   tcli = self.packages.${pkgs.stdenv.hostPlatform.system}.tcli;
   # One-shot jellyfin maintenance for tanmedia: cold-backup the DB and strip
-  # duplicate UserData rows, with the stack stopped the whole time. fish has no
-  # heredoc support, so the quoted REMOTE block lives in a real sh script that
-  # streams it to tanmedia verbatim; the remote bash -s then runs it. An EXIT
-  # trap guarantees the stack comes back up even if the backup or dedupe step
-  # fails. tanmedia has no sqlite3 CLI, so the dedupe runs through python3.
+  # duplicate UserData rows, with the stack stopped the whole time. The quoted
+  # REMOTE block lives in a real sh script so every interactive shell invokes
+  # the same implementation; remote bash -s then runs it. An EXIT trap
+  # guarantees the stack comes back up even if the backup or dedupe step fails.
+  # tanmedia has no sqlite3 CLI, so the dedupe runs through python3.
   jellyfinUc = pkgs.writeShellScriptBin "jellyfin-uc" ''
     ssh tan@192.168.0.116 'bash -s' <<'REMOTE'
     set -euo pipefail
@@ -64,16 +84,7 @@ in
       uc = "jellyfin-uc";
     };
 
-    fish.shellAliases = {
-      fu = "tcli update";
-      fr = "tcli rebuild";
-      ncg = "tcli gc";
-      winblows = "systemctl reboot --boot-loader-entry=auto-windows";
-      enterbios = "systemctl reboot --boot-loader-entry=auto-reboot-to-firmware-setup";
-      codebox = "ssh tan@codebox";
-      tanime = "ssh root@192.168.0.85";
-      tanmedia = "ssh tan@192.168.0.116";
-      uc = "jellyfin-uc";
-    };
+    fish.shellAliases = lib.mkIf fishEnabled sharedAliases;
+    zsh.shellAliases = lib.mkIf zshEnabled sharedAliases;
   };
 }

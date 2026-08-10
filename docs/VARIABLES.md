@@ -50,7 +50,7 @@ scalar values.
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
 - `desktop.enable = true | false`
 - `features.stylix = { enable, variant }`
-- `features.shell = { fish.enable, starship.enable }`
+- `features.shell = { fish.enable, zsh.enable, starship.enable }`
 - `features.nh = { enable, clean.enable, clean.extraArgs }`
 - `features.swap = { zram.enable, zram.memoryPercent, disk.enable, disk.path, disk.sizeMiB, swappiness }`
 - `features.nixMaintenance = { gc.enable, gc.dates, gc.options, optimise.enable, optimise.dates }`
@@ -154,17 +154,20 @@ storage.mounts = [
 ];
 ```
 
-### Fish + starship + zoxide
+### Shell + Starship + zoxide
 
 ```nix
 features = {
   shell = {
-    fish.enable = true;
+    fish.enable = false;
+    zsh.enable = true;
     starship.enable = true;
   };
   zoxide.enable = true;
 };
 ```
+
+Fish and Zsh are mutually exclusive. Disable both to use Bash as the login shell.
 
 ### Desktop startup apps
 

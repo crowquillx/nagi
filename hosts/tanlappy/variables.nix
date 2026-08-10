@@ -81,7 +81,8 @@
     };
 
     shell = {
-      fish.enable = true;
+      fish.enable = false;
+      zsh.enable = true;
       starship.enable = true;
     };
 

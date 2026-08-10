@@ -994,6 +994,10 @@ in
                       type = packageToggle "Fish" true;
                       default = { };
                     };
+                    zsh = mkOption {
+                      type = packageToggle "Zsh" false;
+                      default = { };
+                    };
                     starship = mkOption {
                       type = packageToggle "Starship" true;
                       default = { };
