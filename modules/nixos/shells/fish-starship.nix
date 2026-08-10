@@ -6,10 +6,9 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  fishEnable = get [ "features" "shell" "fish" "enable" ] true;
-  zshEnable = get [ "features" "shell" "zsh" "enable" ] false;
-  starshipEnable = get [ "features" "shell" "starship" "enable" ] true;
+  fishEnable = v.features.shell.fish.enable;
+  zshEnable = v.features.shell.zsh.enable;
+  starshipEnable = v.features.shell.starship.enable;
 in
 {
   config = lib.mkIf (fishEnable || (starshipEnable && !zshEnable)) {

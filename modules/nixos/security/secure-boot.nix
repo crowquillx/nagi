@@ -1,17 +1,21 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  secureBootEnabled = get [ "boot" "secureBoot" "enable" ] false;
-  secureBootPkiBundle = get [ "boot" "secureBoot" "pkiBundle" ] "/var/lib/sbctl";
-  secureBootAutoEnroll = get [ "boot" "secureBoot" "autoEnroll" ] false;
-  secureBootIncludeMicrosoftKeys = get [ "boot" "secureBoot" "includeMicrosoftKeys" ] true;
+  secureBootEnabled = v.boot.secureBoot.enable;
+  secureBootPkiBundle = v.boot.secureBoot.pkiBundle;
+  secureBootAutoEnroll = v.boot.secureBoot.autoEnroll;
+  secureBootIncludeMicrosoftKeys = v.boot.secureBoot.includeMicrosoftKeys;
 in
 {
   config = lib.mkIf secureBootEnabled {
     assertions = [
       {
-        assertion = get [ "boot" "systemdBoot" "enable" ] true;
+        assertion = v.boot.systemdBoot.enable;
         message = "boot.secureBoot.enable requires boot.systemdBoot.enable = true during setup/migration.";
       }
     ];

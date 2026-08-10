@@ -1,10 +1,14 @@
-{ lib, config, options, ... }:
+{
+  lib,
+  config,
+  options,
+  ...
+}:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
-  keyringEnable = get [ "desktop" "session" "keyring" "enable" ] true;
+  desktopEnabled = v.desktop.enable;
+  sessionEnabled = v.desktop.session.enable;
+  keyringEnable = v.desktop.session.keyring.enable;
 in
 {
   config = lib.mkIf (desktopEnabled && sessionEnabled && keyringEnable) {

@@ -125,8 +125,8 @@ in
   hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote (noctalia "window-switcher")}), { description = "Window switcher" })
   hl.bind(mainMod .. " + SHIFT + slash", hl.dsp.exec_cmd("ghostty -e sh -lc 'hyprctl binds | less'"), { description = "Show keybinds" })
 
-  hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("ghostty"), { description = "Open terminal" })
-  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("kitty"), { description = "Open terminal" })
+  hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("kitty"), { description = "Open Kitty" })
+  hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("ghostty"), { description = "Open Ghostty" })
   hl.bind(mainMod .. " + S", toggleScratchpad, { description = "Toggle scratchpad", dont_inhibit = true })
   hl.bind(mainMod .. " + SHIFT + S", moveActiveWindowToScratchpad, { description = "Move window to scratchpad", dont_inhibit = true })
   hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(${quote (noctalia "panel-toggle clipboard")}), { description = "Clipboard manager" })

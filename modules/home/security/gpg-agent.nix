@@ -22,9 +22,9 @@ in
       enableSshSupport = true;
       # Sensible default cache TTLs for the desktop — touch the key once
       # per few hours, not every minute.
-      defaultCacheTtl = 7200;       # 2h
-      defaultCacheTtlSsh = 7200;    # 2h
-      maxCacheTtl = 86400;          # 24h hard cap
+      defaultCacheTtl = 7200; # 2h
+      defaultCacheTtlSsh = 7200; # 2h
+      maxCacheTtl = 86400; # 24h hard cap
       pinentry = {
         package = pkgs.pinentry-bemenu;
         program = "pinentry-bemenu";
@@ -37,17 +37,20 @@ in
     # Skips the import if the key file is a placeholder (no PGP block),
     # so this is safe to enable before you've generated the key.
     home.activation.importYubikeyPgpKey = lib.hm.dag.entryAfter [ "writeBoundary" ] (
-      if pgpPublicKey != null then ''
-        key=${lib.escapeShellArg (toString pgpPublicKey)}
-        gpgHome="$HOME/.gnupg"
+      if pgpPublicKey != null then
+        ''
+          key=${lib.escapeShellArg (toString pgpPublicKey)}
+          gpgHome="$HOME/.gnupg"
 
-        mkdir -p "$gpgHome"
-        chmod 700 "$gpgHome"
+          mkdir -p "$gpgHome"
+          chmod 700 "$gpgHome"
 
-        if grep -q "BEGIN PGP PUBLIC KEY BLOCK" "$key" 2>/dev/null; then
-          gpg --homedir "$gpgHome" --import "$key" >/dev/null 2>&1 || true
-        fi
-      '' else ""
+          if grep -q "BEGIN PGP PUBLIC KEY BLOCK" "$key" 2>/dev/null; then
+            gpg --homedir "$gpgHome" --import "$key" >/dev/null 2>&1 || true
+          fi
+        ''
+      else
+        ""
     );
   };
 }

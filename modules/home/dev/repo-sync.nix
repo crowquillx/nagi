@@ -15,9 +15,7 @@ let
   interval = get [ "features" "codingTools" "repoSync" "interval" ] "2m";
   configuredDirectory = get [ "features" "codingTools" "repoSync" "directory" ] null;
   repositoryDirectory =
-    if configuredDirectory == null
-    then "${config.home.homeDirectory}/REPOS"
-    else configuredDirectory;
+    if configuredDirectory == null then "${config.home.homeDirectory}/REPOS" else configuredDirectory;
   sshKeyName = get [ "security" "sops" "sshKey" "name" ] "ssh_key";
   repoSync = pkgs.writeShellApplication {
     name = "nagi-repo-sync";

@@ -11,6 +11,7 @@
     system = "x86_64-linux";
     module = ../hosts/tandesk/default.nix;
     variables = [
+      ../hosts/profiles/tan-common.nix
       ../hosts/tandesk/variables.nix
       ../hosts/tandesk/advanced.nix
     ];
@@ -27,6 +28,7 @@
     system = "x86_64-linux";
     module = ../hosts/tanlappy/default.nix;
     variables = [
+      ../hosts/profiles/tan-common.nix
       ../hosts/tanlappy/variables.nix
       ../hosts/tanlappy/advanced.nix
     ];

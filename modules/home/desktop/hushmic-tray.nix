@@ -1,4 +1,9 @@
-{ lib, pkgs, vars ? { }, ... }:
+{
+  lib,
+  pkgs,
+  vars ? { },
+  ...
+}:
 let
   get = path: default: lib.attrByPath path default vars;
   deviceId = get [ "desktop" "hushmic" "deviceId" ] null;

@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   vars ? { },
   ...
 }:
@@ -8,9 +9,15 @@ let
   get = path: default: lib.attrByPath path default vars;
   zshEnabled = get [ "features" "shell" "zsh" "enable" ] false;
   starshipEnabled = get [ "features" "shell" "starship" "enable" ] true;
+  rosePineStarshipPreset = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/rose-pine/starship/0edc3c781f219565453bbb8e8e7af56ebc2a0d8a/rose-pine.toml";
+    hash = "sha256-0nK3gRQDuoH+jAvKWbM04rVUXtFNRgvB86jKhuvnr9g=";
+  };
 in
 {
   config = lib.mkIf zshEnabled {
+    stylix.targets.starship.enable = false;
+
     programs = {
       zsh = {
         enable = true;
@@ -57,6 +64,7 @@ in
       starship = {
         enable = starshipEnabled;
         enableZshIntegration = starshipEnabled;
+        settings = builtins.fromTOML (builtins.readFile rosePineStarshipPreset);
       };
     };
   };

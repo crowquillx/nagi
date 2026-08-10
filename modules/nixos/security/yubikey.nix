@@ -1,13 +1,11 @@
 {
   lib,
   pkgs,
-  vars ? { },
+  config,
   ...
 }:
 let
-  v = vars;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "security" "yubikey" "enable" ] false;
+  enabled = config.nagi.variables.security.yubikey.enable;
 in
 {
   config = lib.mkIf enabled {

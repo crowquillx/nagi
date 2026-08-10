@@ -1,32 +1,31 @@
 {
   lib,
   config,
-  vars ? { },
+  vars,
   ...
 }:
 let
-  get = path: default: lib.attrByPath path default vars;
-  enabled = get [ "security" "sops" "enable" ] true;
-  defaultSopsFile = get [ "security" "sops" "defaultSopsFile" ] null;
-  ageKeyFile = get [ "security" "sops" "ageKeyFile" ] "/var/lib/sops-nix/key.txt";
-  gnupgHome = get [ "security" "sops" "gnupgHome" ] null;
-  administrativeGroup = get [ "security" "sops" "administrativeGroup" ] null;
-  primaryUser = get [ "users" "primary" ] "nagi";
+  v = vars;
+  sopsVars = v.security.sops;
+  inherit (sopsVars)
+    ageKeyFile
+    administrativeGroup
+    agePublicKey
+    defaultSopsFile
+    gnupgHome
+    ;
+  enabled = sopsVars.enable;
+  primaryUser = v.users.primary;
   sshKey = {
-    enable = get [ "security" "sops" "sshKey" "enable" ] false;
-    name = get [ "security" "sops" "sshKey" "name" ] "ssh_key";
-    pubName = get [ "security" "sops" "sshKey" "pubName" ] "ssh_key_pub";
-    privMode = get [ "security" "sops" "sshKey" "privateMode" ] "0600";
-    pubMode = get [ "security" "sops" "sshKey" "publicMode" ] "0644";
+    inherit (sopsVars.sshKey) enable name pubName;
+    privMode = sopsVars.sshKey.privateMode;
+    pubMode = sopsVars.sshKey.publicMode;
   };
   signingKey = {
-    enable = get [ "security" "sops" "signingKey" "enable" ] false;
-    name = get [ "security" "sops" "signingKey" "name" ] "ssh_signing_key";
-    pubName = get [ "security" "sops" "signingKey" "pubName" ] "ssh_signing_key_pub";
-    privMode = get [ "security" "sops" "signingKey" "privateMode" ] "0600";
-    pubMode = get [ "security" "sops" "signingKey" "publicMode" ] "0644";
+    inherit (sopsVars.signingKey) enable name pubName;
+    privMode = sopsVars.signingKey.privateMode;
+    pubMode = sopsVars.signingKey.publicMode;
   };
-  agePublicKey = get [ "security" "sops" "agePublicKey" ] null;
 in
 {
   config = lib.mkMerge [
@@ -44,9 +43,11 @@ in
         {
           assertion =
             !enabled
-            || (builtins.isString primaryUser
+            || (
+              builtins.isString primaryUser
               && primaryUser != ""
-              && builtins.hasAttr primaryUser config.users.users);
+              && builtins.hasAttr primaryUser config.users.users
+            );
           message = "security.sops.enable = true requires users.primary (\"${toString primaryUser}\") to exist as a NixOS user.";
         }
         {

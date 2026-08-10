@@ -1,20 +1,6 @@
 {
   features = {
-    localsend = {
-      package.enable = true;
-      openFirewall = true;
-    };
-
-    chat = {
-      client = "discord";
-      startup.enable = true;
-      discord = {
-        forceXwayland = false;
-        equicord = {
-          enable = true;
-        };
-      };
-    };
+    chat.discord.forceXwayland = false;
 
     mullvad = {
       package = "gui";
@@ -25,59 +11,8 @@
       };
     };
 
-    codingTools = {
-      enable = true;
-      editors = {
-        enable = true;
-        t3code.enable = true;
-        cursor.enable = true;
-        zed.enable = true;
-      };
-      aiCli = {
-        enable = true;
-        codex.enable = true;
-        opencode.enable = true;
-        opencode2.enable = true;
-        gemini.enable = true;
-        pi.enable = true;
-        ohMyPi.enable = true;
-      };
-      nixTools.enable = true;
-    };
-    mcp.nixos.enable = true;
-    tailscale.enable = true;
-    fileManager.thunar.enable = true;
-    terminals = {
-      alacritty.enable = true;
-      foot.enable = true;
-      kitty.enable = true;
-    };
-    videoEditing = {
-      kdenlive.enable = true;
-      davinciResolve = {
-        enable = false;
-        edition = "free";
-      };
-    };
-    theme = {
-      gtk = {
-        enable = true;
-        iconTheme = {
-          name = "rose-pine";
-          package = "rose-pine-icon-theme";
-        };
-      };
-      qt.enable = true;
-    };
-    zoxide.enable = true;
-    bluetooth.enable = true;
-    networking.networkmanager.enable = true;
-    portals.enable = true;
-    services = {
-      fstrim.enable = true;
-      resolved.enable = true;
-      powerProfilesDaemon.enable = true;
-    };
+    codingTools.aiCli.gemini.enable = true;
+    videoEditing.kdenlive.enable = true;
     razer = {
       openrazer = {
         enable = true;
@@ -85,9 +20,7 @@
       };
       inputRemapper.enable = true;
     };
-    printing.enable = false;
     flatpak = {
-      enable = true;
       packages = [
         "org.upscayl.Upscayl"
         "ru.linux_gaming.PortProton"

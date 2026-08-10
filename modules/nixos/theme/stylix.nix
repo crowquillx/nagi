@@ -1,11 +1,14 @@
 { lib, config, ... }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
 
-  enabled = get [ "features" "stylix" "enable" ] true;
-  variantRaw = get [ "features" "stylix" "variant" ] "moon";
-  allowedVariants = [ "moon" "main" "dawn" ];
+  enabled = v.features.stylix.enable;
+  variantRaw = v.features.stylix.variant;
+  allowedVariants = [
+    "moon"
+    "main"
+    "dawn"
+  ];
   schemes = import ../../theme/rose-pine.nix;
 in
 {

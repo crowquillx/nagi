@@ -6,9 +6,8 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "features" "flatpak" "enable" ] false;
-  packageRefs = get [ "features" "flatpak" "packages" ] [ ];
+  enabled = v.features.flatpak.enable;
+  packageRefs = v.features.flatpak.packages;
   isNonEmptyString = value: lib.isString value && value != "";
   isBundleRef =
     ref:

@@ -6,10 +6,9 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "features" "nh" "enable" ] true;
-  cleanEnable = get [ "features" "nh" "clean" "enable" ] true;
-  cleanExtraArgs = get [ "features" "nh" "clean" "extraArgs" ] "--keep-since 4d --keep 3";
+  enabled = v.features.nh.enable;
+  cleanEnable = v.features.nh.clean.enable;
+  cleanExtraArgs = v.features.nh.clean.extraArgs;
 in
 {
   config = lib.mkIf enabled {

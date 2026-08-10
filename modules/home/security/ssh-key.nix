@@ -31,8 +31,14 @@ let
   '';
 
   waitSources =
-    (lib.optionals authEnabled [ privSource pubSource ])
-    ++ (lib.optionals signingEnabled [ signingPrivSource signingPubSource ]);
+    (lib.optionals authEnabled [
+      privSource
+      pubSource
+    ])
+    ++ (lib.optionals signingEnabled [
+      signingPrivSource
+      signingPubSource
+    ]);
 
   waitCondition = lib.concatMapStringsSep " && " (s: "[ -e '${s}' ]") waitSources;
 

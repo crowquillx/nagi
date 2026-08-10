@@ -1,4 +1,9 @@
-{ lib, pkgs, vars ? { }, ... }:
+{
+  lib,
+  pkgs,
+  vars ? { },
+  ...
+}:
 let
   v = vars;
   get = path: default: lib.attrByPath path default v;
@@ -35,11 +40,7 @@ let
     require("${pkgs.equicord}/desktop/patcher.js");
     EOF
   '';
-  discordBasePackage =
-    if equicordEnabled then
-      discordEquicordPackage
-    else
-      pkgs.discord;
+  discordBasePackage = if equicordEnabled then discordEquicordPackage else pkgs.discord;
   discordPackage =
     if discordForceXwayland then
       pkgs.symlinkJoin {
@@ -61,11 +62,8 @@ let
     else
       discordBasePackage;
 
-  resolvePkg = name:
-    if name == "brave" then
-      bravePackage
-    else
-      lib.attrByPath (lib.splitString "." name) null pkgs;
+  resolvePkg =
+    name: if name == "brave" then bravePackage else lib.attrByPath (lib.splitString "." name) null pkgs;
   missingPackageNames = lib.filter (name: resolvePkg name == null) packageNames;
   resolvedPackages = lib.filter (pkg: pkg != null) (map resolvePkg packageNames);
   featurePackages =
@@ -86,7 +84,17 @@ in
       message = "LocalSend is declared twice; use features.localsend.package.enable instead of users.extraPackages.";
     }
     {
-      assertion = !(mullvadPackage != "none" && builtins.any (name: builtins.elem name [ "mullvad" "mullvad-vpn" ]) packageNames);
+      assertion =
+        !(
+          mullvadPackage != "none"
+          && builtins.any (
+            name:
+            builtins.elem name [
+              "mullvad"
+              "mullvad-vpn"
+            ]
+          ) packageNames
+        );
       message = "Mullvad is declared twice; use features.mullvad.package instead of users.extraPackages.";
     }
     {

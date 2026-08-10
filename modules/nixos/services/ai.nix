@@ -6,11 +6,10 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  aiEnabled = get [ "features" "ai" "enable" ] false;
-  comfyuiEnabled = get [ "features" "ai" "comfyui" "enable" ] false;
-  ollamaEnabled = get [ "features" "ai" "ollama" "enable" ] false;
-  openWebuiEnabled = get [ "features" "ai" "openWebui" "enable" ] false;
+  aiEnabled = v.features.ai.enable;
+  comfyuiEnabled = v.features.ai.comfyui.enable;
+  ollamaEnabled = v.features.ai.ollama.enable;
+  openWebuiEnabled = v.features.ai.openWebui.enable;
   # latest-cuda
   comfyuiImage = "ghcr.io/utensils/comfyui-nix@sha256:d16e82bfa6036fe49faaaf9d36bf52dff03efdbb43676fb99d1a452181ccef0c";
   # latest

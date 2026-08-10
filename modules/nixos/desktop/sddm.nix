@@ -6,15 +6,14 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  dm = get [ "desktop" "displayManager" ] "auto";
-  compositor = get [ "desktop" "compositor" ] "niri";
-  sddmEnable = get [ "desktop" "sddm" "enable" ] true;
-  sddmWaylandEnable = get [ "desktop" "sddm" "wayland" "enable" ] true;
-  sddmTheme = get [ "desktop" "sddm" "theme" ] "sddm-astronaut-theme";
-  sddmBackground = get [ "desktop" "sddm" "background" ] null;
-  sddmThemeConfig = get [ "desktop" "sddm" "themeConfig" ] { };
+  desktopEnabled = v.desktop.enable;
+  dm = v.desktop.displayManager;
+  inherit (v.desktop) compositor;
+  sddmEnable = v.desktop.sddm.enable;
+  sddmWaylandEnable = v.desktop.sddm.wayland.enable;
+  sddmTheme = v.desktop.sddm.theme;
+  sddmBackground = v.desktop.sddm.background;
+  sddmThemeConfig = v.desktop.sddm.themeConfig;
   effectiveDm = if dm == "auto" then "sddm" else dm;
   defaultSession =
     if compositor == "plasma" then

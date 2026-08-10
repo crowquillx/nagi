@@ -1,9 +1,8 @@
 { lib, config, ... }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  enabled = get [ "features" "fileManager" "thunar" "enable" ] desktopEnabled;
+  desktopEnabled = v.desktop.enable;
+  enabled = v.features.fileManager.thunar.enable;
 in
 {
   config = lib.mkIf enabled {

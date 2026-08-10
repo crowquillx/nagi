@@ -1,27 +1,35 @@
-{ lib, pkgs, config, ... }:
+{
+  lib,
+  pkgs,
+  config,
+  ...
+}:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
 
-  allowedProfiles = [ "auto" "none" "amd" "intel" "nvidia" "vm" ];
-  hostIsVm = get [ "host" "isVm" ] false;
-  profileRaw = get [ "graphics" "profile" ] "auto";
-  profile =
-    if profileRaw == "auto"
-    then if hostIsVm then "vm" else "none"
-    else profileRaw;
+  allowedProfiles = [
+    "auto"
+    "none"
+    "amd"
+    "intel"
+    "nvidia"
+    "vm"
+  ];
+  hostIsVm = v.host.isVm;
+  profileRaw = v.graphics.profile;
+  profile = if profileRaw == "auto" then if hostIsVm then "vm" else "none" else profileRaw;
 
-  extraPackageNames = get [ "graphics" "extraPackages" ] [ ];
+  extraPackageNames = v.graphics.extraPackages;
   resolvePkg = name: lib.attrByPath (lib.splitString "." name) null pkgs;
   missingPackageNames = lib.filter (name: resolvePkg name == null) extraPackageNames;
   resolvedExtraPackages = lib.filter (pkg: pkg != null) (map resolvePkg extraPackageNames);
 
-  nvidiaModesettingEnable = get [ "graphics" "nvidia" "modesetting" "enable" ] true;
-  nvidiaPowerManagementEnable = get [ "graphics" "nvidia" "powerManagement" "enable" ] false;
-  nvidiaOpenEnable = get [ "graphics" "nvidia" "open" ] false;
-  nvidiaSettingsEnable = get [ "graphics" "nvidia" "nvidiaSettings" ] true;
-  nvidiaUseLatest = get [ "graphics" "nvidia" "useLatestDriver" ] false;
-  enable32Bit = get [ "graphics" "enable32Bit" ] false;
+  nvidiaModesettingEnable = v.graphics.nvidia.modesetting.enable;
+  nvidiaPowerManagementEnable = v.graphics.nvidia.powerManagement.enable;
+  nvidiaOpenEnable = v.graphics.nvidia.open;
+  nvidiaSettingsEnable = v.graphics.nvidia.nvidiaSettings;
+  nvidiaUseLatest = v.graphics.nvidia.useLatestDriver;
+  enable32Bit = v.graphics.enable32Bit;
 in
 {
   config = lib.mkMerge [

@@ -6,10 +6,8 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "features" "portals" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  enabled = v.features.portals.enable;
+  inherit (v.desktop) compositor extraCompositors;
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
   hasHyprland = builtins.elem "hyprland" ([ compositor ] ++ extraCompositors);
   hasPlasma = builtins.elem "plasma" ([ compositor ] ++ extraCompositors);

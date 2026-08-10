@@ -5,16 +5,18 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  primaryUser = get [ "users" "primary" ] "nagi";
+  primaryUser = v.users.primary;
 
-  enabled = get [ "features" "ssh" "enable" ] false;
-  openFirewall = get [ "features" "ssh" "openFirewall" ] true;
-  port = get [ "features" "ssh" "port" ] 22;
-  passwordAuthentication = get [ "features" "ssh" "passwordAuthentication" ] false;
-  permitRootLogin = get [ "features" "ssh" "permitRootLogin" ] "prohibit-password";
-  authorizedKeys = get [ "features" "ssh" "authorizedKeys" ] [ ];
-  autoTmuxEnabled = get [ "features" "ssh" "autoTmux" "enable" ] false;
+  ssh = v.features.ssh;
+  inherit (ssh)
+    authorizedKeys
+    openFirewall
+    passwordAuthentication
+    permitRootLogin
+    port
+    ;
+  enabled = ssh.enable;
+  autoTmuxEnabled = ssh.autoTmux.enable;
 in
 {
   config = lib.mkMerge [

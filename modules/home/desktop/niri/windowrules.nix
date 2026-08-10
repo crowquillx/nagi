@@ -1,4 +1,11 @@
-{ plain, leaf, flag, rgbaApps, vars ? { }, ... }:
+{
+  plain,
+  leaf,
+  flag,
+  rgbaApps,
+  vars ? { },
+  ...
+}:
 let
   discordElectronMatch = {
     app-id = "(?i)^electron$";
@@ -27,12 +34,18 @@ let
 in
 [
   (plain "window-rule" [
-    (leaf "match" { app-id = "mullvad-browser$"; title = "^Picture-in-Picture$"; })
+    (leaf "match" {
+      app-id = "mullvad-browser$";
+      title = "^Picture-in-Picture$";
+    })
     (leaf "open-floating" true)
   ])
 
   (plain "window-rule" [
-    (leaf "match" { app-id = "zen$"; title = "^Picture-in-Picture$"; })
+    (leaf "match" {
+      app-id = "zen$";
+      title = "^Picture-in-Picture$";
+    })
     (leaf "open-floating" true)
   ])
 
@@ -75,11 +88,26 @@ in
   ])
 
   (plain "window-rule" [
-    (leaf "match" { app-id = rgbaApps.terminals; is-focused = true; })
-    (leaf "match" { app-id = rgbaApps.fileManagers; is-focused = true; })
-    (leaf "match" { app-id = rgbaApps.chats; is-focused = true; })
-    (leaf "match" { app-id = rgbaApps.editors; is-focused = true; })
-    (leaf "match" { app-id = rgbaApps.mediaPlayers; is-focused = true; })
+    (leaf "match" {
+      app-id = rgbaApps.terminals;
+      is-focused = true;
+    })
+    (leaf "match" {
+      app-id = rgbaApps.fileManagers;
+      is-focused = true;
+    })
+    (leaf "match" {
+      app-id = rgbaApps.chats;
+      is-focused = true;
+    })
+    (leaf "match" {
+      app-id = rgbaApps.editors;
+      is-focused = true;
+    })
+    (leaf "match" {
+      app-id = rgbaApps.mediaPlayers;
+      is-focused = true;
+    })
     (leaf "match" (discordElectronMatch // { is-focused = true; }))
     (leaf "opacity" 0.96)
   ])

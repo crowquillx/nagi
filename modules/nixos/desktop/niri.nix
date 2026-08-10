@@ -6,10 +6,8 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  desktopEnabled = v.desktop.enable;
+  inherit (v.desktop) compositor extraCompositors;
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
   niriPackage = lib.attrByPath [ "niri-unstable" ] null pkgs;
 in

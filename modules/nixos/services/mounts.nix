@@ -1,7 +1,7 @@
 { lib, config, ... }:
 let
   v = config.nagi.variables;
-  mounts = lib.attrByPath [ "storage" "mounts" ] [ ] v;
+  mounts = v.storage.mounts;
 
   normalizeMount =
     mount:
@@ -22,10 +22,7 @@ in
     {
       assertions = map (mount: {
         assertion =
-          mount.device != null
-          && mount.device != ""
-          && mount.mountPath != null
-          && mount.mountPath != "";
+          mount.device != null && mount.device != "" && mount.mountPath != null && mount.mountPath != "";
         message = "storage.mounts entries must set non-empty device and mountPoint values.";
       }) normalizedMounts;
     }

@@ -1,4 +1,9 @@
-{ plain, leaf, flag, ... }:
+{
+  plain,
+  leaf,
+  flag,
+  ...
+}:
 [
   (plain "input" [
     (plain "keyboard" [

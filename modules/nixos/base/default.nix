@@ -6,10 +6,9 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  primaryUser = get [ "users" "primary" ] "nagi";
-  fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
-  zshEnabled = get [ "features" "shell" "zsh" "enable" ] false;
+  primaryUser = v.users.primary;
+  fishEnabled = v.features.shell.fish.enable;
+  zshEnabled = v.features.shell.zsh.enable;
   maintenance = v.features.nixMaintenance;
   binaryCaches = import ./binary-caches.nix;
 in
@@ -42,13 +41,13 @@ in
     };
   };
 
-  time.timeZone = get [ "host" "timeZone" ] "America/Chicago";
-  i18n.defaultLocale = get [ "host" "locale" ] "en_US.UTF-8";
+  time.timeZone = v.host.timeZone;
+  i18n.defaultLocale = v.host.locale;
 
   boot = {
     loader = {
       systemd-boot = {
-        enable = lib.mkDefault (get [ "boot" "systemdBoot" "enable" ] true);
+        enable = lib.mkDefault v.boot.systemdBoot.enable;
         configurationLimit = lib.mkDefault 7;
         consoleMode = lib.mkDefault "max";
       };
@@ -57,7 +56,7 @@ in
 
     kernelPackages =
       let
-        kernel = get [ "boot" "kernel" ] "default";
+        kernel = v.boot.kernel;
       in
       if kernel == "zen" then
         pkgs.linuxPackages_zen
@@ -96,7 +95,7 @@ in
         pkgs.bashInteractive;
   };
 
-  fonts = {
+  fonts = lib.mkIf v.desktop.enable {
     packages = with pkgs; [
       noto-fonts
       noto-fonts-cjk-sans
@@ -146,5 +145,5 @@ in
 
   nixpkgs.config.allowUnfree = true;
 
-  system.stateVersion = "25.05";
+  system.stateVersion = v.host.stateVersion.nixos;
 }

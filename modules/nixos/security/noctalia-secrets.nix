@@ -1,14 +1,13 @@
 {
   lib,
-  vars ? { },
+  config,
   ...
 }:
 let
-  get = path: default: lib.attrByPath path default vars;
-  primaryUser = get [ "users" "primary" ] "nagi";
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] desktopEnabled;
-  secrets = get [ "desktop" "noctalia" "assistantPanel" "secrets" ] { };
+  v = config.nagi.variables;
+  primaryUser = v.users.primary;
+  noctaliaEnabled = v.desktop.enable && v.desktop.noctalia.enable;
+  secrets = v.desktop.noctalia.assistantPanel.secrets;
 
   mkSecret =
     name:

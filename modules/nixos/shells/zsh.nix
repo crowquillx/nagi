@@ -5,9 +5,7 @@
   ...
 }:
 let
-  v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  zshEnable = get [ "features" "shell" "zsh" "enable" ] false;
+  zshEnable = config.nagi.variables.features.shell.zsh.enable;
 in
 {
   config = lib.mkIf zshEnable {

@@ -5,10 +5,9 @@
   ...
 }:
 let
-  get = path: default: lib.attrByPath path default config.nagi.variables;
-  desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
+  v = config.nagi.variables;
+  desktopEnabled = v.desktop.enable;
+  inherit (v.desktop) compositor extraCompositors;
   hasHyprland = builtins.elem "hyprland" ([ compositor ] ++ extraCompositors);
 in
 {

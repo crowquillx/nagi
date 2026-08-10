@@ -2,8 +2,6 @@
   host = {
     name = "tandesk";
     isVm = false;
-    timeZone = "America/Boise";
-    locale = "en_US.UTF-8";
   };
 
   storage.mounts = [
@@ -27,19 +25,7 @@
     }
   ];
 
-  boot = {
-    kernel = "zen";
-    systemdBoot.enable = true;
-    secureBoot = {
-      enable = true;
-      # Keep Microsoft UEFI CA/3rd-party keys available for dual-boot and vendor tooling.
-      includeMicrosoftKeys = true;
-      # Set true after reading docs/SECURE_BOOT.md and confirming firmware setup steps.
-      autoEnroll = false;
-      # Lanzaboote/sbctl conventional PKI location.
-      pkiBundle = "/var/lib/sbctl";
-    };
-  };
+  boot.secureBoot.enable = true;
 
   users = {
     primary = "tan";
@@ -61,10 +47,6 @@
       "vortex"
       "ntfs3g"
     ];
-    git = {
-      name = "tan";
-      email = "tancodes@proton.me";
-    };
   };
 
   graphics = {
@@ -80,17 +62,8 @@
   };
 
   desktop = {
-    enable = true;
-    compositor = "hyprland";
-    extraCompositors = [ ];
-    displayManager = "auto";
-    sddm.wayland.enable = false;
-    sddm.background = ../../wallpapers/1.png;
     browser = {
-      default = "zen";
       brave.passwordStore = "gnome-libsecret";
-      zen.enable = true;
-      helium.enable = true;
       mullvadBrowser.enable = true;
     };
     hyprland = {
@@ -154,70 +127,30 @@
           };
         };
       };
-      settings = { };
     };
-    noctalia = import ./noctalia;
     session = {
-      enable = true;
       killProcessesOnLogout = true;
       polkit.enable = false;
-      keyring.enable = true;
-      lock = {
-        enable = true;
-        command = "nagi-noctalia-shell msg session lock";
-        idleSeconds = 300;
-        beforeSleep = true;
-        onLidClose = true;
-      };
     };
-    shellStartupCommand = null;
     hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo";
     startup.apps = [
       "spotify"
       "nagi-hushmic-tray"
     ];
-    startup.backend = "hyprland";
   };
 
   features = {
-    stylix = {
-      enable = true;
-      variant = "main";
-    };
-
     ssh = {
-      enable = true;
-      # Key-only SSH: password and keyboard-interactive auth are disabled.
-      # Both keys below are authorized for user `tan`.
-      passwordAuthentication = false;
       autoTmux = {
         enable = true;
         sessionName = "ssh";
       };
-      authorizedKeys = [
-        "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCu4u2AElakm7r1HESc19BY3PsfQfkPb/mVoPu+Zw72d3W6qdO9HAT6OM5fxfV6yqQE0aH0ob9AHEI96+qbEx2TC35awUXXetOyMUckXtIqGPzazuBmA/WVoQjbNP2mHirhuUXUMm3sJz+e50riea2fvZ8mS7lTOXmfbnCilWNcKX+0gii1atPU0OMm0pghvGikrj1XcGFA+OcSGZdVSJPTDhfZZE236ch/9UxySFXO4Tk6gDXb46RElkiklGkfo9K0p14rf+XIeoHSvqYHiB0AECf/6t5pm/b5EGQqLaiKLM2b98abUX6N5bElc/Ok2sHw2Rar/8HuSJP0r91H1icqESa24ljl9SWc1rr6LwRx5OW2klwpRy9zdq+tfa3kp2yrAPZEYSFEHsCCzwdhNWq3suJaE/hlFyCJ8sVIiSeXsIjP1u75ek0xRoUdxGdh7w57X2Iud6PdxO/VaFkyZb/h9uYpabc40XChDvZnm2PS7hNre+sKsaLcfYNq4Q9C6Oc= tan@tandesk"
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJZbQQm+SOtRh2tAbJSa+kkObzIRV4xCkGfFB5eUMcnW tancodes@proton.me"
-      ];
-    };
-
-    shell = {
-      fish.enable = false;
-      zsh.enable = true;
-      starship.enable = true;
     };
 
     codingTools.repoSync = {
       enable = true;
       remoteHost = "codebox";
       remoteUser = "tan";
-    };
-
-    nh = {
-      enable = true;
-      clean = {
-        enable = true;
-        extraArgs = "--keep-since 4d --keep 3";
-      };
     };
 
     swap = {
@@ -233,38 +166,14 @@
       swappiness = 10;
     };
 
-    nixMaintenance = {
-      gc.enable = false;
-      optimise = {
-        enable = true;
-        dates = "weekly";
-      };
-    };
-
-    audio.enable = true;
   };
 
   security.sops = {
-    enable = true;
     defaultSopsFile = ../../secrets/tandesk.yaml;
-    ageKeyFile = "/var/lib/sops-nix/key.txt";
-    # Make the age key group-readable so sops CLI doesn't need sudo or
-    # a /tmp copy. The user is added to this group at activation.
-    administrativeGroup = "sops";
     # sops-nix is mutually exclusive between gnupgHome and ageKeyFile at
     # runtime, so we use the age key file for unattended boot. The Yubikey
     # PGP key is still a recipient in the sops file (added via
     # `sops updatekeys`); gpg-agent uses it when you run `sops` manually.
-    sshKey = {
-      enable = true;
-      name = "ssh_key";
-      pubName = "ssh_key_pub";
-    };
-    signingKey = {
-      enable = true;
-      name = "ssh_signing_key";
-      pubName = "ssh_signing_key_pub";
-    };
   };
 
   security.yubikey = {

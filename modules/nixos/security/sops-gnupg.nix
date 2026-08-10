@@ -1,14 +1,13 @@
 {
   lib,
-  vars ? { },
+  config,
   ...
 }:
 let
-  v = vars;
-  get = path: default: lib.attrByPath path default v;
-  sopsEnabled = get [ "security" "sops" "enable" ] true;
-  gnupgHome = get [ "security" "sops" "gnupgHome" ] null;
-  publicKeyPath = get [ "security" "sops" "gnupgPublicKey" ] null;
+  sopsVars = config.nagi.variables.security.sops;
+  sopsEnabled = sopsVars.enable;
+  inherit (sopsVars) gnupgHome;
+  publicKeyPath = sopsVars.gnupgPublicKey;
   enabled = sopsEnabled && gnupgHome != null;
 in
 {

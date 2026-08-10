@@ -1,13 +1,13 @@
 {
   lib,
-  vars ? { },
+  config,
   ...
 }:
 let
-  get = path: default: lib.attrByPath path default vars;
-  sopsEnabled = get [ "security" "sops" "enable" ] true;
-  enabled = sopsEnabled && (get [ "security" "sops" "kotomi" "enable" ] true);
-  primaryUser = get [ "users" "primary" ] "nagi";
+  v = config.nagi.variables;
+  sopsEnabled = v.security.sops.enable;
+  enabled = sopsEnabled && v.security.sops.kotomi.enable;
+  primaryUser = v.users.primary;
   secretName = "kotomi_target";
 in
 {

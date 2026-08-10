@@ -1,8 +1,6 @@
 { lib, config, ... }:
 let
-  v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "features" "printing" "enable" ] false;
+  enabled = config.nagi.variables.features.printing.enable;
 in
 {
   config = lib.mkIf enabled {

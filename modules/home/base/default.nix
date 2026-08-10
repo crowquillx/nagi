@@ -7,8 +7,14 @@
   ...
 }:
 let
+  # `vars` is fully schema-resolved for published NixOS and standalone Home
+  # Manager outputs. Fallback access remains here because this module is also
+  # exported for external Home Manager consumers.
   v = vars;
   get = path: default: lib.attrByPath path default v;
+  desktopEnabled = get [ "desktop" "enable" ] true;
+  audioEnabled = get [ "features" "audio" "enable" ] true;
+  networkManagerEnabled = get [ "features" "networking" "networkmanager" "enable" ] true;
   thunarEnabled = get [ "features" "fileManager" "thunar" "enable" ] (
     get [ "desktop" "enable" ] true
   );
@@ -19,8 +25,11 @@ let
   zenEnabled = get [ "desktop" "browser" "zen" "enable" ] false;
   heliumEnabled = get [ "desktop" "browser" "helium" "enable" ] false;
   mullvadBrowserEnabled = get [ "desktop" "browser" "mullvadBrowser" "enable" ] false;
+  terminalDefault = get [ "features" "terminals" "default" ] "kitty";
   alacrittyEnabled = get [ "features" "terminals" "alacritty" "enable" ] true;
   footEnabled = get [ "features" "terminals" "foot" "enable" ] true;
+  ghosttyEnabled = get [ "features" "terminals" "ghostty" "enable" ] true;
+  kittyEnabled = get [ "features" "terminals" "kitty" "enable" ] true;
   fishEnabled = get [ "features" "shell" "fish" "enable" ] true;
   zshEnabled = get [ "features" "shell" "zsh" "enable" ] false;
   noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] false;
@@ -103,6 +112,26 @@ let
       value = browserDesktopFile;
     }) browserMimeTypes
   );
+  terminalEnabledMap = {
+    alacritty = alacrittyEnabled;
+    foot = footEnabled;
+    ghostty = ghosttyEnabled;
+    kitty = kittyEnabled;
+  };
+  terminalCommandMap = {
+    alacritty = "alacritty";
+    foot = "foot";
+    ghostty = "ghostty";
+    kitty = "kitty";
+  };
+  terminalDesktopMap = {
+    alacritty = "Alacritty.desktop";
+    foot = "foot.desktop";
+    ghostty = "com.mitchellh.ghostty.desktop";
+    kitty = "kitty.desktop";
+  };
+  terminalCommand = lib.attrByPath [ terminalDefault ] "kitty" terminalCommandMap;
+  terminalDesktopFile = lib.attrByPath [ terminalDefault ] "kitty.desktop" terminalDesktopMap;
 in
 {
   assertions = [
@@ -121,6 +150,10 @@ in
     {
       assertion = !(heliumEnabled && heliumPkg == null);
       message = "desktop.browser.helium.enable is true, but helium2nix package could not be resolved from flake input.";
+    }
+    {
+      assertion = lib.attrByPath [ terminalDefault ] false terminalEnabledMap;
+      message = "features.terminals.default is \"${terminalDefault}\" but features.terminals.${terminalDefault}.enable is false.";
     }
     {
       assertion = !(browserDefault == "helium" && browserPkg == null);
@@ -149,19 +182,29 @@ in
   ];
 
   home = {
-    stateVersion = "25.05";
+    stateVersion = get [ "host" "stateVersion" "home" ] "25.05";
     packages =
-      (with pkgs; [
+      lib.optionals desktopEnabled (
+        with pkgs;
+        [
+          fuzzel
+          wl-clipboard
+          cliphist
+        ]
+      )
+      ++ lib.optionals (desktopEnabled && audioEnabled) [ pkgs.pavucontrol ]
+      ++ lib.optionals desktopEnabled (
+        with pkgs;
+        [
+          brightnessctl
+          playerctl
+          grim
+          slurp
+        ]
+      )
+      ++ lib.optionals (desktopEnabled && networkManagerEnabled) [ pkgs.networkmanagerapplet ]
+      ++ (with pkgs; [
         # General user tooling should be HM-managed.
-        fuzzel
-        wl-clipboard
-        cliphist
-        pavucontrol
-        brightnessctl
-        playerctl
-        grim
-        slurp
-        networkmanagerapplet
         fzf
         bat
         eza
@@ -188,11 +231,12 @@ in
       ++ lib.optionals (zenEnabled && zenPkg != null) [ zenPkg ]
       ++ lib.optionals (heliumEnabled && heliumPkg != null) [ heliumPkg ]
       ++ lib.optionals mullvadBrowserEnabled [ pkgs.mullvad-browser ]
-      ++ lib.optionals (get [ "desktop" "enable" ] true) [
+      ++ lib.optionals desktopEnabled [
         pkgs.libnotify
       ];
     sessionVariables = {
       NAGI_FLAKE_DIR = flakeDirectory;
+      TERMINAL = terminalCommand;
     };
   };
 
@@ -269,10 +313,17 @@ in
     };
     # Avoid repeated activation failures when a previous backup file already exists.
     configFile."user-dirs.dirs".force = true;
+    configFile."xfce4/helpers.rc" = lib.mkIf thunarEnabled {
+      text = "TerminalEmulator=${terminalCommand}\n";
+    };
     mimeApps = {
       enable = true;
       defaultApplications = browserAssociations;
       associations.added = browserAssociations;
+    };
+    terminal-exec = {
+      enable = true;
+      settings.default = [ terminalDesktopFile ];
     };
   };
 

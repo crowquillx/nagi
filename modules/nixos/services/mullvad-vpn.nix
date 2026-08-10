@@ -1,10 +1,13 @@
-{ lib, config, pkgs, ... }: let
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+let
   cfg = config.nagi.variables.features.mullvad;
   mullvadCliPackage = lib.getAttr "mullvad" pkgs;
-  lanMode =
-    if cfg.service.allowLan
-    then "allow"
-    else "block";
+  lanMode = if cfg.service.allowLan then "allow" else "block";
   # mullvad-daemon reports active before the management socket is ready.
   setLanSharing = pkgs.writeShellScript "mullvad-lan-sharing" ''
     set -eu
@@ -18,7 +21,8 @@
     echo "mullvad lan set ${lanMode} failed after waiting for the management interface" >&2
     exit 1
   '';
-in {
+in
+{
   config = lib.mkMerge [
     {
       assertions = [
@@ -36,9 +40,9 @@ in {
 
       systemd.services.mullvad-lan-sharing = {
         description = "Configure Mullvad local network sharing";
-        wantedBy = ["multi-user.target"];
-        requires = ["mullvad-daemon.service"];
-        after = ["mullvad-daemon.service"];
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "mullvad-daemon.service" ];
+        after = [ "mullvad-daemon.service" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${setLanSharing}";

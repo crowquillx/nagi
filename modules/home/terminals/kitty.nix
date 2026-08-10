@@ -1,4 +1,8 @@
-{ lib, vars ? { }, ... }:
+{
+  lib,
+  vars ? { },
+  ...
+}:
 let
   v = vars;
   get = path: default: lib.attrByPath path default v;

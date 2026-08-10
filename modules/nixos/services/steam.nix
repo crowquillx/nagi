@@ -6,27 +6,15 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  enabled = get [ "features" "gaming" "enable" ] false;
-  gamescopeSessionEnable = get [ "features" "gaming" "steam" "gamescopeSession" "enable" ] false;
-  remotePlayOpenFirewall = get [ "features" "gaming" "steam" "remotePlay" "openFirewall" ] true;
-  dedicatedServerOpenFirewall = get [
-    "features"
-    "gaming"
-    "steam"
-    "dedicatedServer"
-    "openFirewall"
-  ] true;
-  localTransfersOpenFirewall = get [
-    "features"
-    "gaming"
-    "steam"
-    "localNetworkGameTransfers"
-    "openFirewall"
-  ] true;
-  millenniumEnable = get [ "features" "gaming" "steam" "millennium" "enable" ] false;
-  cheatengineEnable = get [ "features" "gaming" "cheatengine" "enable" ] false;
-  primaryUser = get [ "users" "primary" ] "nagi";
+  gaming = v.features.gaming;
+  enabled = gaming.enable;
+  gamescopeSessionEnable = gaming.steam.gamescopeSession.enable;
+  remotePlayOpenFirewall = gaming.steam.remotePlay.openFirewall;
+  dedicatedServerOpenFirewall = gaming.steam.dedicatedServer.openFirewall;
+  localTransfersOpenFirewall = gaming.steam.localNetworkGameTransfers.openFirewall;
+  millenniumEnable = gaming.steam.millennium.enable;
+  cheatengineEnable = gaming.cheatengine.enable;
+  primaryUser = v.users.primary;
   cheatengineGroup = "cheatengine";
   lutrisPkg = pkgs.lutris or null;
   heroicPkg = pkgs.heroic or null;

@@ -6,19 +6,12 @@
 }:
 let
   v = config.nagi.variables;
-  get = path: default: lib.attrByPath path default v;
-  primaryUser = get [ "users" "primary" ] "nagi";
+  primaryUser = v.users.primary;
 
-  vmHostEnable = get [ "features" "virtualisation" "vmHost" "enable" ] false;
-  spiceUSBRedirectionEnable = get [
-    "features"
-    "virtualisation"
-    "vmHost"
-    "spiceUSBRedirection"
-    "enable"
-  ] true;
-  podmanEnable = get [ "features" "virtualisation" "containers" "podman" "enable" ] false;
-  dockerEnable = get [ "features" "virtualisation" "containers" "docker" "enable" ] false;
+  vmHostEnable = v.features.virtualisation.vmHost.enable;
+  spiceUSBRedirectionEnable = v.features.virtualisation.vmHost.spiceUSBRedirection.enable;
+  podmanEnable = v.features.virtualisation.containers.podman.enable;
+  dockerEnable = v.features.virtualisation.containers.docker.enable;
 
   extraGroups = lib.optionals vmHostEnable [ "libvirtd" ] ++ lib.optionals dockerEnable [ "docker" ];
 in

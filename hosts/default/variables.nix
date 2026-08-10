@@ -4,6 +4,10 @@
     isVm = true;
     timeZone = "America/Chicago";
     locale = "en_US.UTF-8";
+    stateVersion = {
+      nixos = "25.05";
+      home = "25.05";
+    };
   };
 
   boot.systemdBoot.enable = true;
@@ -34,7 +38,7 @@
   desktop = {
     enable = true;
     compositor = "hyprland";
-    extraCompositors = [];
+    extraCompositors = [ ];
     displayManager = "auto";
     browser = {
       default = "mullvadBrowser";
@@ -43,13 +47,13 @@
       mullvadBrowser.enable = true;
     };
     hyprland = {
-      outputs = {};
-      settings = {};
+      outputs = { };
+      settings = { };
     };
     noctalia = {
       enable = true;
       command = "nagi-noctalia-shell";
-      settings = {};
+      settings = { };
     };
     session = {
       enable = true;

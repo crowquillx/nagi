@@ -8,7 +8,8 @@
   combined,
   homeModulesFor,
   ...
-}: let
+}:
+let
   v = config.nagi.variables;
   primaryUser = v.users.primary;
   hmBackupCommand = pkgs.writeShellScript "home-manager-backup" ''
@@ -25,14 +26,15 @@
 
     exec ${pkgs.coreutils}/bin/mv "$target_path" "$backup_path"
   '';
-in {
-  imports =
-    [
-      ./variables-schema.nix
-    ]
-    ++ combined.nixosModules;
+in
+{
+  imports = [
+    ./variables-schema.nix
+  ]
+  ++ combined.nixosModules;
 
   nagi.variables = vars;
+  networking.hostName = v.host.name;
 
   home-manager = {
     useGlobalPkgs = true;
@@ -46,7 +48,7 @@ in {
       inherit self inputs combined;
     };
     users.${primaryUser} = {
-      imports = homeModulesFor {};
+      imports = homeModulesFor { };
       home.username = lib.mkForce primaryUser;
       home.homeDirectory = lib.mkForce "/home/${primaryUser}";
       xdg.configHome = lib.mkForce "/home/${primaryUser}/.config";

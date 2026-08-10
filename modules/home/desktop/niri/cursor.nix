@@ -1,4 +1,10 @@
-{ plain, leaf, flag, cursorTheme, ... }:
+{
+  plain,
+  leaf,
+  flag,
+  cursorTheme,
+  ...
+}:
 [
   (plain "cursor" [
     (leaf "xcursor-theme" cursorTheme.name)

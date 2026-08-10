@@ -17,7 +17,13 @@
 #
 # When `configBuilder != null` (the default), only the KDL result is applied;
 # `settings` is ignored. `outputs` still affect the default builder through vars.
-{ lib, pkgs, vars ? { }, inputs ? { }, ... }:
+{
+  lib,
+  pkgs,
+  vars ? { },
+  inputs ? { },
+  ...
+}:
 let
   v = vars;
   get = path: default: lib.attrByPath path default v;
@@ -31,11 +37,19 @@ let
   defaultNiriConfigBuilder = import ./niri/default.nix;
   niriConfigBuilder = get [ "desktop" "niri" "configBuilder" ] defaultNiriConfigBuilder;
 
-  callBuilder = builder:
+  callBuilder =
+    builder:
     if builder == null then
       null
     else if builtins.isFunction builder then
-      builder { inherit lib pkgs vars inputs; }
+      builder {
+        inherit
+          lib
+          pkgs
+          vars
+          inputs
+          ;
+      }
     else
       builder;
 

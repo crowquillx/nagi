@@ -1,4 +1,10 @@
-{ plain, leaf, flag, colors, ... }:
+{
+  plain,
+  leaf,
+  flag,
+  colors,
+  ...
+}:
 [
   (plain "layout" [
     (leaf "gaps" 12)
@@ -32,7 +38,10 @@
     (plain "shadow" [
       (leaf "softness" 30)
       (leaf "spread" 5)
-      (leaf "offset" { x = 0; y = 5; })
+      (leaf "offset" {
+        x = 0;
+        y = 5;
+      })
       (leaf "color" colors.shadow)
     ])
 
