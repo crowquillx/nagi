@@ -131,13 +131,13 @@ features.flatpak = {
 
 ## CI
 
-Pull requests run a fast, unprivileged validation tier with Determinate Nix and FlakeHub Cache:
+Pull requests run a fast, unprivileged validation tier with Determinate Nix:
 
 - Nix formatting, Statix, ShellCheck, and syntax parsing for every tracked Nix file
-- focused tcli, orphan-scanner, and Codex Desktop transformation tests
+- focused tcli, repo-sync, orphan-scanner, and Codex Desktop transformation tests
 - `nix flake check --no-build --accept-flake-config`, which evaluates every published NixOS and standalone Home Manager configuration
 
-Pushes to `main` and manual dispatches can additionally build the full NixOS and Home Manager matrix on a trusted runner labelled `self-hosted`, `linux`, `x64`, and `nagi`. Set the repository variable `NAGI_FULL_BUILD_RUNNER=true` only after that runner exists. Pull requests never execute on it. The matrix is read from `nagiHostMetadata`, which is derived from `lib/host-registry.nix`.
+The workflow runs only for pull requests. Pushes to `main` and manual dispatches do not start CI.
 
 ## Updating local binary packages
 
@@ -155,6 +155,7 @@ nix build .#mo2-lint
 
 - Host variable reference: `docs/VARIABLES.md`
 - `tcli` behavior: `docs/TCLI.md`
+- repository synchronization: `docs/REPO_SYNC.md`
 - sops key and secret setup: `docs/SOPS.md`
 - adding a host: `docs/NEW_HOST.md`
 - flake-parts structure: `docs/DENDRITIC.md`

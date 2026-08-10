@@ -2,10 +2,6 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -19,21 +15,12 @@ jobs:
     name: Fast validation
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    outputs:
-      hosts: ${{ steps.host-metadata.outputs.hosts }}
     steps:
       - name: Check out repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Install Determinate Nix
         uses: DeterminateSystems/determinate-nix-action@61cbfe2efc2d4e7a8a6d56967c3c1058e846c858 # v3
-
-      - name: Enable FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@e62e272c914d4ad8e4d1587a864e9c3ad2cba9de # main, pinned 2026-08-10
-
-      - name: Read host metadata
-        id: host-metadata
-        run: echo "hosts=$(nix eval --json --accept-flake-config .#nagiHostMetadata --apply builtins.attrNames)" >> "$GITHUB_OUTPUT"
 
       - name: Check Nix formatting
         run: nix build --accept-flake-config .#checks.x86_64-linux.format
@@ -55,39 +42,10 @@ jobs:
           nix build --accept-flake-config \
             .#checks.x86_64-linux.tcli-help \
             .#checks.x86_64-linux.codex-desktop-config \
+            .#checks.x86_64-linux.repo-sync \
             .#checks.x86_64-linux.orphan-modules
 
       # This evaluates every published NixOS and standalone Home Manager
       # configuration without realizing their large closures.
       - name: Evaluate flake checks
         run: nix flake check --no-build --accept-flake-config
-
-  full-build:
-    name: Full build (${{ matrix.host }})
-    needs: validate
-    if: github.event_name != 'pull_request' && vars.NAGI_FULL_BUILD_RUNNER == 'true'
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - nagi
-    timeout-minutes: 180
-    strategy:
-      fail-fast: false
-      matrix:
-        host: ${{ fromJSON(needs.validate.outputs.hosts) }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - name: Install Determinate Nix
-        uses: DeterminateSystems/determinate-nix-action@61cbfe2efc2d4e7a8a6d56967c3c1058e846c858 # v3
-
-      - name: Enable FlakeHub Cache
-        uses: DeterminateSystems/flakehub-cache-action@e62e272c914d4ad8e4d1587a864e9c3ad2cba9de # main, pinned 2026-08-10
-
-      - name: Build published NixOS configuration
-        run: nix build --accept-flake-config .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
-
-      - name: Build standalone Home Manager configuration
-        run: nix build --accept-flake-config .#homeConfigurations.${{ matrix.host }}.activationPackage
