@@ -21,7 +21,7 @@ in
             "hyprland"
             "plasma"
           ];
-          # Default hyprland while niri-flake is unwired (libdisplay-info_0_2).
+          # Keep generic/new hosts on Hyprland unless they explicitly select another session.
           default = "hyprland";
         };
         extraCompositors = mkOption {

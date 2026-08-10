@@ -1,12 +1,12 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Plasma, Noctalia shell, SDDM, Stylix, Fish/Zsh + Starship, NH, and `sops-nix`.
+Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Niri, Plasma, Noctalia shell, SDDM, Stylix, Fish/Zsh + Starship, NH, and `sops-nix`.
 
 ## Hosts
 
 - `default`: generic VM-safe reference profile for new installs
 - `tandesk`: physical desktop profile
-- `tanlappy`: laptop profile with power/lid/battery defaults
+- `tanlappy`: Niri laptop profile with power/lid/battery defaults
 
 The flake profile name and installed machine hostname are separate. For example, `default` can build a machine whose hostname is `alice-pc`.
 
@@ -167,5 +167,5 @@ nix build .#mo2-lint
 - `hardware-configuration.nix` placeholders are overwritten by bootstrap when needed.
 - The shared host data model is `config.nagi.variables`.
 - This setup targets `nixpkgs-unstable` and uses Determinate Nix as its only Nix distribution.
-- Niri module sources remain under `modules/*/desktop/niri*` and are parse/format/orphan checked, but the `sodiboo/niri-flake` input is temporarily unwired while [upstream issue #1851](https://github.com/sodiboo/niri-flake/issues/1851) remains open.
+- Niri uses the compositor from host `nixpkgs` for Mesa/ABI alignment while `sodiboo/niri-flake` supplies only the KDL/Home Manager configuration API.
 - Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.

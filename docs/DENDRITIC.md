@@ -101,5 +101,5 @@ Fallback:
 
 ## Notes
 
-- Plasma remains supported and dormant Niri modules are retained for re-enablement; every tracked Nix file is parsed and format-checked even when it is not in the active stack.
+- Plasma and Niri remain supported. The upstream Niri Home Manager configuration module is injected only for hosts that select Niri.
 - If lockfile updates are required for new inputs, run `nix flake lock --update-input <name>` in a Nix-enabled environment.

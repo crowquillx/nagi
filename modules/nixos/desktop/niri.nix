@@ -9,18 +9,16 @@ let
   desktopEnabled = v.desktop.enable;
   inherit (v.desktop) compositor extraCompositors;
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
-  niriPackage = lib.attrByPath [ "niri-unstable" ] null pkgs;
+  niriPackage = lib.attrByPath [ "niri" ] null pkgs;
 in
 {
   config = lib.mkIf (desktopEnabled && hasNiri) {
     assertions = [
       {
         assertion = niriPackage != null;
-        message = "pkgs.niri-unstable is unavailable. Ensure inputs.niri.overlays.niri is applied.";
+        message = "pkgs.niri is unavailable for ${pkgs.stdenv.hostPlatform.system}.";
       }
     ];
-
-    niri-flake.cache.enable = true;
 
     environment.systemPackages = [
       pkgs.xwayland-satellite

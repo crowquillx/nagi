@@ -24,7 +24,7 @@ let
   ];
 
   nixosDesktop = [
-    # niri.nix unwired while sodiboo/niri-flake is dropped from flake inputs.
+    ../nixos/desktop/niri.nix
     ../nixos/desktop/hyprland.nix
     ../nixos/desktop/kde.nix
     ../nixos/desktop/sddm.nix
@@ -108,7 +108,6 @@ let
 
   homeDesktop = [
     ../home/desktop/session-runtime.nix
-    # niri-user.nix unwired while sodiboo/niri-flake is dropped from flake inputs.
     ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix

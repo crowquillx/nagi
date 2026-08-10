@@ -25,7 +25,7 @@ capture.
 ## Key switches
 
 - `host.stateVersion = { nixos = "25.05"; home = "25.05"; }` (host-specific migration baselines; copy existing values and do not casually upgrade them)
-- `desktop.compositor = "hyprland" | "plasma" | "niri"` (default session selected by SDDM; default is `hyprland`. `niri` is schema-supported but the flake input is temporarily unwired)
+- `desktop.compositor = "hyprland" | "plasma" | "niri"` (default session selected by SDDM; default is `hyprland`. Niri uses the stable package from host `nixpkgs`.)
 - `desktop.extraCompositors = [ "hyprland" "plasma" "niri" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
 - `desktop.sddm.wayland.enable = true | false`

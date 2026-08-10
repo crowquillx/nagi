@@ -62,7 +62,7 @@ let
   hasNiriSettings = effectiveNiriSettings != { };
   hasNiriConfig = niriConfig != null;
 
-  niriPackage = lib.attrByPath [ "niri-unstable" ] null pkgs;
+  niriPackage = lib.attrByPath [ "niri" ] null pkgs;
   cursorTheme = import ./cursor-theme.nix;
   rosePineCursorPkg = lib.attrByPath [ cursorTheme.packageAttr ] null pkgs;
 in

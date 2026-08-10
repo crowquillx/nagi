@@ -41,10 +41,12 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 The `mcp-nixos` `test_read_text_file` skip was removed in this cleanup.
 Upstream fixed the content assertion and closed [issue #198](https://github.com/utensils/mcp-nixos/issues/198); the pinned nixpkgs now provides 3.0.0, whose unmodified package was verified to build.
 
-## Dormant Niri compatibility
+## Niri package/configuration split
 
-Niri source modules remain present and are parse-, format-, and orphan-checked.
-The flake input remains intentionally unwired while
-[sodiboo/niri-flake issue #1851](https://github.com/sodiboo/niri-flake/issues/1851)
-tracks the removed `libdisplay-info_0_2` dependency. Re-enable it as a focused
-change with host builds after upstream resolves that dependency.
+Niri hosts use `pkgs.niri` from the root nixpkgs input, while
+`sodiboo/niri-flake` supplies only `homeModules.config` and its KDL library.
+This retains the repository's structured configuration without evaluating the
+incompatible package overlay affected by
+[sodiboo/niri-flake issue #1851](https://github.com/sodiboo/niri-flake/issues/1851).
+Reconsider the split when the upstream package overlay builds against the
+repository's nixpkgs pin without the removed `libdisplay-info_0_2`.

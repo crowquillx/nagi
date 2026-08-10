@@ -12,6 +12,8 @@
 let
   v = config.nagi.variables;
   primaryUser = v.users.primary;
+  hasNiri =
+    v.desktop.enable && builtins.elem "niri" ([ v.desktop.compositor ] ++ v.desktop.extraCompositors);
   hmBackupCommand = pkgs.writeShellScript "home-manager-backup" ''
     set -eu
 
@@ -48,7 +50,7 @@ in
       inherit self inputs combined;
     };
     users.${primaryUser} = {
-      imports = homeModulesFor { };
+      imports = homeModulesFor { niri = hasNiri; };
       home.username = lib.mkForce primaryUser;
       home.homeDirectory = lib.mkForce "/home/${primaryUser}";
       xdg.configHome = lib.mkForce "/home/${primaryUser}/.config";

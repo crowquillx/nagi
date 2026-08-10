@@ -22,15 +22,18 @@
   };
 
   desktop = {
+    compositor = "niri";
     browser = {
       mullvadBrowser.enable = false;
     };
     session = {
-      polkit.enable = true;
+      # Noctalia owns the authentication agent in Niri sessions.
+      polkit.enable = false;
     };
     startup.apps = [
       "spotify"
     ];
+    startup.backend = "niri";
   };
 
   features = {

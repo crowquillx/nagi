@@ -1,5 +1,5 @@
 {
-  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Plasma, Noctalia, and sops-nix";
+  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, Noctalia, and sops-nix";
 
   # This literal is the source of truth for both --accept-flake-config and the
   # installed Nix daemon settings. Nix rejects imported/thunked nixConfig
@@ -68,9 +68,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Niri (sodiboo/niri-flake) is temporarily unwired: host nixpkgs removed
-    # libdisplay-info_0_2 which niri-flake still requires. Module sources under
-    # modules/*/desktop/niri* remain for re-enable later.
+    # Use niri-flake only for its KDL/Home Manager configuration API. The
+    # compositor package comes from host nixpkgs to keep Mesa/ABI alignment.
+    niri.url = "github:sodiboo/niri-flake";
 
     # Do not follow nixpkgs: hyprland.cachix.org caches against upstream's pin.
     hyprland = {

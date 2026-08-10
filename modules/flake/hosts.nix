@@ -43,21 +43,32 @@ let
 
   stylixHmModule = lib.attrByPath [ "stylix" "homeModules" "stylix" ] null inputs;
   determinateHmModule = inputs.determinate.homeManagerModules.default;
+  niriHmConfigModule = inputs.niri.homeModules.config;
+  niriHomeModule = import ../home/desktop/niri-user.nix;
 
-  # Stylix NixOS module injects its Home Manager module; standalone HM needs
-  # that module appended explicitly below.
+  # Niri's configuration module is host-conditional. Stylix injects its Home
+  # Manager module from NixOS, while standalone HM appends it explicitly.
   sharedHomeModules =
     lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ]
     ++ lib.optionals (codexDesktopHmModule != null) [ codexDesktopHmModule ];
   homeModulesFor =
     {
       standalone ? false,
+      niri ? false,
     }:
     [ homeModule ]
     ++ sharedHomeModules
+    ++ lib.optionals niri [
+      niriHmConfigModule
+      niriHomeModule
+    ]
     ++ lib.optional standalone determinateHmModule
     ++ lib.optionals (standalone && stylixHmModule != null) [ stylixHmModule ];
 
+  niriEnabled =
+    vars:
+    vars.desktop.enable
+    && builtins.elem "niri" ([ vars.desktop.compositor ] ++ vars.desktop.extraCompositors);
   comfyuiEnabled = vars: vars.features.ai.enable && vars.features.ai.comfyui.enable;
 
   mkHost =
@@ -112,12 +123,17 @@ let
           combined
           ;
       };
-      modules = homeModulesFor { standalone = true; } ++ [
-        {
-          home.username = primaryUser;
-          home.homeDirectory = "/home/${primaryUser}";
+      modules =
+        homeModulesFor {
+          standalone = true;
+          niri = niriEnabled vars;
         }
-      ];
+        ++ [
+          {
+            home.username = primaryUser;
+            home.homeDirectory = "/home/${primaryUser}";
+          }
+        ];
     };
 
   nixosConfigs = lib.mapAttrs mkHost hostPlatforms;
