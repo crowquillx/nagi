@@ -133,6 +133,19 @@ in
                 default = "2m";
                 description = "systemd calendar duration between synchronization runs.";
               };
+              repositories = mkOption {
+                type = types.listOf (strictSubmodule {
+                  path = mkOption {
+                    type = types.nonEmptyStr;
+                    description = "Absolute path to an additional Git worktree.";
+                  };
+                  autoCheckpoint = enableOption ''
+                    Preserve dirty tracked and untracked files in a private, host-specific checkpoint ref.
+                  '' false;
+                });
+                default = [ ];
+                description = "Additional repositories outside the scanned directory.";
+              };
             };
             default = { };
           };

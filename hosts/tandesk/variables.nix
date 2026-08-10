@@ -147,12 +147,6 @@
       };
     };
 
-    codingTools.repoSync = {
-      enable = true;
-      remoteHost = "codebox";
-      remoteUser = "tan";
-    };
-
     swap = {
       zram = {
         enable = true;

@@ -92,8 +92,12 @@ capture.
 - `features.codingTools.aiCli.herdr.enable = true | false`
 - `features.codingTools.aiCli.primeAgent.enable = true | false` (Prime Agent from llm-agents.nix)
 - `features.codingTools.nixTools.enable = true | false`
-- `features.codingTools.repoSync = { enable, directory, remoteHost, remoteUser, remoteName, mirrorDirectory, interval }`
-  - Synchronizes committed branches through private bare repositories on the remote host. It never auto-commits, rebases, resets, or overwrites dirty worktrees.
+- `features.codingTools.repoSync = { enable, directory, remoteHost, remoteUser, remoteName, mirrorDirectory, interval, repositories }`
+  - `repositories = [ { path = "/absolute/worktree"; autoCheckpoint = true; } ]` adds repositories outside the scanned directory.
+  - Synchronizes committed branches through private bare repositories on the remote host.
+  - Auto-checkpoint repositories preserve dirty tracked and untracked, nonignored files under private `refs/nagi/checkpoints/<host>` refs without moving `HEAD` or changing the real Git index.
+  - A clean peer restores a compatible checkpoint as uncommitted work. Dirty peers and mismatched bases are never overwritten.
+  - Checkpointing refuses obvious private-key material and plaintext YAML under `secrets/`.
 - `features.mcp.nixos.enable = true | false`
 - `features.tailscale = { enable, acceptDns, exitNode }`
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys, autoTmux }`

@@ -143,6 +143,25 @@
               touch "$out"
             '';
 
+        repo-sync =
+          pkgs.runCommandLocal "repo-sync-tests"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.git
+                pkgs.gnugrep
+                pkgs.gnused
+                pkgs.openssh
+                pkgs.python3
+              ];
+            }
+            ''
+              NAGI_REPO_SYNC=${../../scripts/repo-sync} \
+                python ${../../tests/test_repo_sync.py}
+              touch "$out"
+            '';
+
         # Lightweight behavior check: help text only (no flake eval / rebuild).
         tcli-help =
           pkgs.runCommandLocal "tcli-help"

@@ -160,6 +160,17 @@ print_git_context() {
   fi
 }
 
+# Preserve dirty nagi work through the private repo-sync checkpoint ref before
+# a build. The configured wrapper is a no-op for non-checkpointed flake paths.
+checkpoint_before_build() {
+  local flake_dir="$1"
+
+  command -v nagi-repo-checkpoint >/dev/null 2>&1 || return 0
+  if ! nagi-repo-checkpoint "$flake_dir"; then
+    printf '  ! WARNING: repo checkpoint failed; working tree was left unchanged.\n' >&2
+  fi
+}
+
 # Print a note if building for a host that does not match the running machine.
 print_host_note() {
   local host="$1"
@@ -291,6 +302,8 @@ run_nh_os() {
     old_system="$(readlink -f /run/current-system)"
   fi
 
+  checkpoint_before_build "$flake_ref"
+
   case "$action" in
     switch|boot|test)
       auto_statix "$flake_ref"
@@ -347,6 +360,7 @@ run_update() {
     old_system="$(readlink -f /run/current-system)"
   fi
 
+  checkpoint_before_build "$flake_ref"
   auto_statix "$flake_ref"
   check_dirty_tree "$flake_ref"
 
@@ -389,6 +403,7 @@ run_nh_home() {
     *) die "invalid nh home action: $action (expected switch|build)" ;;
   esac
 
+  checkpoint_before_build "$flake_ref"
   printf '==> nh home %s for host %s\n' "$action" "$host"
   local extra_args=()
   mapfile -t extra_args < <(build_nh_extra_args "$@")

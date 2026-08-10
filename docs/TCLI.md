@@ -6,6 +6,11 @@ It provides one place to run common flake lifecycle tasks while handling both la
 
 The default rebuild path now runs through `nh`, so you get the tree view, diffs, and related `nh` UX without changing the repo's host/home composition model.
 
+Before a NixOS or standalone Home Manager build, `tcli` asks the configured
+`nagi-repo-checkpoint` wrapper to preserve dirty nagi files in the private
+codebox mirror. A checkpoint failure is reported but never mutates or discards
+the working tree.
+
 ## Commands
 
 ### `tcli`

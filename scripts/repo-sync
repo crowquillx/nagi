@@ -5,8 +5,21 @@ root="${NAGI_REPO_SYNC_ROOT:-$HOME/REPOS}"
 remote_name="${NAGI_REPO_SYNC_REMOTE_NAME:-codebox}"
 remote_host="${NAGI_REPO_SYNC_REMOTE_HOST:-}"
 mirror_dir="${NAGI_REPO_SYNC_MIRROR_DIR:-git-mirrors}"
+explicit_repositories="${NAGI_REPO_SYNC_REPOSITORIES:-}"
+checkpoint_repositories="${NAGI_REPO_SYNC_CHECKPOINT_REPOSITORIES:-}"
+sync_host="${NAGI_REPO_SYNC_HOST:-$(hostname -s)}"
 export GIT_SSH_COMMAND="${NAGI_REPO_SYNC_SSH_COMMAND:-ssh -o BatchMode=yes}"
 failures=0
+mode="sync"
+
+if [[ "${1-}" == "--checkpoint-only" ]]; then
+  mode="checkpoint"
+  shift
+fi
+if [[ $# -ne 0 ]]; then
+  printf 'repo-sync: usage: nagi-repo-sync [--checkpoint-only]\n' >&2
+  exit 2
+fi
 
 log() {
   printf 'repo-sync: %s\n' "$*"
@@ -28,9 +41,9 @@ operation_in_progress() {
   local repo="$1"
   local marker
 
-  for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
+  for marker in index.lock MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD rebase-merge rebase-apply; do
     marker="$(git -C "$repo" rev-parse --git-path "$marker")"
-    if [[ -e "$marker" ]]; then
+    if [[ -e "$repo/$marker" || -e "$marker" ]]; then
       return 0
     fi
   done
@@ -84,6 +97,279 @@ ensure_remote() {
   fi
 }
 
+worktree_tree() {
+  local repo="$1"
+  local temporary_index
+  local tree
+
+  temporary_index="$(mktemp "${TMPDIR:-/tmp}/nagi-repo-sync-index.XXXXXX")" || return 1
+  rm -f -- "$temporary_index"
+
+  if ! GIT_INDEX_FILE="$temporary_index" git -C "$repo" read-tree HEAD; then
+    rm -f -- "$temporary_index"
+    return 1
+  fi
+  if ! GIT_INDEX_FILE="$temporary_index" git -C "$repo" add -A -- .; then
+    rm -f -- "$temporary_index"
+    return 1
+  fi
+  if ! tree="$(GIT_INDEX_FILE="$temporary_index" git -C "$repo" write-tree)"; then
+    rm -f -- "$temporary_index"
+    return 1
+  fi
+
+  rm -f -- "$temporary_index"
+  printf '%s\n' "$tree"
+}
+
+checkpoint_base() {
+  git -C "$1" show -s --format=%B "$2" \
+    | sed -n 's/^Nagi-Base: //p' \
+    | head -n 1
+}
+
+checkpoint_preflight() {
+  local repo="$1"
+  local name="$2"
+  local suspicious
+  local secret
+
+  if suspicious="$(
+    git -C "$repo" grep --untracked -I -l -E \
+      -e '-----BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY-----|AGE-SECRET-KEY-' \
+      -- . 2>/dev/null
+  )"; then
+    warn "$name checkpoint contains private-key material; refusing to store it"
+    printf '%s\n' "$suspicious" | sed 's/^/repo-sync: warning:   /' >&2
+    return 1
+  fi
+
+  while IFS= read -r -d '' secret; do
+    [[ -f "$repo/$secret" ]] || continue
+    if ! grep -q '^sops:' "$repo/$secret" || ! grep -q 'ENC\\[' "$repo/$secret"; then
+      warn "$name checkpoint contains an unencrypted SOPS YAML file: $secret"
+      return 1
+    fi
+  done < <(
+    git -C "$repo" ls-files -z --modified --others --exclude-standard -- \
+      'secrets/*.yaml' 'secrets/*.yml'
+  )
+
+  return 0
+}
+
+fetch_checkpoints() {
+  local repo="$1"
+  local refspec="+refs/nagi/checkpoints/*:refs/nagi/remotes/${remote_name}/*"
+
+  if ! git -C "$repo" fetch --prune "$remote_name" "$refspec"; then
+    warn "checkpoint fetch failed for ${repo##*/}"
+    return 1
+  fi
+}
+
+applied_state_file() {
+  local git_dir
+  git_dir="$(git -C "$1" rev-parse --absolute-git-dir)" || return 1
+  printf '%s/nagi-repo-sync/last-applied\n' "$git_dir"
+}
+
+clear_applied_state() {
+  local state_file
+  state_file="$(applied_state_file "$1")" || return 0
+  rm -f -- "$state_file"
+}
+
+create_checkpoint() {
+  local repo="$1"
+  local name="${repo##*/}"
+  local branch
+  local head
+  local tree
+  local own_ref
+  local remote_own_ref
+  local local_oid
+  local remote_oid
+  local previous_oid
+  local previous_tree
+  local previous_base
+  local state_file
+  local applied_oid=""
+  local author_name
+  local author_email
+  local commit_oid
+  local expected_old
+  local parent_args=()
+
+  if operation_in_progress "$repo"; then
+    warn "$name has a Git operation in progress; checkpoint deferred"
+    return 0
+  fi
+  if [[ -z "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+    return 0
+  fi
+  if ! branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
+    warn "$name has a detached HEAD; checkpoint deferred"
+    return 0
+  fi
+  if ! ensure_remote "$repo" "$name" "$branch"; then
+    return 1
+  fi
+  if ! fetch_checkpoints "$repo"; then
+    return 1
+  fi
+  if ! checkpoint_preflight "$repo" "$name"; then
+    return 1
+  fi
+
+  head="$(git -C "$repo" rev-parse HEAD)" || return 1
+  tree="$(worktree_tree "$repo")" || {
+    warn "could not snapshot $name"
+    return 1
+  }
+  state_file="$(applied_state_file "$repo")" || return 1
+  if [[ -f "$state_file" ]]; then
+    applied_oid="$(<"$state_file")"
+  fi
+  if [[ -n "$applied_oid" ]] \
+    && git -C "$repo" cat-file -e "${applied_oid}^{commit}" 2>/dev/null \
+    && [[ "$(git -C "$repo" rev-parse "${applied_oid}^{tree}")" == "$tree" ]] \
+    && [[ "$(checkpoint_base "$repo" "$applied_oid")" == "$head" ]]; then
+    return 0
+  fi
+
+  own_ref="refs/nagi/checkpoints/$sync_host"
+  remote_own_ref="refs/nagi/remotes/$remote_name/$sync_host"
+  local_oid="$(git -C "$repo" rev-parse --verify "$own_ref" 2>/dev/null || true)"
+  remote_oid="$(git -C "$repo" rev-parse --verify "$remote_own_ref" 2>/dev/null || true)"
+  previous_oid="$local_oid"
+
+  if [[ -z "$previous_oid" ]]; then
+    previous_oid="$remote_oid"
+  elif [[ -n "$remote_oid" && "$previous_oid" != "$remote_oid" ]]; then
+    if git -C "$repo" merge-base --is-ancestor "$previous_oid" "$remote_oid"; then
+      previous_oid="$remote_oid"
+    elif ! git -C "$repo" merge-base --is-ancestor "$remote_oid" "$previous_oid"; then
+      warn "$name checkpoint history for $sync_host diverged; refusing to overwrite it"
+      return 1
+    fi
+  fi
+
+  if [[ -n "$previous_oid" ]]; then
+    previous_tree="$(git -C "$repo" rev-parse "${previous_oid}^{tree}")"
+    previous_base="$(checkpoint_base "$repo" "$previous_oid")"
+    if [[ "$previous_tree" == "$tree" && "$previous_base" == "$head" ]]; then
+      if [[ "$local_oid" != "$previous_oid" ]]; then
+        git -C "$repo" update-ref "$own_ref" "$previous_oid" "$local_oid" || return 1
+      fi
+      if [[ "$remote_oid" != "$previous_oid" ]]; then
+        git -C "$repo" push "$remote_name" "$own_ref:$own_ref" || return 1
+      fi
+      return 0
+    fi
+    parent_args=( -p "$previous_oid" )
+  else
+    parent_args=( -p "$head" )
+  fi
+
+  author_name="$(git -C "$repo" config user.name || true)"
+  author_email="$(git -C "$repo" config user.email || true)"
+  author_name="${author_name:-nagi repo-sync}"
+  author_email="${author_email:-repo-sync@localhost}"
+  commit_oid="$(
+    GIT_AUTHOR_NAME="$author_name" \
+      GIT_AUTHOR_EMAIL="$author_email" \
+      GIT_COMMITTER_NAME="$author_name" \
+      GIT_COMMITTER_EMAIL="$author_email" \
+      git -C "$repo" commit-tree "$tree" "${parent_args[@]}" \
+        -m "chore(sync): checkpoint $sync_host" \
+        -m "Nagi-Base: $head"$'\n'"Nagi-Host: $sync_host"
+  )" || {
+    warn "could not create checkpoint commit for $name"
+    return 1
+  }
+
+  expected_old="${local_oid:-0000000000000000000000000000000000000000}"
+  if ! git -C "$repo" update-ref -m "repo-sync checkpoint" "$own_ref" "$commit_oid" "$expected_old"; then
+    warn "could not update the local checkpoint ref for $name"
+    return 1
+  fi
+  if ! git -C "$repo" push "$remote_name" "$own_ref:$own_ref"; then
+    warn "could not publish the checkpoint for $name"
+    return 1
+  fi
+
+  clear_applied_state "$repo"
+  log "checkpointed $name from $sync_host"
+}
+
+restore_checkpoint() {
+  local repo="$1"
+  local name="${repo##*/}"
+  local head
+  local ref
+  local source_host
+  local candidate_oid=""
+  local candidate_ref=""
+  local candidate_tree
+  local head_tree
+  local state_file
+  local applied_oid=""
+
+  if operation_in_progress "$repo"; then
+    return 0
+  fi
+  if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+    return 0
+  fi
+  if ! fetch_checkpoints "$repo"; then
+    return 1
+  fi
+
+  head="$(git -C "$repo" rev-parse HEAD)" || return 1
+  while IFS= read -r ref; do
+    [[ -n "$ref" ]] || continue
+    source_host="${ref##*/}"
+    [[ "$source_host" != "$sync_host" ]] || continue
+    if [[ "$(checkpoint_base "$repo" "$ref")" == "$head" ]]; then
+      candidate_ref="$ref"
+      candidate_oid="$(git -C "$repo" rev-parse "$ref")"
+      break
+    fi
+  done < <(
+    git -C "$repo" for-each-ref \
+      --sort=-committerdate \
+      --format='%(refname)' \
+      "refs/nagi/remotes/$remote_name/"
+  )
+
+  [[ -n "$candidate_oid" ]] || return 0
+  state_file="$(applied_state_file "$repo")" || return 1
+  if [[ -f "$state_file" ]]; then
+    applied_oid="$(<"$state_file")"
+  fi
+  [[ "$applied_oid" != "$candidate_oid" ]] || return 0
+
+  candidate_tree="$(git -C "$repo" rev-parse "${candidate_oid}^{tree}")"
+  head_tree="$(git -C "$repo" rev-parse "${head}^{tree}")"
+  if [[ "$candidate_tree" != "$head_tree" ]]; then
+    if ! git -C "$repo" diff --binary "$head" "$candidate_ref" -- . \
+      | git -C "$repo" apply --check --whitespace=nowarn -; then
+      warn "$name checkpoint from ${candidate_ref##*/} no longer applies cleanly"
+      return 1
+    fi
+    if ! git -C "$repo" diff --binary "$head" "$candidate_ref" -- . \
+      | git -C "$repo" apply --whitespace=nowarn -; then
+      warn "$name checkpoint restore failed"
+      return 1
+    fi
+  fi
+
+  mkdir -p -- "${state_file%/*}"
+  printf '%s\n' "$candidate_oid" >"$state_file"
+  log "restored uncommitted $name checkpoint from ${candidate_ref##*/}"
+}
+
 sync_repo() {
   local repo="$1"
   local name="${repo##*/}"
@@ -92,6 +378,9 @@ sync_repo() {
   local remote_ref
   local local_oid
   local remote_oid
+  local dirty
+  local current_tree
+  local remote_tree
 
   if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     return 0
@@ -150,7 +439,19 @@ sync_repo() {
   fi
 
   if git -C "$repo" merge-base --is-ancestor "$local_ref" "$remote_ref"; then
-    if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+    dirty="$(git -C "$repo" status --porcelain --untracked-files=normal)"
+    if [[ -n "$dirty" ]]; then
+      current_tree="$(worktree_tree "$repo" || true)"
+      remote_tree="$(git -C "$repo" rev-parse "${remote_ref}^{tree}")"
+      if [[ -n "$current_tree" && "$current_tree" == "$remote_tree" ]]; then
+        log "advancing $name:$branch to an identical committed checkpoint"
+        if ! git -C "$repo" reset --mixed "$remote_ref" >/dev/null; then
+          warn "could not advance $name:$branch"
+          return 1
+        fi
+        clear_applied_state "$repo"
+        return 0
+      fi
       warn "$name:$branch is behind $remote_name but has uncommitted changes; fast-forward deferred"
       return 0
     fi
@@ -159,6 +460,7 @@ sync_repo() {
       warn "fast-forward failed for $name:$branch"
       return 1
     fi
+    clear_applied_state "$repo"
     return 0
   fi
 
@@ -166,15 +468,75 @@ sync_repo() {
   return 1
 }
 
-if [[ ! -d "$root" ]]; then
-  warn "repository root does not exist: $root"
-  exit 0
+declare -a repositories=()
+declare -A seen_repositories=()
+declare -A checkpoint_paths=()
+
+add_repository() {
+  local path="$1"
+  local canonical
+
+  [[ -n "$path" ]] || return 0
+  if ! canonical="$(readlink -f -- "$path" 2>/dev/null)"; then
+    warn "repository path does not exist: $path"
+    return 0
+  fi
+  if [[ -z "${seen_repositories[$canonical]+x}" ]]; then
+    seen_repositories["$canonical"]=1
+    repositories+=( "$canonical" )
+  fi
+}
+
+mark_checkpoint_path() {
+  local path="$1"
+  local canonical
+
+  [[ -n "$path" ]] || return 0
+  if ! canonical="$(readlink -f -- "$path" 2>/dev/null)"; then
+    warn "checkpoint path does not exist: $path"
+    return 0
+  fi
+  checkpoint_paths["$canonical"]=1
+  add_repository "$canonical"
+}
+
+IFS=':' read -r -a configured_repositories <<<"$explicit_repositories"
+for repo in "${configured_repositories[@]}"; do
+  add_repository "$repo"
+done
+
+IFS=':' read -r -a configured_checkpoints <<<"$checkpoint_repositories"
+for repo in "${configured_checkpoints[@]}"; do
+  mark_checkpoint_path "$repo"
+done
+
+if [[ "$mode" == "sync" ]]; then
+  if [[ -d "$root" ]]; then
+    for repo in "$root"/*; do
+      [[ -d "$repo" ]] || continue
+      add_repository "$repo"
+    done
+  elif [[ ${#repositories[@]} -eq 0 ]]; then
+    warn "repository root does not exist: $root"
+  fi
 fi
 
-for repo in "$root"/*; do
-  [[ -d "$repo" ]] || continue
-  if ! sync_repo "$repo"; then
-    failures=$((failures + 1))
+for repo in "${repositories[@]}"; do
+  if [[ "$mode" == "sync" ]]; then
+    if ! sync_repo "$repo"; then
+      failures=$((failures + 1))
+      continue
+    fi
+  fi
+
+  if [[ -n "${checkpoint_paths[$repo]+x}" ]]; then
+    if [[ "$mode" == "checkpoint" || -n "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+      if ! create_checkpoint "$repo"; then
+        failures=$((failures + 1))
+      fi
+    elif ! restore_checkpoint "$repo"; then
+      failures=$((failures + 1))
+    fi
   fi
 done
 

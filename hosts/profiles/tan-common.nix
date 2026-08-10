@@ -119,6 +119,17 @@
         primeAgent.enable = true;
       };
       nixTools.enable = true;
+      repoSync = {
+        enable = true;
+        remoteHost = "codebox";
+        remoteUser = "tan";
+        repositories = [
+          {
+            path = "/home/tan/nagi";
+            autoCheckpoint = true;
+          }
+        ];
+      };
     };
     mcp.nixos.enable = true;
     tailscale.enable = true;

@@ -1,0 +1,42 @@
+# Repository synchronization
+
+`nagi-repo-sync` synchronizes committed branches through private bare Git
+repositories on `codebox`. Tandesk and tanlappy also checkpoint `/home/tan/nagi`
+every two minutes so unfinished work can move safely between them.
+
+## Checkpoint behavior
+
+- Dirty tracked and untracked, nonignored files are captured with a temporary
+  Git index. The active branch, working tree, and real index are not changed.
+- Each host publishes its own `refs/nagi/checkpoints/<host>` history.
+- A clean peer restores a checkpoint only when it was made from that peer's
+  current `HEAD`. The result remains visibly uncommitted.
+- A dirty peer is never overwritten. If both hosts edit independently, both
+  checkpoint refs remain available for manual reconciliation.
+- When one host commits a restored checkpoint, the other host can advance to
+  that commit automatically only when its complete working-tree snapshot is
+  byte-for-byte identical.
+- Obvious private-key material and plaintext `secrets/*.yaml` files block the
+  checkpoint. Ignored files are never included.
+
+GitHub remains the deliberate publication remote. Repo-sync pushes branches and
+checkpoint refs only to the private `codebox` remote.
+
+## Inspection and recovery
+
+```bash
+systemctl --user status nagi-repo-sync.timer
+systemctl --user start nagi-repo-sync.service
+git show-ref | grep refs/nagi
+git log --stat refs/nagi/checkpoints/$(hostname -s)
+```
+
+To compare an imported checkpoint before committing:
+
+```bash
+git status
+git diff
+```
+
+Resolve simultaneous edits normally with Git. Repo-sync stops on real
+divergence and never force-pushes or overwrites either dirty worktree.
