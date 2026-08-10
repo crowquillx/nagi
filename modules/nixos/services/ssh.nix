@@ -8,6 +8,7 @@ let
   primaryUser = v.users.primary;
 
   ssh = v.features.ssh;
+  repoSync = v.features.codingTools.repoSync;
   inherit (ssh)
     authorizedKeys
     openFirewall
@@ -59,6 +60,9 @@ in
         linger = lib.mkIf autoTmuxEnabled true;
         openssh.authorizedKeys.keys = authorizedKeys;
       };
+    })
+    (lib.mkIf (repoSync.enable && repoSync.remotePublicKey != null) {
+      programs.ssh.knownHosts.${repoSync.remoteHost}.publicKey = repoSync.remotePublicKey;
     })
   ];
 }

@@ -116,6 +116,9 @@ in
                 type = types.nonEmptyStr;
                 default = "codebox";
               };
+              remotePublicKey = nullableString ''
+                Trusted OpenSSH public host key for the private Git mirror host.
+              '';
               remoteUser = mkOption {
                 type = types.nonEmptyStr;
                 default = config.users.primary;

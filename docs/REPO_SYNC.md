@@ -22,6 +22,9 @@ every two minutes so unfinished work can move safely between them.
 GitHub remains the deliberate publication remote. Repo-sync pushes branches and
 checkpoint refs only to the private `codebox` remote.
 
+The shared host profile also installs codebox's trusted Ed25519 host key
+system-wide, so enrollment never needs to disable SSH host-key verification.
+
 ## Inspection and recovery
 
 ```bash

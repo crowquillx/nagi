@@ -122,6 +122,7 @@
       repoSync = {
         enable = true;
         remoteHost = "codebox";
+        remotePublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAK0GLQcG0rsppoJZa6s1TFwQNRjvimcUSmOLtEZPops";
         remoteUser = "tan";
         repositories = [
           {
