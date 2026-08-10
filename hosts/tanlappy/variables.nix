@@ -77,7 +77,7 @@
   features = {
     stylix = {
       enable = true;
-      variant = "moon";
+      variant = "main";
     };
 
     shell = {
