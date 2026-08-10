@@ -1,3 +1,19 @@
 .local/
+
+# Nix build outputs and development environments.
 result
 result-*
+.direnv/
+
+# Python bytecode.
+__pycache__/
+*.py[cod]
+
+# Editor and temporary files.
+*~
+*.swp
+*.swo
+.#*
+.DS_Store
+.idea/
+.vscode/

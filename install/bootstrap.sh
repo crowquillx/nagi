@@ -80,16 +80,18 @@ HOST_DIR="${REPO_ROOT}/hosts/${HOST}"
 HW_FILE="${HOST_DIR}/hardware-configuration.nix"
 KEY_FILE="/var/lib/sops-nix/key.txt"
 NIX_EXPERIMENTAL_FEATURES="nix-command flakes"
-NIRI_SUBSTITUTER="https://niri.cachix.org"
-NIRI_PUBLIC_KEY="niri.cachix.org-1:Wv0OmO7PsuocRKzfDoJ3mulSl7Z6oezYhGhR+3W2964="
-DETERMIMATE_SUBSTITUTER="https://install.determinate.systems"
-DETERMIMATE_PUBLIC_KEY="cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
 FLAKE_PATH="path:${REPO_ROOT}"
 NIXOS_FLAKE_REF="${FLAKE_PATH}#${HOST}"
 
-if [[ ! -d "${HOST_DIR}" ]]; then
-  KNOWN_HOSTS="$(find "${REPO_ROOT}/hosts" -mindepth 1 -maxdepth 1 -type d ! -name 'common' -printf '%f\n' | sort | paste -sd', ' -)"
-  echo "Unknown host '${HOST}'. Expected one of: ${KNOWN_HOSTS}."
+# Keep bootstrap self-contained even when /etc/nix/nix.conf is immutable
+# (common on NixOS where /etc is declaratively managed).
+export NIX_CONFIG="${NIX_CONFIG-}"$'\n'"experimental-features = ${NIX_EXPERIMENTAL_FEATURES}"
+
+KNOWN_HOSTS="$(nix eval --raw --file "${REPO_ROOT}/lib/host-registry.nix" \
+  --apply 'registry: builtins.concatStringsSep "\n" (builtins.attrNames registry)')"
+if ! grep -Fxq -- "${HOST}" <<<"${KNOWN_HOSTS}"; then
+  KNOWN_HOSTS_DISPLAY="$(tr '\n' ',' <<<"${KNOWN_HOSTS}" | sed 's/,$//; s/,/, /g')"
+  echo "Unknown host '${HOST}'. Expected one of: ${KNOWN_HOSTS_DISPLAY}."
   exit 1
 fi
 
@@ -167,14 +169,8 @@ echo "Machine hostname: ${TARGET_HOSTNAME}"
 echo "Primary user: ${PRIMARY_USER}"
 echo "Repo root: ${REPO_ROOT}"
 
-# Keep bootstrap self-contained even when /etc/nix/nix.conf is immutable
-# (common on NixOS where /etc is declaratively managed).
-export NIX_CONFIG="${NIX_CONFIG-}"$'\n'"experimental-features = ${NIX_EXPERIMENTAL_FEATURES}"
-export NIX_CONFIG="${NIX_CONFIG}"$'\n'"extra-substituters = ${NIRI_SUBSTITUTER} ${DETERMIMATE_SUBSTITUTER}"
-export NIX_CONFIG="${NIX_CONFIG}"$'\n'"extra-trusted-public-keys = ${NIRI_PUBLIC_KEY} ${DETERMIMATE_PUBLIC_KEY}"
 echo "Using experimental features for this run: ${NIX_EXPERIMENTAL_FEATURES}"
-echo "Using Niri cache for this run: ${NIRI_SUBSTITUTER}"
-echo "Using Determinate cache for this run: ${DETERMIMATE_SUBSTITUTER}"
+echo "Using cache settings declared by the flake (--accept-flake-config)."
 
 if command -v nixos-generate-config >/dev/null 2>&1; then
   TMP_HW="$(mktemp)"
@@ -215,28 +211,15 @@ REBUILD_ACTION="switch"
 if ! findmnt -rn /boot >/dev/null 2>&1; then
   REBUILD_ACTION="test"
   echo "/boot is not mounted; using nixos-rebuild test to avoid bootloader install failure."
-  echo "Fix boot mounts, then run: sudo nixos-rebuild switch --accept-flake-config --option extra-substituters ${DETERMIMATE_SUBSTITUTER} --option extra-trusted-public-keys ${DETERMIMATE_PUBLIC_KEY} --flake ${NIXOS_FLAKE_REF}"
+  echo "Fix boot mounts, then run: sudo nixos-rebuild switch --accept-flake-config --flake ${NIXOS_FLAKE_REF}"
 fi
 nixos-rebuild "${REBUILD_ACTION}" --accept-flake-config \
-  --option extra-substituters "${DETERMIMATE_SUBSTITUTER}" \
-  --option extra-trusted-public-keys "${DETERMIMATE_PUBLIC_KEY}" \
   --flake "${NIXOS_FLAKE_REF}"
-
-echo "Running Home Manager activation for ${HOST} as ${PRIMARY_USER}"
-if ! id "${PRIMARY_USER}" >/dev/null 2>&1; then
-  echo "Primary user '${PRIMARY_USER}' does not exist on this system; skipping Home Manager activation."
-else
-  HM_OUT_LINK="/tmp/nagi-hm-${HOST}"
-  rm -f "${HM_OUT_LINK}"
-  sudo -H -u "${PRIMARY_USER}" \
-    nix --extra-experimental-features "${NIX_EXPERIMENTAL_FEATURES}" \
-    build --accept-flake-config "${FLAKE_PATH}#homeConfigurations.${HOST}.activationPackage" \
-    --out-link "${HM_OUT_LINK}"
-  sudo -H -u "${PRIMARY_USER}" "${HM_OUT_LINK}/activate"
-fi
 
 echo
 echo "Bootstrap complete."
+echo "NixOS activated Home Manager for ${PRIMARY_USER} through the integrated module."
 echo "Next:"
 echo "1) Add encrypted secrets under ./secrets and update .sops.yaml recipients."
-echo "2) Re-run: sudo nixos-rebuild switch --accept-flake-config --option extra-substituters ${DETERMIMATE_SUBSTITUTER} --option extra-trusted-public-keys ${DETERMIMATE_PUBLIC_KEY} --flake ${NIXOS_FLAKE_REF}"
+echo "2) Re-run: sudo nixos-rebuild switch --accept-flake-config --flake ${NIXOS_FLAKE_REF}"
+echo "3) Recovery/manual HM remains available as: home-manager switch --flake ${FLAKE_PATH}#${HOST}"

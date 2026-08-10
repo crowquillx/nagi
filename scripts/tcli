@@ -92,6 +92,59 @@ resolve_host() {
   hostname
 }
 
+registered_hosts() {
+  local flake_dir="$1"
+  if [[ -n "${NAGI_REGISTERED_HOSTS-}" ]]; then
+    tr ' ' '\n' <<<"${NAGI_REGISTERED_HOSTS}"
+    return
+  fi
+
+  nix eval --raw --file "${flake_dir}/lib/host-registry.nix" \
+    --apply 'registry: builtins.concatStringsSep "\n" (builtins.attrNames registry)'
+}
+
+validate_host() {
+  local host="$1"
+  local flake_dir="$2"
+  registered_hosts "$flake_dir" | grep -Fxq -- "$host" \
+    || die "unknown host ${host}; run 'tcli hosts' for registered profiles"
+}
+
+resolve_profile() {
+  local requested="$1"
+  local flake_dir="$2"
+  if [[ -n "$requested" ]]; then
+    printf '%s\n' "$requested"
+    return
+  fi
+
+  local current_host
+  current_host="$(resolve_host "")"
+  if registered_hosts "$flake_dir" | grep -Fxq -- "$current_host"; then
+    printf '%s\n' "$current_host"
+    return
+  fi
+
+  local metadata matched_profile
+  metadata="$(nix eval --json --accept-flake-config "${flake_dir}#nagiHostMetadata")"
+  matched_profile="$(
+    python3 -c '
+import json
+import sys
+
+metadata = json.load(sys.stdin)
+matches = [
+    profile
+    for profile, details in metadata.items()
+    if details["configuredHostName"] == sys.argv[1]
+]
+if len(matches) == 1:
+    print(matches[0])
+' "$current_host" <<<"$metadata"
+  )"
+  printf '%s\n' "${matched_profile:-${current_host}}"
+}
+
 # Print the git HEAD sha and dirty-file count for build context.
 print_git_context() {
   local flake_dir="$1"
@@ -192,39 +245,12 @@ auto_statix() {
   fi
 }
 
-# Find .nix files under modules/ not referenced by any other .nix file.
-# Catches modules that exist but were never added to stacks.nix or
-# imported by a parent module.
+# Follow exact Nix path references from module entrypoints. This avoids
+# basename collisions, comments, and unrooted groups of modules fooling the
+# orphan check. The scanner explicitly roots intentionally dormant Niri code.
 scan_orphan_modules() {
   local flake_dir="$1"
-  local orphans=0
-
-  while IFS= read -r f; do
-    local base
-    base="$(basename "$f")"
-    # default.nix is auto-loaded by directory imports.
-    [[ "$base" == "default.nix" ]] && continue
-    # stacks.nix is the manifest itself.
-    [[ "$base" == "stacks.nix" ]] && continue
-
-    local found
-    found=$(grep -rl --include='*.nix' -- "$base" \
-      "$flake_dir/modules" "$flake_dir/hosts" "$flake_dir/users" \
-      "$flake_dir/flake.nix" 2>/dev/null \
-      | grep -v "^${f}$" || true)
-    if [[ -z "$found" ]]; then
-      printf '    ORPHAN: %s\n' "${f#"$flake_dir"/}"
-      orphans=$((orphans + 1))
-    fi
-  done < <(find "$flake_dir/modules/nixos" "$flake_dir/modules/home" \
-              -name '*.nix' -type f 2>/dev/null | sort)
-
-  if [[ "$orphans" -eq 0 ]]; then
-    printf '    no orphan modules detected\n'
-  else
-    printf '    %d orphan module(s) found - add to modules/combined/stacks.nix or import from a parent.\n' "$orphans"
-  fi
-  return "$orphans"
+  python3 "$flake_dir/scripts/check-orphan-modules.py" "$flake_dir"
 }
 
 run_check() {
@@ -568,24 +594,22 @@ run_doctor() {
 # List available hosts, marking the current one.
 run_hosts() {
   local flake_dir="$1"
-  local current_host
-  current_host=$(resolve_host "")
+  local current_profile
+  current_profile=$(resolve_profile "" "$flake_dir")
   printf 'Available hosts:\n'
   local found=0
-  for d in "$flake_dir"/hosts/*/; do
-    [[ -d "$d" ]] || continue
-    local name
-    name=$(basename "$d")
-    # Skip hosts/common — it has no variables.nix.
-    [[ -f "$d/variables.nix" ]] || continue
-    if [[ "$name" == "$current_host" ]]; then
+  while IFS= read -r name; do
+    [[ -n "$name" ]] || continue
+    if [[ "$name" == "$current_profile" ]]; then
       printf '  * %s (current)\n' "$name"
     else
       printf '    %s\n' "$name"
     fi
     found=$((found + 1))
-  done
-  [[ "$found" -eq 0 ]] && printf '  (none found)\n'
+  done < <(registered_hosts "$flake_dir")
+  if [[ "$found" -eq 0 ]]; then
+    printf '  (none found)\n'
+  fi
 }
 
 # Parse global flags from args before dispatching.
@@ -629,6 +653,13 @@ main() {
     shift || true
   fi
 
+  case "$cmd" in
+    -h|--help|help)
+      usage
+      return
+      ;;
+  esac
+
   local flake_dir flake_ref host action nh_scope pkg
   flake_dir="$(resolve_flake_dir)"
   flake_ref="${flake_dir}"
@@ -640,9 +671,9 @@ main() {
         host="$(resolve_host "$1")"
         shift || true
       else
-        host="$(resolve_host "")"
+        host="$(resolve_profile "" "$flake_dir")"
       fi
-      [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+      validate_host "$host" "$flake_dir"
       if [[ "${1-}" == "--" ]]; then
         shift || true
       fi
@@ -658,9 +689,9 @@ main() {
         host="$(resolve_host "$1")"
         shift || true
       else
-        host="$(resolve_host "")"
+        host="$(resolve_profile "" "$flake_dir")"
       fi
-      [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+      validate_host "$host" "$flake_dir"
       if [[ "${1-}" == "--" ]]; then
         shift || true
       fi
@@ -674,7 +705,7 @@ main() {
         host="$(resolve_host "$1")"
         shift || true
       else
-        host="$(resolve_host "")"
+        host="$(resolve_profile "" "$flake_dir")"
       fi
       run_doctor "$flake_dir" "$host"
       ;;
@@ -692,9 +723,9 @@ main() {
         host="$(resolve_host "$1")"
         shift || true
       else
-        host="$(resolve_host "")"
+        host="$(resolve_profile "" "$flake_dir")"
       fi
-      [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+      validate_host "$host" "$flake_dir"
       run_why "$pkg" "$host" "$flake_ref"
       ;;
     hosts)
@@ -705,9 +736,9 @@ main() {
         host="$(resolve_host "$1")"
         shift || true
       else
-        host="$(resolve_host "")"
+        host="$(resolve_profile "" "$flake_dir")"
       fi
-      [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+      validate_host "$host" "$flake_dir"
       if [[ "${1-}" == "--" ]]; then
         shift || true
       fi
@@ -734,9 +765,9 @@ main() {
             host="$(resolve_host "$1")"
             shift || true
           else
-            host="$(resolve_host "")"
+            host="$(resolve_profile "" "$flake_dir")"
           fi
-          [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+          validate_host "$host" "$flake_dir"
           if [[ "${1-}" == "--" ]]; then
             shift || true
           fi
@@ -752,9 +783,9 @@ main() {
             host="$(resolve_host "$1")"
             shift || true
           else
-            host="$(resolve_host "")"
+            host="$(resolve_profile "" "$flake_dir")"
           fi
-          [[ -d "${flake_dir}/hosts/${host}" ]] || die "unknown host ${host} in ${flake_dir}/hosts"
+          validate_host "$host" "$flake_dir"
           if [[ "${1-}" == "--" ]]; then
             shift || true
           fi
@@ -770,9 +801,6 @@ main() {
           die "invalid nh scope: $nh_scope (expected os|home|clean)"
           ;;
       esac
-      ;;
-    -h|--help|help)
-      usage
       ;;
     *)
       die "unknown command: $cmd"
