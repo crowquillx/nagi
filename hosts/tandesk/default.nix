@@ -5,6 +5,13 @@
     ./hardware-configuration.nix
   ];
 
+  # Use an enrolled FIDO2 token first, then fall back to the existing LUKS
+  # passphrase when no suitable token appears.
+  boot.initrd.luks.devices."luks-840bc2c4-3551-4cd7-b379-e0e70db6b623".crypttabExtraOpts = [
+    "fido2-device=auto"
+    "token-timeout=5s"
+  ];
+
   services.logind.settings = {
     Login = {
       HandlePowerKey = "poweroff";

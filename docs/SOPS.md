@@ -226,7 +226,7 @@ home.security.yubikey.pgpPublicKey = ../../secrets/yubikey-pgp-pub.asc;
 
 `modules/nixos/security/yubikey.nix` enables `services.pcscd` and the
 yubikey-manager udev rules. `modules/home/security/gpg-agent.nix`
-configures user-side `gpg-agent` with `pinentry-bemenu` and `scdaemon`
+configures user-side `gpg-agent` with `pinentry-qt` and `scdaemon`
 support, plus SSH-agent forwarding; its activation script imports the
 PGP public key into `~/.gnupg` so gpg-agent can find it.
 

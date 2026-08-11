@@ -26,8 +26,8 @@ in
       defaultCacheTtlSsh = 7200; # 2h
       maxCacheTtl = 86400; # 24h hard cap
       pinentry = {
-        package = pkgs.pinentry-bemenu;
-        program = "pinentry-bemenu";
+        package = pkgs.pinentry-qt;
+        program = "pinentry-qt";
       };
     };
 

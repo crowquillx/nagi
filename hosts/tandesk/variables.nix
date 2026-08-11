@@ -37,7 +37,7 @@
       "age"
       "gnupg"
       "yubikey-manager"
-      "pinentry-bemenu"
+      "pinentry-qt"
       "qbittorrent"
       "proton-vpn"
       "brave"
