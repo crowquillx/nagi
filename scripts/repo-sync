@@ -131,29 +131,48 @@ checkpoint_base() {
 checkpoint_preflight() {
   local repo="$1"
   local name="$2"
-  local suspicious
-  local secret
+  local base="$3"
+  local tree="$4"
+  local path
+  local private_key_pattern
+  local -a changed_paths=()
+  local -a suspicious_paths=()
 
-  if suspicious="$(
-    git -C "$repo" grep --untracked -I -l -E \
-      -e '-----BEGIN ([A-Z0-9 ]+ )?PRIVATE KEY-----|AGE-SECRET-KEY-' \
-      -- . 2>/dev/null
-  )"; then
+  private_key_pattern='^\+.*(-----BEGIN ([A-Z0-9 ]+ )?PRIVATE'
+  private_key_pattern+=' KEY-----|AGE-SECRET-'
+  private_key_pattern+='KEY-)'
+
+  while IFS= read -r -d '' path; do
+    changed_paths+=( "$path" )
+  done < <(git -C "$repo" diff --name-only -z "$base" "$tree" -- .)
+
+  for path in "${changed_paths[@]}"; do
+    if git -C "$repo" diff --no-ext-diff --unified=0 --text "$base" "$tree" -- "$path" \
+      | grep -E -e "$private_key_pattern" >/dev/null; then
+      suspicious_paths+=( "$path" )
+    fi
+  done
+
+  if (( ${#suspicious_paths[@]} > 0 )); then
     warn "$name checkpoint contains private-key material; refusing to store it"
-    printf '%s\n' "$suspicious" | sed 's/^/repo-sync: warning:   /' >&2
+    printf 'repo-sync: warning:   %s\n' "${suspicious_paths[@]}" >&2
     return 1
   fi
 
-  while IFS= read -r -d '' secret; do
-    [[ -f "$repo/$secret" ]] || continue
-    if ! grep -q '^sops:' "$repo/$secret" || ! grep -q 'ENC\\[' "$repo/$secret"; then
-      warn "$name checkpoint contains an unencrypted SOPS YAML file: $secret"
-      return 1
-    fi
-  done < <(
-    git -C "$repo" ls-files -z --modified --others --exclude-standard -- \
-      'secrets/*.yaml' 'secrets/*.yml'
-  )
+  for path in "${changed_paths[@]}"; do
+    case "$path" in
+      secrets/*.yaml|secrets/*.yml)
+        if ! git -C "$repo" cat-file -e "$tree:$path" 2>/dev/null; then
+          continue
+        fi
+        if ! git -C "$repo" grep -q -e '^sops:' "$tree" -- "$path" \
+          || ! git -C "$repo" grep -Fq -e 'ENC[' "$tree" -- "$path"; then
+          warn "$name checkpoint contains an unencrypted SOPS YAML file: $path"
+          return 1
+        fi
+        ;;
+    esac
+  done
 
   return 0
 }
@@ -218,15 +237,15 @@ create_checkpoint() {
   if ! fetch_checkpoints "$repo"; then
     return 1
   fi
-  if ! checkpoint_preflight "$repo" "$name"; then
-    return 1
-  fi
 
   head="$(git -C "$repo" rev-parse HEAD)" || return 1
   tree="$(worktree_tree "$repo")" || {
     warn "could not snapshot $name"
     return 1
   }
+  if ! checkpoint_preflight "$repo" "$name" "$head" "$tree"; then
+    return 1
+  fi
   state_file="$(applied_state_file "$repo")" || return 1
   if [[ -f "$state_file" ]]; then
     applied_oid="$(<"$state_file")"

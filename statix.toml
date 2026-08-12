@@ -1,2 +1,2 @@
 disabled = []
-ignore = ["hosts/*/hardware-configuration.nix"]
+ignore = ["**/hardware-configuration.nix"]

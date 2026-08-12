@@ -211,9 +211,42 @@ class RepoSyncTests(unittest.TestCase):
             self.remote_ref("refs/nagi/checkpoints/tanlappy").returncode,
         )
 
+    def test_committed_private_key_examples_do_not_block_checkpoint(self):
+        (self.tandesk / "key-examples.txt").write_text(
+            "-----BEGIN OPENSSH PRIVATE"
+            " KEY-----\n"
+            "not-a-real-key\n"
+            "AGE-SECRET-"
+            "KEY-\n",
+            encoding="utf-8",
+        )
+        self.git("-C", str(self.tandesk), "add", "key-examples.txt")
+        self.git(
+            "-C",
+            str(self.tandesk),
+            "commit",
+            "-m",
+            "docs: add key examples",
+        )
+        (self.tandesk / "flake.nix").write_text("{ updated = true; }\n", encoding="utf-8")
+
+        result = self.sync(self.tandesk, "tandesk", checkpoint_only=True)
+
+        self.assertIn("checkpointed nagi from tandesk", result.stdout)
+        self.assertEqual(
+            "{ updated = true; }\n",
+            self.git(
+                "--git-dir",
+                str(self.remote),
+                "show",
+                "refs/nagi/checkpoints/tandesk:flake.nix",
+            ).stdout,
+        )
+
     def test_private_key_material_blocks_checkpoint(self):
         (self.tandesk / "accidental-key").write_text(
-            "-----BEGIN OPENSSH PRIVATE KEY-----\nnot-a-real-key\n",
+            "-----BEGIN OPENSSH PRIVATE"
+            " KEY-----\nnot-a-real-key\n",
             encoding="utf-8",
         )
 
@@ -232,6 +265,58 @@ class RepoSyncTests(unittest.TestCase):
         )
         self.assertTrue((self.tandesk / "accidental-key").exists())
 
+    def test_staged_private_key_material_blocks_checkpoint(self):
+        (self.tandesk / "accidental-key").write_text(
+            "AGE-SECRET-"
+            "KEY-1NOTAREALKEY\n",
+            encoding="utf-8",
+        )
+        self.git("-C", str(self.tandesk), "add", "accidental-key")
+
+        result = self.sync(
+            self.tandesk,
+            "tandesk",
+            checkpoint_only=True,
+            check=False,
+        )
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("contains private-key material", result.stderr)
+        self.assertNotEqual(
+            0,
+            self.remote_ref("refs/nagi/checkpoints/tandesk").returncode,
+        )
+
+    def test_tracked_private_key_material_blocks_checkpoint(self):
+        (self.tandesk / "config.txt").write_text("safe\n", encoding="utf-8")
+        self.git("-C", str(self.tandesk), "add", "config.txt")
+        self.git(
+            "-C",
+            str(self.tandesk),
+            "commit",
+            "-m",
+            "test: add safe config",
+        )
+        (self.tandesk / "config.txt").write_text(
+            "-----BEGIN PRIVATE"
+            " KEY-----\nnot-a-real-key\n",
+            encoding="utf-8",
+        )
+
+        result = self.sync(
+            self.tandesk,
+            "tandesk",
+            checkpoint_only=True,
+            check=False,
+        )
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("contains private-key material", result.stderr)
+        self.assertNotEqual(
+            0,
+            self.remote_ref("refs/nagi/checkpoints/tandesk").returncode,
+        )
+
     def test_plaintext_sops_yaml_blocks_checkpoint(self):
         secrets = self.tandesk / "secrets"
         secrets.mkdir()
@@ -249,6 +334,51 @@ class RepoSyncTests(unittest.TestCase):
         self.assertNotEqual(
             0,
             self.remote_ref("refs/nagi/checkpoints/tandesk").returncode,
+        )
+
+    def test_staged_plaintext_sops_yaml_blocks_checkpoint(self):
+        secrets = self.tandesk / "secrets"
+        secrets.mkdir()
+        (secrets / "new-host.yaml").write_text("token: plaintext\n", encoding="utf-8")
+        self.git("-C", str(self.tandesk), "add", "secrets/new-host.yaml")
+
+        result = self.sync(
+            self.tandesk,
+            "tandesk",
+            checkpoint_only=True,
+            check=False,
+        )
+
+        self.assertEqual(1, result.returncode)
+        self.assertIn("unencrypted SOPS YAML", result.stderr)
+        self.assertNotEqual(
+            0,
+            self.remote_ref("refs/nagi/checkpoints/tandesk").returncode,
+        )
+
+    def test_encrypted_sops_yaml_allows_checkpoint(self):
+        secrets = self.tandesk / "secrets"
+        secrets.mkdir()
+        (secrets / "new-host.yaml").write_text(
+            "token: ENC[AES256_GCM,data:not-real]\n"
+            "sops:\n"
+            "  version: 3.10.2\n",
+            encoding="utf-8",
+        )
+
+        result = self.sync(self.tandesk, "tandesk", checkpoint_only=True)
+
+        self.assertIn("checkpointed nagi from tandesk", result.stdout)
+        self.assertEqual(
+            "token: ENC[AES256_GCM,data:not-real]\n"
+            "sops:\n"
+            "  version: 3.10.2\n",
+            self.git(
+                "--git-dir",
+                str(self.remote),
+                "show",
+                "refs/nagi/checkpoints/tandesk:secrets/new-host.yaml",
+            ).stdout,
         )
 
 

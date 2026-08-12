@@ -248,7 +248,7 @@ auto_statix() {
   local flake_dir="$1"
   if command -v statix >/dev/null 2>&1; then
     local output=""
-    output="$(statix check "$flake_dir" 2>&1)" || {
+    output="$(statix check --config "$flake_dir" "$flake_dir" 2>&1)" || {
       printf '  ! WARNING: statix check failed. Run tcli check for details.\n'
       # Show the first few lines of statix output to make debugging easier.
       printf '%s\n' "$output" | head -5 | sed 's/^/      /'
@@ -270,7 +270,7 @@ run_check() {
 
   printf '==> statix check\n'
   if command -v statix >/dev/null 2>&1; then
-    statix check "$flake_dir" || rc=1
+    statix check --config "$flake_dir" "$flake_dir" || rc=1
   else
     printf '  (statix not found, skipping)\n'
   fi
@@ -519,7 +519,7 @@ run_doctor() {
   # 3. Statix
   printf -- '--- statix ---\n'
   if command -v statix >/dev/null 2>&1; then
-    if statix check "$flake_dir"; then
+    if statix check --config "$flake_dir" "$flake_dir"; then
       printf '  ok\n'
     else
       printf '  issues found\n'
