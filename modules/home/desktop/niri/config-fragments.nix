@@ -11,8 +11,12 @@ let
   get = path: default: lib.attrByPath path default vars;
   qtThemeEnabled =
     get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
+  hostName = vars.host.name or "";
+  isTanlappy = hostName == "tanlappy";
 in
 [
+  (optionalNode isTanlappy (leaf "workspace" "2"))
+
   (optionalNode qtThemeEnabled (
     plain "environment" [
       (leaf "QT_QPA_PLATFORMTHEME" "qt5ct")

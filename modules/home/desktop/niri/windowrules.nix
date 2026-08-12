@@ -19,6 +19,7 @@ let
   };
   hostName = vars.host.name or "";
   isTandesk = hostName == "tandesk";
+  isTanlappy = hostName == "tanlappy";
   spotifyRule = plain "window-rule" [
     (leaf "match" { app-id = "(?i)^spotify$"; })
     (leaf "open-on-output" "DP-2")
@@ -29,6 +30,18 @@ let
     (leaf "match" equibopAppMatch)
     (leaf "match" discordElectronMatch)
     (leaf "open-on-output" "DP-1")
+    (leaf "open-maximized" true)
+  ];
+  lappySpotifyRule = plain "window-rule" [
+    (leaf "match" { app-id = "(?i)^spotify$"; })
+    (leaf "open-on-workspace" "2")
+    (leaf "open-maximized" true)
+  ];
+  lappyChatRule = plain "window-rule" [
+    (leaf "match" discordAppMatch)
+    (leaf "match" equibopAppMatch)
+    (leaf "match" discordElectronMatch)
+    (leaf "open-on-workspace" "2")
     (leaf "open-maximized" true)
   ];
 in
@@ -151,5 +164,9 @@ in
   (if isTandesk then chatRule else null)
 
   (if isTandesk then spotifyRule else null)
+
+  (if isTanlappy then lappyChatRule else null)
+
+  (if isTanlappy then lappySpotifyRule else null)
 
 ]
