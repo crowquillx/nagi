@@ -15,7 +15,11 @@ let
   isTanlappy = hostName == "tanlappy";
 in
 [
+  # niri inserts named workspaces at the top of the stack in reverse
+  # declaration order, so declare "2" before "1" to keep them ordered
+  # [1, 2, ...] and preserve positional focus-workspace keybinds.
   (optionalNode isTanlappy (leaf "workspace" "2"))
+  (optionalNode isTanlappy (leaf "workspace" "1"))
 
   (optionalNode qtThemeEnabled (
     plain "environment" [
