@@ -48,7 +48,6 @@ in
       programs.codexDesktopLinux = {
         enable = true;
         package = codexDesktopPkg;
-        cliPackage = codexPkg;
         computerUseUi.enable = true;
         remoteControl = {
           enable = true;
