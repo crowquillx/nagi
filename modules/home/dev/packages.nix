@@ -10,6 +10,7 @@ let
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
   orcaEnabled = get [ "features" "codingTools" "orca" "enable" ] codingToolsEnabled;
+  paseoEnabled = get [ "features" "codingTools" "paseo" "enable" ] codingToolsEnabled;
   editorsEnabled = get [ "features" "codingTools" "editors" "enable" ] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "t3code" "enable" ] true;
   cursorEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "cursor" "enable" ] true;
@@ -77,6 +78,7 @@ let
         };
       };
   claudeCodePkg = llmAgent "claude-code";
+  paseoPkg = llmAgent "paseo-desktop";
   cliProxyApiPkg = llmAgent "cli-proxy-api";
   # OpenCode 2 is intentionally packaged as the separate `opencode2` binary,
   # so it can coexist with the v1 `programs.opencode` package.
@@ -130,6 +132,10 @@ in
     {
       assertion = !(orcaEnabled && orcaPkg == null);
       message = "features.codingTools.orca.enable is true, but the orca-nix package could not be resolved from the flake input.";
+    }
+    {
+      assertion = !(paseoEnabled && paseoPkg == null);
+      message = "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(geminiEnabled && geminiCliPkg == null);
@@ -224,6 +230,7 @@ in
   home.packages =
     lib.optionals codingToolsEnabled [ pkgs.nodejs ]
     ++ lib.optionals (orcaEnabled && orcaPkg != null) [ orcaPkg ]
+    ++ lib.optionals (paseoEnabled && paseoPkg != null) [ paseoPkg ]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [ geminiCliPkg ]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [ claudeCodePkg ]
     ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [ cliProxyApiPkg ]

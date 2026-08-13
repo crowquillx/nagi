@@ -18,6 +18,10 @@ in
             type = packageToggle "Orca" codingToolsArgs.config.enable;
             default = { };
           };
+          paseo = mkOption {
+            type = packageToggle "Paseo" codingToolsArgs.config.enable;
+            default = { };
+          };
           editors = mkOption {
             type = types.submodule {
               options = {
