@@ -23,24 +23,10 @@ let
       });
   discordForceXwayland = get [ "features" "chat" "discord" "forceXwayland" ] true;
   equicordEnabled = get [ "features" "chat" "discord" "equicord" "enable" ] false;
-  discordEquicordPackage = pkgs.runCommand "discord-equicord" { } ''
-    discord=${pkgs.discord}
-    cp -a ${pkgs.discord} "$out"
-    chmod -R u+w "$out/opt/Discord"
-
-    substituteInPlace "$out/opt/Discord/Discord" \
-      --replace-fail "$discord/opt/Discord" "$out/opt/Discord"
-
-    mv "$out/opt/Discord/resources/app.asar" "$out/opt/Discord/resources/_app.asar"
-    mkdir "$out/opt/Discord/resources/app"
-    cat > "$out/opt/Discord/resources/app/package.json" <<'EOF'
-    {"name":"discord","main":"index.js"}
-    EOF
-    cat > "$out/opt/Discord/resources/app/index.js" <<'EOF'
-    require("${pkgs.equicord}/desktop/patcher.js");
-    EOF
-  '';
-  discordBasePackage = if equicordEnabled then discordEquicordPackage else pkgs.discord;
+  # pkgs.discord is now an FHSEnv wrapper without /opt/Discord. Use the
+  # upstream hook so Equicord is patched into discord-unwrapped.
+  discordBasePackage =
+    if equicordEnabled then pkgs.discord.override { withEquicord = true; } else pkgs.discord;
   discordPackage =
     if discordForceXwayland then
       pkgs.symlinkJoin {
