@@ -12,7 +12,6 @@
       "https://nix-community.cachix.org"
       "https://install.determinate.systems"
       "https://cache.numtide.com"
-      "https://codex-desktop-linux.cachix.org"
       "https://vortex-nix.cachix.org"
       "https://nix-gaming.cachix.org"
       "https://hushmic-nix.cachix.org"
@@ -26,7 +25,6 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
-      "codex-desktop-linux.cachix.org-1:nX/xy6AdK9hQE24A8ALGjkCKj2ObFmcnemiL5Cid4nk="
       "vortex-nix.cachix.org-1:7+ZVU0umNp8sz1JqZV/bRcbVgemNuNtzN5KiJxihFRY="
       "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "hushmic-nix.cachix.org-1:29j1XWTAAnb869spxlZ937ITJI9MCU1Wre+z7+1HJUM="
@@ -98,10 +96,6 @@
 
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
-    };
-
-    codex-desktop-linux = {
-      url = "github:ilysenko/codex-desktop-linux";
     };
 
     millennium = {

@@ -11,11 +11,6 @@ let
 
   homeModule = import ../../users/default/home.nix;
   noctaliaHmModule = lib.attrByPath [ "noctalia" "homeModules" "default" ] null inputs;
-  codexDesktopHmModule = lib.attrByPath [
-    "codex-desktop-linux"
-    "homeManagerModules"
-    "default"
-  ] null inputs;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
   importVariables = files: lib.foldl' lib.recursiveUpdate { } (map import files);
   # Validate each host's raw variables against the schema and materialise
@@ -49,8 +44,7 @@ let
   # Niri's configuration module is host-conditional. Stylix injects its Home
   # Manager module from NixOS, while standalone HM appends it explicitly.
   sharedHomeModules =
-    lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ]
-    ++ lib.optionals (codexDesktopHmModule != null) [ codexDesktopHmModule ];
+    lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ];
   homeModulesFor =
     {
       standalone ? false,
