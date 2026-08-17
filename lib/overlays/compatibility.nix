@@ -30,12 +30,12 @@ let
   };
 
   # Introduced 2026-07-17.
-  # cheatengine.org currently re-serves 7.7 with a flat archive layout,
-  # tutorial-x86_64 naming, and a hash different from cheatengine-flake's pin.
-  # The cap-bearing security wrapper also requires DT_RPATH because capability
-  # execution strips LD_LIBRARY_PATH. Remove only after upstream packages the
-  # live archive layout and preserves runtime library discovery through the
-  # NixOS security wrapper.
+  # cheatengine.org re-serves the Linux zip in place, so the live 7.71
+  # archive hash/layout can differ from a given cheatengine-flake pin.
+  # The cap-bearing security wrapper also requires DT_RPATH because
+  # capability execution strips LD_LIBRARY_PATH. Remove only after
+  # upstream packages the live archive and preserves runtime library
+  # discovery through the NixOS security wrapper.
   # Upstream: https://github.com/Hy4ri/cheatengine-flake/issues/1
   cheatengine = final: prev: {
     cheatengine = prev.cheatengine.overrideAttrs (
@@ -47,18 +47,25 @@ let
       in
       {
         src = final.fetchurl {
-          url = old.src.url or "https://cheatengine.org/download/CheatEngineLinux77.zip";
-          hash = "sha256-mzbojv4sNl1xgewYH/88rZcABwSbSS7pOX8WjYHQ+Zc=";
+          url = old.src.url or "https://cheatengine.org/download/CheatEngineLinux771.zip";
+          hash = "sha256-D7DZBDroVqzeA7W4caLzYn689nSurNBF+G1W2RoH8Xc=";
         };
         dontAutoPatchelf = true;
         nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.patchelf ];
         installPhase = ''
           runHook preInstall
           mkdir -p "$out/opt/cheatengine"
-          cp -r ./* "$out/opt/cheatengine/"
+          if [ -d CheatEngineLinux771 ]; then
+            cp -r CheatEngineLinux771/* "$out/opt/cheatengine/"
+          else
+            cp -r ./* "$out/opt/cheatengine/"
+          fi
           chmod +x "$out/opt/cheatengine/cheatengine-x86_64"
           if [ -f "$out/opt/cheatengine/tutorial-x86_64" ]; then
             chmod +x "$out/opt/cheatengine/tutorial-x86_64"
+          fi
+          if [ -f "$out/opt/cheatengine/gtutorial-x86_64" ]; then
+            chmod +x "$out/opt/cheatengine/gtutorial-x86_64"
           fi
           mkdir -p "$out/bin"
           makeShellWrapper "$out/opt/cheatengine/cheatengine-x86_64" "$out/bin/cheatengine" \
@@ -80,6 +87,10 @@ let
           if [ -f "$out/opt/cheatengine/tutorial-x86_64" ]; then
             patchelf --set-interpreter "${interpreter}" "$out/opt/cheatengine/tutorial-x86_64"
             patchelf --force-rpath --set-rpath "${rpath}" "$out/opt/cheatengine/tutorial-x86_64"
+          fi
+          if [ -f "$out/opt/cheatengine/gtutorial-x86_64" ]; then
+            patchelf --set-interpreter "${interpreter}" "$out/opt/cheatengine/gtutorial-x86_64"
+            patchelf --force-rpath --set-rpath "${rpath}" "$out/opt/cheatengine/gtutorial-x86_64"
           fi
         '';
       }

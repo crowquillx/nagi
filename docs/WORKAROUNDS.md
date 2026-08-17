@@ -17,7 +17,7 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 - Introduced: 2026-07-17
 - Scope: hosts with `features.gaming.cheatengine.enable`
-- Reason: the upstream 7.7 download is mutable and currently differs from the flake hash/layout; the NixOS capability wrapper also strips `LD_LIBRARY_PATH`, so the ELF needs a final `DT_RPATH`
+- Reason: the live 7.71 download is mutable and can differ from the flake hash/layout; the NixOS capability wrapper also strips `LD_LIBRARY_PATH`, so the ELF needs a final `DT_RPATH`
 - Remove when: `cheatengine-flake` packages the current archive and its executable still finds runtime libraries through `/run/wrappers/bin/cheatengine-bin`
 - Track: [cheatengine-flake issue #1](https://github.com/Hy4ri/cheatengine-flake/issues/1), [archive-layout PR #3](https://github.com/Hy4ri/cheatengine-flake/pull/3), and subsequent upstream package changes
 
