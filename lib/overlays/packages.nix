@@ -31,6 +31,9 @@ let
   mo2Lint = final: _prev: {
     mo2-lint = final.callPackage ../../pkgs/mo2-lint { };
   };
+  # Keep the local nightly AppImage. llm-agents.nix packages t3code from
+  # source at the last stable tag (0.0.33) and wraps the stock grok
+  # bubblewrap launcher, which fails when T3 starts `grok agent stdio`.
   t3codeNightly = final: _prev: {
     t3code = final.callPackage ../../pkgs/t3code-nightly { };
   };

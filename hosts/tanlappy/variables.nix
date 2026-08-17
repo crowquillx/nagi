@@ -31,10 +31,6 @@
       polkit.enable = false;
     };
     startup.apps = [
-      # Land the boot screen on workspace 1; niri would otherwise focus the
-      # trailing empty workspace. Spotify/discord are placed on workspace 2 by
-      # niri window rules so they stay off-screen at startup.
-      "niri msg action focus-workspace 1"
       "spotify"
     ];
     startup.backend = "niri";
