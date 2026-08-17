@@ -44,6 +44,16 @@ let
     (leaf "open-on-workspace" "2")
     (leaf "open-maximized" true)
   ];
+  lappyBackgroundStartupRule = plain "window-rule" [
+    (leaf "match" (discordAppMatch // { "at-startup" = true; }))
+    (leaf "match" (equibopAppMatch // { "at-startup" = true; }))
+    (leaf "match" (discordElectronMatch // { "at-startup" = true; }))
+    (leaf "match" {
+      app-id = "(?i)^spotify$";
+      "at-startup" = true;
+    })
+    (leaf "open-focused" false)
+  ];
 in
 [
   (plain "window-rule" [
@@ -168,5 +178,7 @@ in
   (if isTanlappy then lappyChatRule else null)
 
   (if isTanlappy then lappySpotifyRule else null)
+
+  (if isTanlappy then lappyBackgroundStartupRule else null)
 
 ]
