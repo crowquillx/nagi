@@ -141,7 +141,7 @@ in
   ])
 
   (plain "window-rule" [
-    (leaf "match" { app-id = "^thunar$"; })
+    (leaf "match" { app-id = "(?i)^(thunar|org\\.gnome\\.FileRoller)$"; })
     (leaf "open-floating" true)
     (leaf "min-width" 450)
     (leaf "min-height" 225)

@@ -120,15 +120,12 @@ in
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false;
-        matchBlocks."github.com" = {
-          host = "github.com";
-          hostname = "github.com";
-          user = "git";
-          identityFile = "~/.ssh/${privName}";
-          identitiesOnly = true;
-          extraOptions = {
-            IdentityAgent = "none";
-          };
+        settings."github.com" = {
+          HostName = "github.com";
+          User = "git";
+          IdentityFile = "~/.ssh/${privName}";
+          IdentitiesOnly = true;
+          IdentityAgent = "none";
         };
         settings."*" = {
           ForwardAgent = lib.mkDefault false;
