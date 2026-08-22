@@ -15,6 +15,7 @@ let
   millenniumEnable = gaming.steam.millennium.enable;
   gamemodeEnable = gaming.gamemode.enable;
   cheatengineEnable = gaming.cheatengine.enable;
+  pcsx2Enable = gaming.pcsx2.enable;
   primaryUser = v.users.primary;
   cheatengineGroup = "cheatengine";
   lutrisPkg = pkgs.lutris or null;
@@ -42,6 +43,7 @@ let
   pciutilsPkg = pkgs.pciutils or null;
   bottlesPkg = pkgs.bottles or null;
   cheatenginePkg = pkgs.cheatengine or null;
+  pcsx2Pkg = pkgs.pcsx2 or null;
   mo2LintPkg = pkgs.mo2-lint or null;
   rustyPathOfBuildingPkg = pkgs.rusty-path-of-building or null;
   awakenedPoeTradeBase = pkgs.awakened-poe-trade or null;
@@ -136,6 +138,10 @@ in
           message = "features.gaming.enable is true, but nixpkgs package 'awakened-poe-trade' could not be resolved.";
         }
         {
+          assertion = !pcsx2Enable || pcsx2Pkg != null;
+          message = "features.gaming.pcsx2.enable is true, but nixpkgs package 'pcsx2' could not be resolved.";
+        }
+        {
           assertion = !cheatengineEnable || cheatenginePkg != null;
           message = "features.gaming.cheatengine.enable is true, but the 'cheatengine' package could not be resolved. Ensure the cheatengine-flake overlay is applied.";
         }
@@ -171,7 +177,8 @@ in
         rustyPathOfBuildingPkg
         awakenedPoeTradePkg
       ]
-      ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
+      ++ lib.optionals cheatengineEnable [ cheatenginePkg ]
+      ++ lib.optionals pcsx2Enable [ pcsx2Pkg ];
     })
     (lib.mkIf (enabled && gamemodeEnable) {
       # GameMode: gamemoderun on PATH plus the polkit/setcap plumbing so the

@@ -4,6 +4,29 @@
 repositories on `codebox`. Tandesk and tanlappy also checkpoint `/home/tan/nagi`
 every two minutes so unfinished work can move safely between them.
 
+## Remote layout
+
+- The hosted remote (for example GitHub) is always `origin` and the push
+  default. Plain `git push` only publishes when you ask it to; repo-sync never
+  pushes to `origin`, so committing on a branch with an open PR cannot update
+  that PR automatically.
+- Machine-to-machine synchronization uses a dedicated `codebox` remote pointing
+  at the private bare mirror on codebox. Only branches and `refs/nagi/*`
+  checkpoint refs are exchanged there.
+- When a repository is enrolled, its `origin` URL is recorded in the mirror
+  (`nagi.origin-url`). Checkouts cloned by `nagi-repo-sync-codebox` get `origin`
+  restored from that record, and legacy checkouts whose `origin` pointed at the
+  local mirror are migrated to the hosted remote automatically.
+- Both scripts refuse to run with `origin` as the sync remote name.
+
+Mirrors created before this scheme do not carry a recorded `nagi.origin-url`;
+set it once per mirror so codebox checkouts get their hosted `origin` back:
+
+```bash
+ssh codebox git --git-dir=git-mirrors/<name>.git config nagi.origin-url \
+  git@github.com:<owner>/<name>.git
+```
+
 ## Checkpoint behavior
 
 - Dirty tracked and untracked, nonignored files are captured with a temporary

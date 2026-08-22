@@ -47,6 +47,10 @@ in
           type = packageToggle "Cheat Engine" false;
           default = { };
         };
+        pcsx2 = mkOption {
+          type = packageToggle "PCSX2" false;
+          default = { };
+        };
         gamemode = mkOption {
           type = packageToggle "GameMode" false;
           default = { };

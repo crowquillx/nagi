@@ -3,6 +3,10 @@ set -uo pipefail
 
 root="${NAGI_REPO_SYNC_ROOT:-$HOME/REPOS}"
 remote_name="${NAGI_REPO_SYNC_REMOTE_NAME:-codebox}"
+if [[ "$remote_name" == "origin" ]]; then
+  printf 'repo-sync: refusing "origin" as the sync remote; hosted remotes must stay default\n' >&2
+  exit 2
+fi
 remote_host="${NAGI_REPO_SYNC_REMOTE_HOST:-}"
 mirror_dir="${NAGI_REPO_SYNC_MIRROR_DIR:-git-mirrors}"
 explicit_repositories="${NAGI_REPO_SYNC_REPOSITORIES:-}"
@@ -94,6 +98,14 @@ ensure_remote() {
   if ! ssh -o BatchMode=yes "$remote_host" git --git-dir="$mirror_path" symbolic-ref HEAD "refs/heads/$branch"; then
     warn "could not set the default branch for $name"
     return 1
+  fi
+
+  local hosted_url
+  hosted_url="$(git -C "$repo" remote get-url origin 2>/dev/null || true)"
+  if [[ -n "$hosted_url" && "$hosted_url" != "$remote_host:$mirror_path" ]]; then
+    ssh -o BatchMode=yes "$remote_host" \
+      git --git-dir="$mirror_path" config nagi.origin-url "$hosted_url" >/dev/null \
+      || warn "could not record the origin URL for $name"
   fi
 }
 

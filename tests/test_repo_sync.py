@@ -73,12 +73,12 @@ class RepoSyncTests(unittest.TestCase):
             "repo-sync@example.invalid",
         )
 
-    def sync(self, repository, hostname, *, checkpoint_only=False, check=True):
+    def sync(self, repository, hostname, *, checkpoint_only=False, check=True, remote_name="codebox"):
         environment = os.environ.copy()
         environment.update(
             {
                 "NAGI_REPO_SYNC_ROOT": str(self.root / "missing-root"),
-                "NAGI_REPO_SYNC_REMOTE_NAME": "codebox",
+                "NAGI_REPO_SYNC_REMOTE_NAME": remote_name,
                 "NAGI_REPO_SYNC_REPOSITORIES": str(repository),
                 "NAGI_REPO_SYNC_CHECKPOINT_REPOSITORIES": str(repository),
                 "NAGI_REPO_SYNC_HOST": hostname,
@@ -381,6 +381,54 @@ class RepoSyncTests(unittest.TestCase):
             ).stdout,
         )
 
+    def test_sync_never_pushes_to_hosted_origin(self):
+        hosted = self.root / "github-hosted.git"
+        self.git("init", "--bare", "--initial-branch=main", str(hosted))
+        self.git(
+            "-C",
+            str(self.tandesk),
+            "remote",
+            "add",
+            "origin",
+            str(hosted),
+        )
+        initial_head = self.rev_parse(self.tandesk, "HEAD")
+        self.git("-C", str(self.tandesk), "push", "--quiet", "origin", "main")
+
+        self.git("-C", str(self.tandesk), "commit", "--allow-empty", "-m", "feat: pr work")
+        committed_head = self.rev_parse(self.tandesk, "HEAD")
+        result = self.sync(self.tandesk, "tandesk")
+
+        self.assertIn("pushing nagi:main", result.stdout)
+        self.assertEqual(
+            initial_head,
+            self.git(
+                "--git-dir",
+                str(hosted),
+                "rev-parse",
+                "refs/heads/main",
+            ).stdout.strip(),
+        )
+        self.assertNotEqual(committed_head, initial_head)
+        self.assertEqual(
+            0,
+            self.remote_ref("refs/heads/main").returncode,
+        )
+        self.assertEqual(
+            committed_head,
+            self.git(
+                "--git-dir",
+                str(self.remote),
+                "rev-parse",
+                "refs/heads/main",
+            ).stdout.strip(),
+        )
+
+    def test_origin_is_rejected_as_the_sync_remote(self):
+        result = self.sync(self.tandesk, "tandesk", check=False, remote_name="origin")
+
+        self.assertEqual(2, result.returncode)
+        self.assertIn('refusing "origin"', result.stderr)
 
 if __name__ == "__main__":
     unittest.main()

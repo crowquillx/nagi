@@ -112,7 +112,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.fileManager.thunar.enable = true | false`
 - `features.services = { fstrim.enable, resolved.enable, powerProfilesDaemon.enable }`
 - `features.flatpak = { enable, packages = [ "<app-id>" ... ] }`
-- `features.gaming = { enable, steam.gamescopeSession.enable, steam.remotePlay.openFirewall, steam.dedicatedServer.openFirewall, steam.localNetworkGameTransfers.openFirewall, cheatengine.enable, gamemode.enable }`
+- `features.gaming = { enable, steam.gamescopeSession.enable, steam.remotePlay.openFirewall, steam.dedicatedServer.openFirewall, steam.localNetworkGameTransfers.openFirewall, cheatengine.enable, pcsx2.enable, gamemode.enable }`
 - `features.virtualisation.vmHost = { enable, spiceUSBRedirection.enable }`
 - `features.virtualisation.containers = { podman.enable, docker.enable }`
 - `features.laptop.enable = true | false`
@@ -584,6 +584,8 @@ features.gaming = {
 ```
 
 `features.gaming.gamemode.enable = true` installs GameMode (`gamemoderun`) and adds the primary user to the `gamemode` group. In Steam, set game launch options to `gamemoderun %command%`.
+
+`features.gaming.pcsx2.enable = true` installs the PCSX2 emulator from nixpkgs (cached upstream; no Flatpak needed).
 
 ### Virtualization (VM host + containers)
 

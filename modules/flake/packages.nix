@@ -159,6 +159,9 @@
             ''
               NAGI_REPO_SYNC=${../../scripts/repo-sync} \
                 python ${../../tests/test_repo_sync.py}
+              NAGI_REPO_SYNC=${../../scripts/repo-sync} \
+              NAGI_REPO_SYNC_CODEBOX=${../../scripts/repo-sync-codebox} \
+                python ${../../tests/test_repo_sync_codebox.py}
               touch "$out"
             '';
 
