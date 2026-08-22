@@ -1,6 +1,6 @@
 # Secure Boot (Lanzaboote) setup guide
 
-This repo supports **optional** Secure Boot through Lanzaboote, controlled per host via:
+This repo supports optional Secure Boot through Lanzaboote, controlled per host via:
 
 ```nix
 boot.secureBoot = {

@@ -1,16 +1,14 @@
 # Parts-wrapped implementation (Vimjoyer-style)
 
-This repository now follows a **Vimjoyer-style parts-wrapped flake layout**:
+This repository follows a parts-wrapped flake layout:
 
 - guide used: <https://www.vimjoyer.com/vid79-parts-wrapped>
 - module auto-loading: <https://github.com/vic/import-tree>
 - flake module framework: <https://flake.parts/>
 
-## Core design
-
 ## 1) `flake.nix` stays tiny
 
-`flake.nix` now does three things only:
+`flake.nix` does three things only:
 
 1. declare inputs
 2. bootstrap `flake-parts`

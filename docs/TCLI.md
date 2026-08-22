@@ -4,7 +4,7 @@
 
 It provides one place to run common flake lifecycle tasks while handling both layers through one NixOS rebuild path (Home Manager via NixOS integration).
 
-The default rebuild path now runs through `nh`, so you get the tree view, diffs, and related `nh` UX without changing the repo's host/home composition model.
+Rebuild commands run through `nh`, so rebuilds get the generation tree view and closure diffs. The host and home composition model is unchanged.
 
 Before a NixOS or standalone Home Manager build, `tcli` asks the configured
 `nagi-repo-checkpoint` wrapper to preserve dirty nagi files in the private
@@ -53,7 +53,7 @@ Exits non-zero if any check fails. Safe to run before any build or switch.
 
 ### `tcli doctor [host]`
 
-Comprehensive diagnostic that checks:
+Diagnostic that checks:
 
 1. **Git status** — HEAD sha, branch, and uncommitted-file count.
 2. **Orphan module scan** — same as `tcli check`.

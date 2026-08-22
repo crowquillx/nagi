@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Modular multi-host NixOS flake with Home Manager, Determinate Nix, `nixpkgs-unstable`, Hyprland, Niri, Plasma, Noctalia shell, SDDM, Stylix, Fish/Zsh + Starship, NH, and `sops-nix`.
+Multi-host NixOS flake with integrated Home Manager. Sessions: Hyprland, Niri, or Plasma behind SDDM. Theming via Stylix, secrets via `sops-nix`, rebuilds via `tcli`/`nh`. Targets `nixpkgs-unstable` and Determinate Nix.
 
 ## Hosts
 

@@ -18,9 +18,8 @@ scalar values. This is still `lib.recursiveUpdate`, so lists replace rather
 than append.
 
 The schema entrypoint is `hosts/common/variables-schema.nix`; domain modules
-live under `hosts/common/variables-schema/`. This document keeps the useful
-examples and operational explanation that generated option listings do not
-capture.
+live under `hosts/common/variables-schema/`. This document covers the examples
+and operational behavior that the option definitions alone do not show.
 
 ## Key switches
 

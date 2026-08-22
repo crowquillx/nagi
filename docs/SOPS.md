@@ -117,7 +117,7 @@ manual `sops` CLI usage, not for runtime secret materialization.
 
 ## Optional: Yubikey PGP ("yubikey" option)
 
-This repo has first-class Yubikey support. The same setup works on every
+This repo has Yubikey support. The same setup works on every
 host because the PGP key lives on the Yubikey itself; only the public
 key is committed to the repo.
 
@@ -238,25 +238,25 @@ opt in, and unset `security.sops.ageKeyFile`.
 
 ## Sops file validation (`validateSopsFiles`)
 
-`sops.validateSopsFiles` is **enabled** in `modules/nixos/security/sops.nix`.
+`sops.validateSopsFiles` is enabled in `modules/nixos/security/sops.nix`.
 
 With the pinned `sops-nix`, validation runs `sops-install-secrets
 -check-mode=sopsfile` inside the manifest derivation's `checkPhase` at
-**build time**. It:
+build time. It:
 
 - parses each encrypted sops file (YAML/JSON/ini/dotenv/binary),
 - verifies every declared `sops.secrets.<name>` key actually exists in the
   encrypted file,
 - validates mode/owner/group strings.
 
-It does **not** decrypt secret values and does **not** need the age/GPG
+It does not decrypt secret values and does not need the age/GPG
 key at build time, so it works in the Nix sandbox and in CI. This catches
-malformed sops files and missing declared keys *before* boot instead of
-failing silently at activation. Keep it on.
+malformed sops files and missing declared keys before boot instead of
+failing silently at activation.
 
 ## Per-host recipients (current `.sops.yaml`)
 
-`.sops.yaml` already uses **per-host rules** for the hosts that have
+`.sops.yaml` already uses per-host rules for the hosts that have
 secret files:
 
 - `secrets/tandesk.yaml` → tandesk age key + Yubikey PGP (one `key_groups` entry)
@@ -264,10 +264,10 @@ secret files:
 - catch-all `secrets/.*\.ya?ml$` → tandesk age key + Yubikey PGP, for any
   not-yet-migrated host file
 
-There is **no** `secrets/default.yaml`; the `default` host profile sets
+There is no `secrets/default.yaml`; the `default` host profile sets
 `security.sops.defaultSopsFile = null`.
 
-Age and PGP for a given file live in a **single** `key_groups` entry so
+Age and PGP for a given file live in a single `key_groups` entry so
 either recipient can decrypt (OR). Do not split them into separate groups.
 
 `security.sops.agePublicKey` is optional schema groundwork: set it to the
@@ -283,7 +283,7 @@ not change encryption recipients.
    ```nix
    security.sops.agePublicKey = "age1...";
    ```
-3. Add a **path-specific rule above the catch-all** in `.sops.yaml`, with
+3. Add a path-specific rule above the catch-all in `.sops.yaml`, with
    the host age key and the Yubikey fingerprint in one `key_groups` entry:
    ```yaml
    - path_regex: secrets/<host>\.ya?ml$
@@ -295,7 +295,7 @@ not change encryption recipients.
    ```
 4. Create/edit `secrets/<host>.yaml` with `sops`, or run
    `sops updatekeys -y secrets/<host>.yaml` after changing recipients.
-5. Boot once and confirm `/run/secrets` populates **before** removing any
+5. Boot once and confirm `/run/secrets` populates before removing any
    old recipient the host still needs.
 
 ### Safety invariants
