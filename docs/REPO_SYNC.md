@@ -13,11 +13,39 @@ every two minutes so unfinished work can move safely between them.
 - Machine-to-machine synchronization uses a dedicated `codebox` remote pointing
   at the private bare mirror on codebox. Only branches and `refs/nagi/*`
   checkpoint refs are exchanged there.
-- When a repository is enrolled, its `origin` URL is recorded in the mirror
-  (`nagi.origin-url`). Checkouts cloned by `nagi-repo-sync-codebox` get `origin`
-  restored from that record, and legacy checkouts whose `origin` pointed at the
-  local mirror are migrated to the hosted remote automatically.
 - Both scripts refuse to run with `origin` as the sync remote name.
+
+## Repository lifecycle
+
+Repositories move between hosts automatically in both directions:
+
+- A repository created inside the scanned root (`~/REPOS` on laptops,
+  `~/Development/projects` on codebox) is enrolled on its next sync run: a bare
+  mirror is created on codebox, its branches and tags are pushed, and every
+  peer clones it into its own root.
+- Mirrors without a local checkout are cloned into the repository root on each
+  run (`NAGI_REPO_SYNC_AUTOCLONE=1` by default). Matching is by sync remote
+  URL, so a checkout whose directory name differs from its mirror (for example
+  `~/REPOS/nakama` tracking `git-mirrors/shoko-companion.git`) owns that mirror
+  and no duplicate clone is made; origin propagation resolves through the URL
+  match as well.
+- The `nagi-repo-sync-codebox` wrapper is a thin shell over
+  `nagi-repo-sync` that points it at the local `~/git-mirrors` directory
+  instead of using ssh.
+
+## Origin propagation
+
+Each checkout remembers the origin URL it last saw or published (in
+`.git/nagi-repo-sync/origin`). On every sync run:
+
+- Adding or changing `origin` locally publishes the new URL to the mirror's
+  `nagi.origin-url`, and peers adopt it.
+- A peer-published URL is adopted by checkouts whose origin is unchanged.
+- If two hosts change the same origin independently, repo-sync warns and leaves
+  both alone until resolved manually.
+- Checkouts cloned by the sync get their hosted `origin` restored from the
+  mirror record; legacy checkouts whose `origin` pointed at the local mirror
+  are migrated automatically.
 
 Mirrors created before this scheme do not carry a recorded `nagi.origin-url`;
 set it once per mirror so codebox checkouts get their hosted `origin` back:
@@ -25,6 +53,29 @@ set it once per mirror so codebox checkouts get their hosted `origin` back:
 ```bash
 ssh codebox git --git-dir=git-mirrors/<name>.git config nagi.origin-url \
   git@github.com:<owner>/<name>.git
+```
+
+## Deletion
+
+Deletion is intentional and propagates in both directions:
+
+- Deleting a checkout directory on any host (after it has been synced there
+  once) is recognized on the next sync run and published to the mirror as a
+  tombstone (`nagi.deleted=<host>`). The mirror itself is kept as the
+  tombstone carrier, so deletion also survives hosts that were offline.
+- Peers see the tombstone and remove their own checkout of that repository.
+  A checkout is only removed when it is clean (nothing uncommitted or
+  untracked), fully pushed to the mirror, not mid-operation, and not an
+  explicitly configured repository. Anything else is left untouched with a
+  warning so work can be recovered manually.
+- Tombstoned mirrors are never cloned by new or existing hosts; deleted stays
+  deleted.
+
+To purge a tombstoned repository completely once every host has removed its
+checkout, delete the bare mirror on codebox:
+
+```bash
+ssh codebox rm -rf "git-mirrors/<name>.git"
 ```
 
 ## Checkpoint behavior

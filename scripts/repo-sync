@@ -9,9 +9,11 @@ if [[ "$remote_name" == "origin" ]]; then
 fi
 remote_host="${NAGI_REPO_SYNC_REMOTE_HOST:-}"
 mirror_dir="${NAGI_REPO_SYNC_MIRROR_DIR:-git-mirrors}"
+mirror_path_local="${NAGI_REPO_SYNC_MIRROR_PATH:-}"
 explicit_repositories="${NAGI_REPO_SYNC_REPOSITORIES:-}"
 checkpoint_repositories="${NAGI_REPO_SYNC_CHECKPOINT_REPOSITORIES:-}"
 sync_host="${NAGI_REPO_SYNC_HOST:-$(hostname -s)}"
+state_dir="${NAGI_REPO_SYNC_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/nagi-repo-sync}"
 export GIT_SSH_COMMAND="${NAGI_REPO_SYNC_SSH_COMMAND:-ssh -o BatchMode=yes}"
 failures=0
 mode="sync"
@@ -31,6 +33,79 @@ log() {
 
 warn() {
   printf 'repo-sync: warning: %s\n' "$*" >&2
+}
+
+has_mirror_access() {
+  [[ -n "$mirror_path_local" || -n "$remote_host" ]]
+}
+
+mirror_url_for() {
+  if [[ -n "$mirror_path_local" ]]; then
+    printf '%s/%s.git\n' "$mirror_path_local" "$1"
+  else
+    printf '%s:%s/%s.git\n' "$remote_host" "$mirror_dir" "$1"
+  fi
+}
+
+run_in_mirror_context() {
+  local name="$1"
+  shift
+  if [[ -n "$mirror_path_local" ]]; then
+    git --git-dir="$mirror_path_local/$name.git" "$@"
+  else
+    ssh -o BatchMode=yes "$remote_host" git --git-dir="$mirror_dir/$name.git" "$@"
+  fi
+}
+
+list_mirrors() {
+  if [[ -n "$mirror_path_local" ]]; then
+    local m name recorded deleted
+    for m in "$mirror_path_local"/*.git; do
+      [[ -d "$m" ]] || continue
+      name="$(basename -- "$m")"
+      name="${name%.git}"
+      recorded="$(git --git-dir="$m" config --get nagi.origin-url || true)"
+      deleted="$(git --git-dir="$m" config --get nagi.deleted || true)"
+      printf '%s\t%s\t%s\n' "$name" "$recorded" "$deleted"
+    done
+  elif [[ -n "$remote_host" ]]; then
+    ssh -o BatchMode=yes "$remote_host" "for m in \"$mirror_dir\"/*.git; do [ -d \"\$m\" ] || continue; printf '%s\t%s\t%s\n' \"\$(basename \"\$m\" .git)\" \"\$(git --git-dir=\"\$m\" config --get nagi.origin-url 2>/dev/null || true)\" \"\$(git --git-dir=\"\$m\" config --get nagi.deleted 2>/dev/null || true)\"; done"
+  fi
+}
+
+record_origin() {
+  run_in_mirror_context "$1" config nagi.origin-url "$2"
+}
+
+record_deletion() {
+  run_in_mirror_context "$1" config nagi.deleted "${2-}"
+}
+
+seen_marker() {
+  printf '%s/repos/%s\n' "$state_dir" "$1"
+}
+
+# Remember that this host has a checkout of the mirror, so a later local
+# deletion of the directory can be recognized as intentional.
+mark_seen() {
+  local repo="$1"
+  local mirror_name
+  local marker
+
+  has_mirror_access || return 0
+  [[ -z "${explicit_paths[$repo]+x}" ]] || return 0
+  mirror_name="$(resolve_mirror_name "$repo" "${repo##*/}")"
+  valid_component "$mirror_name" || return 0
+  marker="$(seen_marker "$mirror_name")" || return 0
+  mkdir -p -- "${marker%/*}" 2>/dev/null || return 0
+  : >"$marker" 2>/dev/null || true
+}
+
+normalize_git_url() {
+  local url="$1"
+  url="${url%/}"
+  url="${url%.git}"
+  printf '%s\n' "$url"
 }
 
 valid_component() {
@@ -59,31 +134,47 @@ ensure_remote() {
   local name="$2"
   local branch="$3"
   local mirror_path
+  local url
 
   if git -C "$repo" remote get-url "$remote_name" >/dev/null 2>&1; then
     return 0
   fi
 
-  if [[ -z "$remote_host" ]]; then
-    warn "$name has no '$remote_name' remote"
-    return 1
-  fi
   if ! valid_component "$name" || ! valid_relative_path "$branch" || ! valid_relative_path "$mirror_dir"; then
     warn "$name cannot be enrolled because its name, branch, or mirror path is unsafe"
     return 1
   fi
 
-  mirror_path="$mirror_dir/$name.git"
-  log "creating $remote_host:$mirror_path"
-  if ! ssh -o BatchMode=yes "$remote_host" mkdir -p "$mirror_dir"; then
-    warn "could not create $remote_host:$mirror_dir"
-    return 1
+  url="$(mirror_url_for "$name")"
+  if [[ -n "$mirror_path_local" ]]; then
+    if ! mkdir -p -- "$mirror_path_local"; then
+      warn "could not create $mirror_path_local"
+      return 1
+    fi
+    if [[ ! -d "$url" ]]; then
+      log "creating $url"
+      if ! git init --bare "$url" >/dev/null; then
+        warn "could not initialize $url"
+        return 1
+      fi
+    fi
+  else
+    if [[ -z "$remote_host" ]]; then
+      warn "$name has no '$remote_name' remote"
+      return 1
+    fi
+    mirror_path="$mirror_dir/$name.git"
+    log "creating $url"
+    if ! ssh -o BatchMode=yes "$remote_host" mkdir -p "$mirror_dir"; then
+      warn "could not create $remote_host:$mirror_dir"
+      return 1
+    fi
+    if ! ssh -o BatchMode=yes "$remote_host" git init --bare "$mirror_path" >/dev/null; then
+      warn "could not initialize $remote_host:$mirror_path"
+      return 1
+    fi
   fi
-  if ! ssh -o BatchMode=yes "$remote_host" git init --bare "$mirror_path" >/dev/null; then
-    warn "could not initialize $remote_host:$mirror_path"
-    return 1
-  fi
-  if ! git -C "$repo" remote add "$remote_name" "$remote_host:$mirror_path"; then
+  if ! git -C "$repo" remote add "$remote_name" "$url"; then
     warn "could not add the '$remote_name' remote to $name"
     return 1
   fi
@@ -95,16 +186,15 @@ ensure_remote() {
     warn "initial tag push failed for $name"
     return 1
   fi
-  if ! ssh -o BatchMode=yes "$remote_host" git --git-dir="$mirror_path" symbolic-ref HEAD "refs/heads/$branch"; then
+  if ! run_in_mirror_context "$name" symbolic-ref HEAD "refs/heads/$branch"; then
     warn "could not set the default branch for $name"
     return 1
   fi
 
   local hosted_url
   hosted_url="$(git -C "$repo" remote get-url origin 2>/dev/null || true)"
-  if [[ -n "$hosted_url" && "$hosted_url" != "$remote_host:$mirror_path" ]]; then
-    ssh -o BatchMode=yes "$remote_host" \
-      git --git-dir="$mirror_path" config nagi.origin-url "$hosted_url" >/dev/null \
+  if [[ -n "$hosted_url" && "$hosted_url" != "$url" ]]; then
+    record_origin "$name" "$hosted_url" >/dev/null \
       || warn "could not record the origin URL for $name"
   fi
 }
@@ -401,9 +491,113 @@ restore_checkpoint() {
   log "restored uncommitted $name checkpoint from ${candidate_ref##*/}"
 }
 
+origin_state_file() {
+  local git_dir
+  git_dir="$(git -C "$1" rev-parse --absolute-git-dir)" || return 1
+  printf '%s/nagi-repo-sync/origin\n' "$git_dir"
+}
+
+# Keep the hosted origin consistent across hosts. Each checkout remembers the
+# origin URL it last saw or published; a local change is published to the
+# mirror, a peer change is adopted, and simultaneous changes need manual care.
+propagate_origin() {
+  local repo="$1"
+  local name="$2"
+  local recorded="$3"
+  local current
+  local announced
+  local state_file
+  local branch
+
+  state_file="$(origin_state_file "$repo")" || return 1
+  current="$(git -C "$repo" remote get-url origin 2>/dev/null || true)"
+
+  if [[ ! -f "$state_file" ]]; then
+    mkdir -p -- "${state_file%/*}" || return 1
+    if [[ -z "$current" && -n "$recorded" ]]; then
+      # A peer published an origin (or this is a legacy mirror-as-origin
+      # checkout); adopt it right away instead of waiting a cycle.
+      if git -C "$repo" remote add origin "$recorded"; then
+        if branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
+          git -C "$repo" fetch --quiet origin || true
+          git -C "$repo" config "branch.${branch}.remote" origin || true
+        fi
+        printf '%s\n' "$recorded" >"$state_file"
+        log "adopted origin for $name from $remote_name"
+        return 0
+      fi
+      warn "could not add the origin of $name"
+      return 1
+    fi
+    printf '%s\n' "$current" >"$state_file"
+    return 0
+  fi
+  announced="$(<"$state_file")"
+
+  if [[ "$current" == "$announced" ]]; then
+    if [[ -n "$recorded" && "$recorded" != "$announced" ]]; then
+      if [[ -n "$current" ]]; then
+        if ! git -C "$repo" remote set-url origin "$recorded"; then
+          warn "could not update the origin of $name"
+          return 1
+        fi
+      else
+        if ! git -C "$repo" remote add origin "$recorded"; then
+          warn "could not add the origin of $name"
+          return 1
+        fi
+        if branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
+          git -C "$repo" fetch --quiet origin || true
+          git -C "$repo" config "branch.${branch}.remote" origin || true
+        fi
+      fi
+      printf '%s\n' "$recorded" >"$state_file"
+      log "adopted origin for $name from $remote_name"
+    elif [[ -z "$recorded" && -n "$announced" ]]; then
+      record_origin "$name" "$announced" >/dev/null \
+        || { warn "could not publish the origin of $name"; return 1; }
+      log "published origin for $name"
+    fi
+    return 0
+  fi
+
+  if [[ -z "$current" ]]; then
+    warn "$name has no origin locally; keeping the recorded origin"
+    return 0
+  fi
+  if [[ -n "$recorded" && "$recorded" != "$announced" ]]; then
+    warn "$name origin changed on multiple hosts ($current vs $recorded); resolve it manually"
+    return 0
+  fi
+
+  record_origin "$name" "$current" >/dev/null \
+    || { warn "could not publish the origin of $name"; return 1; }
+  printf '%s\n' "$current" >"$state_file"
+  log "published origin for $name"
+}
+
+normalize_remotes() {
+  local repo="$1"
+  local name="$2"
+  local own_url
+  local origin_url
+
+  # Legacy checkouts used the mirror itself as their push default.
+  own_url="$(mirror_url_for "$name")"
+  origin_url="$(git -C "$repo" remote get-url origin 2>/dev/null || true)"
+  if [[ "$origin_url" == "$own_url" ]]; then
+    if git -C "$repo" remote get-url "$remote_name" >/dev/null 2>&1; then
+      git -C "$repo" remote remove origin
+    else
+      git -C "$repo" remote rename origin "$remote_name"
+    fi
+  fi
+}
+
 sync_repo() {
   local repo="$1"
   local name="${repo##*/}"
+  local mirror_name
   local branch
   local local_ref
   local remote_ref
@@ -440,6 +634,9 @@ sync_repo() {
   if ! ensure_remote "$repo" "$name" "$branch"; then
     return 1
   fi
+  normalize_remotes "$repo" "$name"
+  mirror_name="$(resolve_mirror_name "$repo" "$name")"
+  propagate_origin "$repo" "$mirror_name" "${mirror_origins[$mirror_name]-}" || return 1
 
   if ! git -C "$repo" fetch --prune "$remote_name"; then
     warn "fetch failed for $name"
@@ -499,9 +696,210 @@ sync_repo() {
   return 1
 }
 
+# Mirror checkouts that exist on a peer but not here are cloned into the
+# repository root, with the hosted remote restored as the push default.
+clone_missing_mirrors() {
+  local name
+  local target
+  local hosted_url
+  local branch
+  local state_file
+  local canonical
+  local cloned=0
+
+  if [[ ! -d "$root" ]]; then
+    mkdir -p -- "$root" || { warn "could not create $root"; return 1; }
+  fi
+  for name in "${!mirror_origins[@]}"; do
+    if ! valid_component "$name"; then
+      warn "refusing unsafe mirror name: $name"
+      continue
+    fi
+    if [[ -n "${mirror_deleted[$name]-}" ]]; then
+      continue
+    fi
+    target="$root/$name"
+    [[ -e "$target" ]] && continue
+    if repository_tracks_mirror "$name"; then
+      continue
+    fi
+    log "cloning $name from $remote_name"
+    if ! git clone --quiet --origin "$remote_name" "$(mirror_url_for "$name")" "$target"; then
+      warn "clone failed for $name"
+      failures=$((failures + 1))
+      continue
+    fi
+    cloned=$((cloned + 1))
+
+    hosted_url="${mirror_origins[$name]}"
+    if [[ -n "$hosted_url" ]]; then
+      if git -C "$target" remote add origin "$hosted_url"; then
+        if branch="$(git -C "$target" symbolic-ref --quiet --short HEAD)"; then
+          git -C "$target" fetch --quiet origin || true
+          git -C "$target" config "branch.${branch}.remote" origin || true
+        fi
+        state_file="$(origin_state_file "$target")" || true
+        if [[ -n "$state_file" ]]; then
+          mkdir -p -- "${state_file%/*}" || true
+          printf '%s\n' "$hosted_url" >"$state_file"
+        fi
+      else
+        warn "could not add the hosted origin for $name"
+      fi
+    else
+      warn "$name has no recorded origin yet; add one anywhere and it will propagate"
+    fi
+
+    if canonical="$(readlink -f -- "$target")"; then
+      repositories+=( "$canonical" )
+      seen_repositories["$canonical"]=1
+    fi
+  done
+  (( cloned > 0 )) && log "cloned $cloned missing checkout(s)"
+  return 0
+}
+
+# A checkout that this host has synced before but whose directory is now gone
+# was deleted on purpose; publish that intent to the mirror as a tombstone.
+publish_deletions() {
+  local name
+  local marker
+
+  for name in "${!mirror_origins[@]}"; do
+    valid_component "$name" || continue
+    [[ -z "${mirror_deleted[$name]-}" ]] || continue
+    if [[ -e "$root/$name" ]]; then
+      continue
+    fi
+    if repository_tracks_mirror "$name"; then
+      continue
+    fi
+    marker="$(seen_marker "$name")"
+    [[ -f "$marker" ]] || continue
+    if ! record_deletion "$name" "$sync_host" >/dev/null; then
+      warn "could not publish the deletion of $name"
+      failures=$((failures + 1))
+      continue
+    fi
+    mirror_deleted["$name"]="$sync_host"
+    rm -f -- "$marker"
+    log "published deletion of $name from $sync_host"
+  done
+}
+
+# Remove local checkouts of mirrors that a peer has deleted. Only clean,
+# fully pushed, non-explicit checkouts are removed; anything else is left
+# in place with a warning.
+apply_deletions() {
+  local repo
+  local name
+  local branch
+  local local_ref
+  local remote_ref
+  declare -a keep=()
+
+  for repo in "${repositories[@]}"; do
+    name="$(resolve_mirror_name "$repo" "${repo##*/}")"
+    if [[ -z "${mirror_deleted[$name]-}" ]]; then
+      keep+=( "$repo" )
+      continue
+    fi
+    if [[ -n "${explicit_paths[$repo]+x}" ]]; then
+      warn "$name was deleted on ${mirror_deleted[$name]}, but it is an explicitly configured repository; remove it from the sync configuration first"
+      keep+=( "$repo" )
+      continue
+    fi
+    case "$repo" in
+      "$root"/*) ;;
+      *)
+        keep+=( "$repo" )
+        continue
+        ;;
+    esac
+    if operation_in_progress "$repo"; then
+      warn "$name has a Git operation in progress; deletion deferred"
+      failures=$((failures + 1))
+      continue
+    fi
+    if [[ -n "$(git -C "$repo" status --porcelain --untracked-files=normal)" ]]; then
+      warn "$name has uncommitted changes; deletion deferred"
+      failures=$((failures + 1))
+      continue
+    fi
+    if ! git -C "$repo" fetch --quiet "$remote_name" 2>/dev/null; then
+      warn "$name could not reach $remote_name; deletion deferred"
+      failures=$((failures + 1))
+      continue
+    fi
+    branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD || true)"
+    if [[ -n "$branch" ]]; then
+      local_ref="refs/heads/$branch"
+      remote_ref="refs/remotes/$remote_name/$branch"
+      if git -C "$repo" show-ref --verify --quiet "$remote_ref" \
+        && ! git -C "$repo" merge-base --is-ancestor "$local_ref" "$remote_ref"; then
+        warn "$name has commits not present on $remote_name; deletion deferred"
+        failures=$((failures + 1))
+        continue
+      fi
+    fi
+    rm -rf -- "$repo"
+    rm -f -- "$(seen_marker "$name")"
+    log "removed $name (deleted on ${mirror_deleted[$name]})"
+  done
+  repositories=( "${keep[@]}" )
+}
+
 declare -a repositories=()
 declare -A seen_repositories=()
 declare -A checkpoint_paths=()
+declare -A mirror_origins=()
+declare -A mirror_by_url=()
+declare -A mirror_deleted=()
+declare -A explicit_paths=()
+
+# Resolve the mirror a repository belongs to by its sync remote URL, so
+# checkouts whose directory name differs from the mirror name are still
+# matched. Falls back to the directory name.
+resolve_mirror_name() {
+  local repo="$1"
+  local fallback="$2"
+  local url
+  local norm
+
+  if [[ ${#mirror_by_url[@]} -eq 0 ]]; then
+    printf '%s\n' "$fallback"
+    return 0
+  fi
+  url="$(git -C "$repo" remote get-url "$remote_name" 2>/dev/null || true)"
+  [[ -n "$url" ]] || { printf '%s\n' "$fallback"; return 0; }
+  norm="$(normalize_git_url "$url")"
+  local candidate
+  for candidate in "${!mirror_by_url[@]}"; do
+    if [[ "$candidate" == "$norm" ]]; then
+      printf '%s\n' "${mirror_by_url[$candidate]}"
+      return 0
+    fi
+  done
+  printf '%s\n' "$fallback"
+}
+
+# True when an existing checkout already tracks this mirror under another name.
+repository_tracks_mirror() {
+  local mirror_name="$1"
+  local target_norm
+  local repo
+  local url
+
+  target_norm="$(normalize_git_url "$(mirror_url_for "$mirror_name")")"
+  for repo in "${repositories[@]}"; do
+    url="$(git -C "$repo" remote get-url "$remote_name" 2>/dev/null || true)"
+    [[ -n "$url" ]] || continue
+    if [[ "$(normalize_git_url "$url")" == "$target_norm" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
 
 add_repository() {
   local path="$1"
@@ -534,6 +932,9 @@ mark_checkpoint_path() {
 IFS=':' read -r -a configured_repositories <<<"$explicit_repositories"
 for repo in "${configured_repositories[@]}"; do
   add_repository "$repo"
+  if canonical="$(readlink -f -- "$repo" 2>/dev/null)"; then
+    explicit_paths["$canonical"]=1
+  fi
 done
 
 IFS=':' read -r -a configured_checkpoints <<<"$checkpoint_repositories"
@@ -547,8 +948,24 @@ if [[ "$mode" == "sync" ]]; then
       [[ -d "$repo" ]] || continue
       add_repository "$repo"
     done
-  elif [[ ${#repositories[@]} -eq 0 ]]; then
+  elif [[ ${#repositories[@]} -eq 0 ]] && { [[ "${NAGI_REPO_SYNC_AUTOCLONE:-1}" != 1 ]] || ! has_mirror_access; }; then
     warn "repository root does not exist: $root"
+  fi
+
+  if has_mirror_access && valid_relative_path "$mirror_dir"; then
+    while IFS=$'\t' read -r mirror_name recorded_origin deleted_host; do
+      [[ -n "$mirror_name" ]] || continue
+      mirror_origins["$mirror_name"]="$recorded_origin"
+      mirror_by_url["$(normalize_git_url "$(mirror_url_for "$mirror_name")")"]="$mirror_name"
+      mirror_deleted["$mirror_name"]="$deleted_host"
+    done < <(list_mirrors)
+    if [[ -d "$root" ]]; then
+      publish_deletions || failures=$((failures + 1))
+    fi
+    if [[ "${NAGI_REPO_SYNC_AUTOCLONE:-1}" == 1 ]]; then
+      clone_missing_mirrors || failures=$((failures + 1))
+    fi
+    apply_deletions || failures=$((failures + 1))
   fi
 fi
 
@@ -558,6 +975,7 @@ for repo in "${repositories[@]}"; do
       failures=$((failures + 1))
       continue
     fi
+    mark_seen "$repo"
   fi
 
   if [[ -n "${checkpoint_paths[$repo]+x}" ]]; then

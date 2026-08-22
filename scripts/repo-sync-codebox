@@ -1,104 +1,14 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-root="${NAGI_REPO_SYNC_ROOT:-$HOME/Development/projects}"
-mirror_root="${NAGI_REPO_SYNC_MIRROR_ROOT:-$HOME/git-mirrors}"
-remote_name="${NAGI_REPO_SYNC_REMOTE_NAME:-codebox}"
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 sync_bin="${NAGI_REPO_SYNC_BIN:-$script_dir/nagi-repo-sync}"
-failures=0
 
-if [[ "$remote_name" == "origin" ]]; then
-  printf 'repo-sync: refusing "origin" as the sync remote; hosted remotes must stay default\n' >&2
-  exit 2
-fi
-
-mkdir -p "$root"
-
-recorded_origin() {
-  git --git-dir="$1" config --get nagi.origin-url || true
-}
-
-# Keep the hosted remote as the push default and reserve $remote_name for the
-# private mirror. Legacy checkouts used the mirror itself as "origin".
-ensure_remotes() {
-  local target="$1"
-  local mirror="$2"
-  local name="${mirror##*/}"
-  name="${name%.git}"
-  local migrated=0
-  local origin_url
-  local hosted_url
-
-  origin_url="$(git -C "$target" remote get-url origin 2>/dev/null || true)"
-  case "$origin_url" in
-    "$mirror_root"|"$mirror_root"/*)
-      if git -C "$target" remote get-url "$remote_name" >/dev/null 2>&1; then
-        git -C "$target" remote remove origin
-      else
-        git -C "$target" remote rename origin "$remote_name"
-      fi
-      migrated=1
-      ;;
-  esac
-
-  if ! git -C "$target" remote get-url "$remote_name" >/dev/null 2>&1; then
-    git -C "$target" remote add "$remote_name" "$mirror" || return 1
-  fi
-
-  if [[ -z "$(git -C "$target" remote get-url origin 2>/dev/null || true)" ]]; then
-    hosted_url="$(recorded_origin "$mirror")"
-    if [[ -n "$hosted_url" ]]; then
-      git -C "$target" remote add origin "$hosted_url" || return 1
-      migrated=1
-    else
-      printf 'repo-sync: warning: %s has no recorded origin; add the hosted remote for plain pushes\n' "$name" >&2
-      return 0
-    fi
-  fi
-
-  if [[ "$migrated" -eq 1 ]]; then
-    local branch
-    if branch="$(git -C "$target" symbolic-ref --quiet --short HEAD)"; then
-      git -C "$target" fetch --quiet origin || return 1
-      git -C "$target" config "branch.${branch}.remote" origin || return 1
-    fi
-  fi
-}
-
-if [[ -d "$mirror_root" ]]; then
-  for mirror in "$mirror_root"/*.git; do
-    [[ -d "$mirror" ]] || continue
-    name="${mirror##*/}"
-    name="${name%.git}"
-    target="$root/$name"
-
-    if [[ ! -e "$target" ]]; then
-      printf 'repo-sync: cloning %s\n' "$name"
-      if ! git clone "$mirror" "$target"; then
-        printf 'repo-sync: warning: clone failed for %s\n' "$name" >&2
-        failures=$((failures + 1))
-        continue
-      fi
-      git -C "$target" remote rename origin "$remote_name"
-    elif ! git -C "$target" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-      printf 'repo-sync: warning: %s exists but is not a Git worktree\n' "$target" >&2
-      failures=$((failures + 1))
-      continue
-    fi
-
-    ensure_remotes "$target" "$mirror" || failures=$((failures + 1))
-  done
-fi
-
-export NAGI_REPO_SYNC_ROOT="$root"
-export NAGI_REPO_SYNC_REMOTE_NAME="$remote_name"
+# On codebox the mirrors live next door, so no ssh is needed. The generic
+# script handles enrollment, cloning, origin propagation, and checkpoints.
+export NAGI_REPO_SYNC_ROOT="${NAGI_REPO_SYNC_ROOT:-$HOME/Development/projects}"
+export NAGI_REPO_SYNC_MIRROR_PATH="${NAGI_REPO_SYNC_MIRROR_PATH:-$HOME/git-mirrors}"
+export NAGI_REPO_SYNC_REMOTE_NAME="${NAGI_REPO_SYNC_REMOTE_NAME:-codebox}"
 unset NAGI_REPO_SYNC_REMOTE_HOST
 
-if ! bash "$sync_bin"; then
-  failures=$((failures + 1))
-fi
-
-if (( failures > 0 )); then
-  exit 1
-fi
+exec bash "$sync_bin"

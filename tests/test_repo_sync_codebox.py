@@ -82,9 +82,10 @@ class RepoSyncCodeboxTests(unittest.TestCase):
         environment.update(
             {
                 "NAGI_REPO_SYNC_ROOT": str(self.projects),
-                "NAGI_REPO_SYNC_MIRROR_ROOT": str(self.mirrors),
+                "NAGI_REPO_SYNC_MIRROR_PATH": str(self.mirrors),
                 "NAGI_REPO_SYNC_BIN": str(self.sync_bin),
                 "NAGI_REPO_SYNC_REMOTE_NAME": "codebox",
+                "NAGI_REPO_SYNC_STATE_DIR": str(self.root / "state"),
                 "NAGI_REPO_SYNC_HOST": "codebox",
             }
         )
@@ -143,7 +144,7 @@ class RepoSyncCodeboxTests(unittest.TestCase):
         self.assertIn(str(self.hosted), self.remote_url(self.target, "origin"))
         self.assertEqual(str(self.mirror), self.remote_url(self.target, "codebox"))
         self.assertEqual("origin", self.branch_tracking_remote(self.target))
-        self.assertEqual("", result.stderr, result.stderr)
+        self.assertNotIn("warning", result.stderr)
 
     def test_missing_recorded_origin_warns_instead_of_failing(self):
         self.git("--git-dir", str(self.mirror), "config", "--unset", "nagi.origin-url")
@@ -159,9 +160,10 @@ class RepoSyncCodeboxTests(unittest.TestCase):
         environment.update(
             {
                 "NAGI_REPO_SYNC_ROOT": str(self.projects),
-                "NAGI_REPO_SYNC_MIRROR_ROOT": str(self.mirrors),
+                "NAGI_REPO_SYNC_MIRROR_PATH": str(self.mirrors),
                 "NAGI_REPO_SYNC_BIN": str(self.sync_bin),
                 "NAGI_REPO_SYNC_REMOTE_NAME": "origin",
+                "NAGI_REPO_SYNC_STATE_DIR": str(self.root / "state"),
                 "NAGI_REPO_SYNC_HOST": "codebox",
             }
         )
