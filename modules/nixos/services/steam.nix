@@ -13,6 +13,7 @@ let
   dedicatedServerOpenFirewall = gaming.steam.dedicatedServer.openFirewall;
   localTransfersOpenFirewall = gaming.steam.localNetworkGameTransfers.openFirewall;
   millenniumEnable = gaming.steam.millennium.enable;
+  gamemodeEnable = gaming.gamemode.enable;
   cheatengineEnable = gaming.cheatengine.enable;
   primaryUser = v.users.primary;
   cheatengineGroup = "cheatengine";
@@ -171,6 +172,12 @@ in
         awakenedPoeTradePkg
       ]
       ++ lib.optionals cheatengineEnable [ cheatenginePkg ];
+    })
+    (lib.mkIf (enabled && gamemodeEnable) {
+      # GameMode: gamemoderun on PATH plus the polkit/setcap plumbing so the
+      # primary user can drive it (Steam launch options: `gamemoderun %command%`).
+      programs.gamemode.enable = true;
+      users.users.${primaryUser}.extraGroups = [ "gamemode" ];
     })
     (lib.mkIf (enabled && cheatengineEnable) {
       # Grant Cheat Engine cap_sys_ptrace so it can scan and debug other

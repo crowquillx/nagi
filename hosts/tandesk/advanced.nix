@@ -45,6 +45,7 @@
         millennium.enable = true;
       };
       cheatengine.enable = true;
+      gamemode.enable = true;
     };
     virtualisation = {
       vmHost = {

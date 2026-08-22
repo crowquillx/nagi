@@ -47,6 +47,10 @@ in
           type = packageToggle "Cheat Engine" false;
           default = { };
         };
+        gamemode = mkOption {
+          type = packageToggle "GameMode" false;
+          default = { };
+        };
       };
       default = { };
     };

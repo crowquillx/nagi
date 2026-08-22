@@ -74,6 +74,24 @@ let
     (lib.attrByPath [ "helium2nix" "defaultPackage" system ] null inputs)
   ];
 
+  # helium2nix wraps the launcher with DefaultANGLEVulkan, which corrupts
+  # rendering on NVIDIA + Wayland. Re-wrap to pin ANGLE onto native GL while
+  # keeping GPU acceleration.
+  heliumWrapped =
+    if heliumPkg == null then
+      null
+    else
+      pkgs.symlinkJoin {
+        name = "${heliumPkg.name}-angle-gl";
+        paths = [ heliumPkg ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
+        postBuild = ''
+          mv $out/bin/helium $out/bin/.helium-unwrapped
+          makeWrapper $out/bin/.helium-unwrapped $out/bin/helium \
+            --add-flags '--use-gl=angle --use-angle=gl'
+        '';
+      };
+
   allowedBrowsers = [
     "zen"
     "helium"
@@ -229,7 +247,7 @@ in
       ++ lib.optionals (thunarEnabled && xfconfPkg != null) [ xfconfPkg ]
       ++ lib.optionals (thunarEnabled && archiveManagerPkg != null) [ archiveManagerPkg ]
       ++ lib.optionals (zenEnabled && zenPkg != null) [ zenPkg ]
-      ++ lib.optionals (heliumEnabled && heliumPkg != null) [ heliumPkg ]
+      ++ lib.optionals (heliumEnabled && heliumWrapped != null) [ heliumWrapped ]
       ++ lib.optionals mullvadBrowserEnabled [ pkgs.mullvad-browser ]
       ++ lib.optionals desktopEnabled [
         pkgs.libnotify
