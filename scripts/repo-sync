@@ -108,6 +108,26 @@ normalize_git_url() {
   printf '%s\n' "$url"
 }
 
+# If some remote already points at the recorded hosted URL, reuse it as
+# origin instead of creating a duplicate. Returns 0 if a rename was done.
+reuse_hosted_remote_as_origin() {
+  local repo="$1"
+  local recorded="$2"
+  local r rurl
+  local norm_recorded
+  norm_recorded="$(normalize_git_url "$recorded")"
+  for r in $(git -C "$repo" remote 2>/dev/null || true); do
+    [[ "$r" == "$remote_name" ]] && continue
+    [[ "$r" == "origin" ]] && continue
+    rurl="$(git -C "$repo" remote get-url "$r" 2>/dev/null || true)"
+    [[ -n "$rurl" ]] || continue
+    if [[ "$(normalize_git_url "$rurl")" == "$norm_recorded" ]]; then
+      git -C "$repo" remote rename "$r" origin 2>/dev/null && return 0
+    fi
+  done
+  return 1
+}
+
 valid_component() {
   [[ "$1" =~ ^[A-Za-z0-9._-]+$ ]]
 }
@@ -193,6 +213,16 @@ ensure_remote() {
 
   local hosted_url
   hosted_url="$(git -C "$repo" remote get-url origin 2>/dev/null || true)"
+  if [[ -z "$hosted_url" || "$hosted_url" == "$url" ]]; then
+    local r rurl
+    for r in $(git -C "$repo" remote 2>/dev/null || true); do
+      [[ "$r" == "$remote_name" ]] && continue
+      rurl="$(git -C "$repo" remote get-url "$r" 2>/dev/null || true)"
+      [[ -n "$rurl" && "$rurl" != "$url" ]] || continue
+      hosted_url="$rurl"
+      break
+    done
+  fi
   if [[ -n "$hosted_url" && "$hosted_url" != "$url" ]]; then
     record_origin "$name" "$hosted_url" >/dev/null \
       || warn "could not record the origin URL for $name"
@@ -517,10 +547,11 @@ propagate_origin() {
     if [[ -z "$current" && -n "$recorded" ]]; then
       # A peer published an origin (or this is a legacy mirror-as-origin
       # checkout); adopt it right away instead of waiting a cycle.
-      if git -C "$repo" remote add origin "$recorded"; then
+      if reuse_hosted_remote_as_origin "$repo" "$recorded" || git -C "$repo" remote add origin "$recorded"; then
         if branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
           git -C "$repo" fetch --quiet origin || true
           git -C "$repo" config "branch.${branch}.remote" origin || true
+          git -C "$repo" config "branch.${branch}.merge" "refs/heads/${branch}" || true
         fi
         printf '%s\n' "$recorded" >"$state_file"
         log "adopted origin for $name from $remote_name"
@@ -542,13 +573,14 @@ propagate_origin() {
           return 1
         fi
       else
-        if ! git -C "$repo" remote add origin "$recorded"; then
+        if ! reuse_hosted_remote_as_origin "$repo" "$recorded" && ! git -C "$repo" remote add origin "$recorded"; then
           warn "could not add the origin of $name"
           return 1
         fi
         if branch="$(git -C "$repo" symbolic-ref --quiet --short HEAD)"; then
           git -C "$repo" fetch --quiet origin || true
           git -C "$repo" config "branch.${branch}.remote" origin || true
+          git -C "$repo" config "branch.${branch}.merge" "refs/heads/${branch}" || true
         fi
       fi
       printf '%s\n' "$recorded" >"$state_file"
@@ -566,6 +598,11 @@ propagate_origin() {
     return 0
   fi
   if [[ -n "$recorded" && "$recorded" != "$announced" ]]; then
+    if [[ "$current" == "$recorded" ]]; then
+      printf '%s\n' "$current" >"$state_file"
+      log "adopted origin for $name from $remote_name (converged)"
+      return 0
+    fi
     warn "$name origin changed on multiple hosts ($current vs $recorded); resolve it manually"
     return 0
   fi
@@ -637,6 +674,16 @@ sync_repo() {
   normalize_remotes "$repo" "$name"
   mirror_name="$(resolve_mirror_name "$repo" "$name")"
   propagate_origin "$repo" "$mirror_name" "${mirror_origins[$mirror_name]-}" || return 1
+  # Hosted remotes must stay the push default: if the current branch still
+  # tracks the sync remote, point it at origin instead (when origin exists).
+  if git -C "$repo" remote get-url origin >/dev/null 2>&1; then
+    branch_remote="$(git -C "$repo" config --get "branch.${branch}.remote" 2>/dev/null || true)"
+    branch_merge="$(git -C "$repo" config --get "branch.${branch}.merge" 2>/dev/null || true)"
+    if [[ "$branch_remote" == "$remote_name" || -z "$branch_merge" ]]; then
+      git -C "$repo" config "branch.${branch}.remote" origin || true
+      git -C "$repo" config "branch.${branch}.merge" "refs/heads/${branch}" || true
+    fi
+  fi
 
   if ! git -C "$repo" fetch --prune "$remote_name"; then
     warn "fetch failed for $name"
@@ -737,6 +784,7 @@ clone_missing_mirrors() {
         if branch="$(git -C "$target" symbolic-ref --quiet --short HEAD)"; then
           git -C "$target" fetch --quiet origin || true
           git -C "$target" config "branch.${branch}.remote" origin || true
+          git -C "$target" config "branch.${branch}.merge" "refs/heads/${branch}" || true
         fi
         state_file="$(origin_state_file "$target")" || true
         if [[ -n "$state_file" ]]; then
