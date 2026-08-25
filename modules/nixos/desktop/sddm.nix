@@ -23,11 +23,15 @@ let
     else
       "niri";
 
-  stylixEnabled = config.stylix.enable or false;
-  scheme = if stylixEnabled then config.stylix.base16Scheme else { };
-  fg = scheme.base00 or "232136";
-  bg = scheme.base01 or "2a273f";
-  text = scheme.base05 or "e0def4";
+  # SDDM colors come straight from the shared Rose Pine scheme by host
+  # variant. This is independent of Stylix enablement: pure Plasma hosts
+  # skip Stylix but keep the same themed greeter, and when Stylix is on
+  # stylix.base16Scheme is set from this very mapping (modules/nixos/theme/stylix.nix).
+  scheme = import ../../theme/rose-pine.nix;
+  colors = scheme.${v.features.stylix.variant};
+  fg = colors.base00;
+  bg = colors.base01;
+  text = colors.base05;
 
   sddmBg =
     if sddmBackground != null then
@@ -47,7 +51,7 @@ let
   // lib.optionalAttrs (sddmBg != null) {
     Background = "${sddmBg}";
   }
-  // lib.optionalAttrs stylixEnabled {
+  // {
     HeaderTextColor = "#${text}";
     DateTextColor = "#${text}";
     TimeTextColor = "#${text}";

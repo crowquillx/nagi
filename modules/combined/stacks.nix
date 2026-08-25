@@ -119,6 +119,7 @@ let
     ../home/security/ssh-key.nix
     ../home/security/sops-age-key.nix
     ../home/security/gpg-agent.nix
+    ../home/security/keyring.nix
   ];
 in
 {

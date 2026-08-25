@@ -51,13 +51,13 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.startup.apps = [ "<cmd>" ... ]`
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false`
-- `desktop.session.keyring.enable = true | false`
+- `desktop.session.keyring.enable = true | false` (unlocks gnome-keyring at login. On Plasma, `ksecretd` owns `org.freedesktop.secrets`; run `nagi-migrate-secrets-to-kwallet` once so Electron/libsecret clients such as T3 Code and Brave keep using credentials created under Hyprland/Niri. Plasma also unlocks KWallet from the SDDM login password via PAM; the wallet password must match the login password, or be empty.)
 - `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }`
 - `users.git = { name, email }`
 - `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
 - `desktop.enable = true | false`
-- `features.stylix = { enable, variant }`
+- `features.stylix = { enable, variant }` (Stylix itself is skipped on pure Plasma hosts; `variant` still selects Rose Pine Moon/Main/Dawn for SDDM and the Plasma color scheme. Mixed hosts keep Stylix for the Niri/Hyprland session; see `modules/theme/stylix-enabled.nix`.)
 - `features.shell = { fish.enable, zsh.enable, starship.enable }`
 - `features.nh = { enable, clean.enable, clean.extraArgs }`
 - `features.swap = { zram.enable, zram.memoryPercent, disk.enable, disk.path, disk.sizeMiB, swappiness }`
@@ -69,7 +69,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, `ghostty`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
-- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }`
+- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze`/`Breeze-Dark` on Plasma-only hosts. Icon theme is unchanged.)
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
 - `features.bluetooth.enable = true | false`
@@ -366,6 +366,13 @@ Niri config overrides its child processes to use Stylix's qtct/Kvantum theme.
 Noctalia's `kcolorscheme` template additionally supplies KDE colors to KDE and
 Kirigami applications opened under Niri. Plasma-only configurations use native
 KDE integration, and Niri-only configurations use qtct/Kvantum directly.
+GTK widget theming is user-global: Niri or Hyprland hosts (including mixed
+Plasma) keep `adw-gtk3`, while Plasma-only hosts use Breeze GTK so GTK apps
+follow Plasma/Klassy. Icon theme selection is independent of that split.
+Plasma sessions (default compositor or `extraCompositors`) also install
+`pkgs.klassy` and a Rose Pine color scheme generated from
+`features.stylix.variant`. The scheme is available in System Settings → Colors
+and is not applied automatically.
 
 ### Hushmic tray
 

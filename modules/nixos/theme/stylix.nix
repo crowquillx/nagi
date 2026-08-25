@@ -2,7 +2,6 @@
 let
   v = config.nagi.variables;
 
-  enabled = v.features.stylix.enable;
   variantRaw = v.features.stylix.variant;
   allowedVariants = [
     "moon"
@@ -10,6 +9,8 @@ let
     "dawn"
   ];
   schemes = import ../../theme/rose-pine.nix;
+
+  enabled = import ../../theme/stylix-enabled.nix { inherit lib; vars = v; };
 in
 {
   config = lib.mkMerge [

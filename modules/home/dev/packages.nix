@@ -3,6 +3,7 @@
   pkgs,
   vars ? { },
   inputs,
+  config,
   ...
 }:
 let
@@ -115,6 +116,30 @@ let
       "t3code-desktop"
     else
       t3DesktopPkg.meta.mainProgram or "t3code-desktop";
+  t3DesktopBin = lib.optionalString (t3DesktopPkg != null) "${t3DesktopPkg}/bin/${t3DesktopProgram}";
+  t3UrlHandlerPath = "${config.home.homeDirectory}/.local/share/applications/t3code-url-handler.desktop";
+  t3UrlHandlerText = lib.optionalString (t3DesktopBin != "") ''
+    [Desktop Entry]
+    Type=Application
+    Name=T3 Code
+    Exec=${t3DesktopBin} %U
+    Terminal=false
+    NoDisplay=true
+    StartupNotify=false
+    MimeType=x-scheme-handler/t3code;
+  '';
+  t3UrlHandlerFile = pkgs.writeText "t3code-url-handler.desktop" t3UrlHandlerText;
+  t3UrlHandlerRewrite = pkgs.writeShellScript "nagi-t3code-url-handler" ''
+    set -eu
+    dest=${lib.escapeShellArg t3UrlHandlerPath}
+    src=${t3UrlHandlerFile}
+    if [ -f "$dest" ] && ${pkgs.diffutils}/bin/cmp -s "$src" "$dest"; then
+      exit 0
+    fi
+    ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "$dest")"
+    ${pkgs.coreutils}/bin/cp "$src" "$dest.tmp"
+    ${pkgs.coreutils}/bin/mv "$dest.tmp" "$dest"
+  '';
   ghPkg = lib.attrByPath [ "gh" ] null pkgs;
   graphiteCliPkg = lib.attrByPath [ "graphite-cli" ] null pkgs;
   skillsPkg =
@@ -261,7 +286,7 @@ in
     t3code = {
       name = "T3 Code";
       comment = "T3 Code desktop build";
-      exec = "${t3DesktopProgram} --no-sandbox --password-store=gnome-libsecret %U";
+      exec = "${t3DesktopProgram} %U";
       terminal = false;
       type = "Application";
       categories = [ "Development" ];
@@ -276,6 +301,37 @@ in
   xdg.mimeApps = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
     enable = true;
     defaultApplications."x-scheme-handler/t3code" = [ "t3code.desktop" ];
-    associations.added."x-scheme-handler/t3code" = [ "t3code.desktop" ];
+    associations.added."x-scheme-handler/t3code" = [
+      "t3code.desktop"
+      "t3code-url-handler.desktop"
+    ];
+  };
+
+  # T3 registers x-scheme-handler/t3code with process.execPath, which is
+  # the unwrapped AppImage ELF. NixOS cannot run that, so Clerk OAuth
+  # callbacks die in stub-ld. Rewrite the desktop file whenever T3 does.
+  home.file.".local/share/applications/t3code-url-handler.desktop" =
+    lib.mkIf (t3codeEnabled && t3DesktopPkg != null)
+      {
+        text = t3UrlHandlerText;
+        force = true;
+      };
+
+  systemd.user.paths.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
+    Unit.Description = "Watch T3 Code protocol handler desktop file";
+    Path = {
+      PathChanged = t3UrlHandlerPath;
+      PathModified = t3UrlHandlerPath;
+      Unit = "nagi-t3code-url-handler.service";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
+
+  systemd.user.services.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
+    Unit.Description = "Rewrite T3 Code protocol handler to the wrapped binary";
+    Service = {
+      Type = "oneshot";
+      ExecStart = t3UrlHandlerRewrite;
+    };
   };
 }
