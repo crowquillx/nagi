@@ -59,7 +59,9 @@ symlinkJoin {
 
   postBuild = ''
     wrapProgram "$out/bin/t3code-desktop" \
-      ${lib.optionalString (runtimePackages != [ ]) "--prefix PATH : ${lib.escapeShellArg (lib.makeBinPath runtimePackages)} \\"}
+      ${lib.optionalString (
+        runtimePackages != [ ]
+      ) "--prefix PATH : ${lib.escapeShellArg (lib.makeBinPath runtimePackages)} \\"}
       --add-flags "--no-sandbox --password-store=gnome-libsecret"
   '';
 

@@ -97,6 +97,7 @@ let
   homeTheme = [
     ../home/theme/gtk.nix
     ../home/theme/qt.nix
+    ../home/theme/stylix.nix
   ];
 
   homeShell = [
@@ -113,6 +114,7 @@ let
     ../home/desktop/noctalia-shell.nix
     ../home/desktop/noctalia-hyprland-workspaces.nix
     ../home/desktop/hushmic-tray.nix
+    ../home/desktop/hdr-game.nix
   ];
 
   homeSecurity = [

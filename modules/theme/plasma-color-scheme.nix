@@ -11,22 +11,26 @@ let
     let
       value = lib.fromHexString hex;
     in
-    "${toString (value / 65536)}, ${toString (lib.mod (value / 256) 256)}, ${toString (lib.mod value 256)}";
+    "${toString (value / 65536)}, ${
+      toString (lib.mod (value / 256) 256)
+    }, ${toString (lib.mod value 256)}";
 
-  meta = {
-    moon = {
-      slug = "RosePineMoon";
-      name = "Rosé Pine Moon";
-    };
-    main = {
-      slug = "RosePine";
-      name = "Rosé Pine";
-    };
-    dawn = {
-      slug = "RosePineDawn";
-      name = "Rosé Pine Dawn";
-    };
-  }.${variant};
+  meta =
+    {
+      moon = {
+        slug = "RosePineMoon";
+        name = "Rosé Pine Moon";
+      };
+      main = {
+        slug = "RosePine";
+        name = "Rosé Pine";
+      };
+      dawn = {
+        slug = "RosePineDawn";
+        name = "Rosé Pine Dawn";
+      };
+    }
+    .${variant};
 
   window = {
     BackgroundNormal = rgb colors.base00;

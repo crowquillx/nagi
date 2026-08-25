@@ -43,8 +43,7 @@ let
 
   # Niri's configuration module is host-conditional. Stylix injects its Home
   # Manager module from NixOS, while standalone HM appends it explicitly.
-  sharedHomeModules =
-    lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ];
+  sharedHomeModules = lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ];
   homeModulesFor =
     {
       standalone ? false,

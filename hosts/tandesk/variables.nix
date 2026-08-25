@@ -79,6 +79,18 @@
       polkit.enable = false;
     };
     hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo";
+    hdrGame = {
+      enable = true;
+      monitor = {
+        # AOC Q27G3XMN Mini-LED; UUID is the stable KScreen identity,
+        # model+serial verify against live EDID, DP-3 is last resort only.
+        uuid = "f113902c-3db2-4cde-bb99-8045f09f995b";
+        model = "Q27G3XMN";
+        serial = "1APR3JA002499";
+        fallbackConnector = "DP-3";
+      };
+      notifications.enable = true;
+    };
     startup.apps = [
       "spotify"
       "nagi-hushmic-tray"

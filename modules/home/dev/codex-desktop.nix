@@ -37,7 +37,10 @@ in
       ];
     }
     (lib.mkIf codexEnabled {
-      home.packages = [ codexPkg chatgptPkg ];
+      home.packages = [
+        codexPkg
+        chatgptPkg
+      ];
 
       home.activation.configureCodexDesktopPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
         CODEX_MARKETPLACE_SOURCE=${lib.escapeShellArg openaiBundledMarketplace} \

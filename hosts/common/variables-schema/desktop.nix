@@ -298,6 +298,41 @@ in
           };
           default = { };
         };
+        hdrGame = mkOption {
+          type = strictSubmodule {
+            enable = enableOption "Install the hdr-game wrapper that switches the HDR gaming display to HDR+WCG while a wrapped game runs." false;
+            monitor = mkOption {
+              type = strictSubmodule {
+                uuid = mkOption {
+                  type = types.str;
+                  default = "";
+                  description = "Known stable KScreen UUID of the HDR display (primary identifier). Empty string skips UUID resolution.";
+                };
+                model = mkOption {
+                  type = types.str;
+                  default = "";
+                  description = "EDID model string used to verify the resolved output (e.g. Q27G3XMN).";
+                };
+                serial = mkOption {
+                  type = types.str;
+                  default = "";
+                  description = "EDID serial string used to verify the resolved output (e.g. 1APR3JA002499).";
+                };
+                fallbackConnector = mkOption {
+                  type = types.str;
+                  default = "";
+                  description = "Last-resort connector name (e.g. DP-3); only accepted if its live EDID matches model/serial.";
+                };
+              };
+              default = { };
+            };
+            notifications = mkOption {
+              type = packageToggle "hdr-game desktop notifications" false;
+              default = { };
+            };
+          };
+          default = { };
+        };
       };
     });
     default = { };

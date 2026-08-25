@@ -9,9 +9,10 @@ let
   desktopEnabled = get [ "desktop" "enable" ] true;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   keyringEnable = get [ "desktop" "session" "keyring" "enable" ] true;
-  compositors =
-    [ (get [ "desktop" "compositor" ] "hyprland") ]
-    ++ get [ "desktop" "extraCompositors" ] [ ];
+  compositors = [
+    (get [ "desktop" "compositor" ] "hyprland")
+  ]
+  ++ get [ "desktop" "extraCompositors" ] [ ];
   hasPlasma = builtins.elem "plasma" compositors;
   python = pkgs.python3.withPackages (ps: [ ps.secretstorage ]);
   migratePy = ./migrate-secrets-to-kwallet.py;

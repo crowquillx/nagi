@@ -11,25 +11,27 @@ let
   enabled = get [ "features" "theme" "gtk" "enable" ] true;
   stylixVariant = get [ "features" "stylix" "variant" ] "moon";
   preferDark = stylixVariant != "dawn";
-  compositors =
-    [ (get [ "desktop" "compositor" ] "hyprland") ]
-    ++ get [ "desktop" "extraCompositors" ] [ ];
+  compositors = [
+    (get [ "desktop" "compositor" ] "hyprland")
+  ]
+  ++ get [ "desktop" "extraCompositors" ] [ ];
   # GTK settings.ini is user-global, so mixed hosts keep adw-gtk3 for Niri/Hyprland.
-  # Plasma-only hosts use Breeze GTK so GTK apps follow Klassy/Plasma.
+  # Plasma-only hosts use Breeze (not Breeze-Dark): Breeze-Dark is a static
+  # palette, while Breeze reads Plasma colors from kde-gtk-config's colors.css.
   hasAdwGtkCompositor = builtins.any (
-    compositor: builtins.elem compositor [ "niri" "hyprland" ]
+    compositor:
+    builtins.elem compositor [
+      "niri"
+      "hyprland"
+    ]
   ) compositors;
+  plasmaOwnsGtk = desktopEnabled && !hasAdwGtkCompositor;
 
   iconThemeName = get [ "features" "theme" "gtk" "iconTheme" "name" ] "MoreWaita";
   iconThemePkgPath = get [ "features" "theme" "gtk" "iconTheme" "package" ] "morewaita-icon-theme";
   fallbackIconThemePkgPath = "papirus-icon-theme";
   gtkThemeName =
-    if hasAdwGtkCompositor then
-      if preferDark then "adw-gtk3-dark" else "adw-gtk3"
-    else if preferDark then
-      "Breeze-Dark"
-    else
-      "Breeze";
+    if hasAdwGtkCompositor then if preferDark then "adw-gtk3-dark" else "adw-gtk3" else "Breeze";
 
   resolvePkg = name: lib.attrByPath (lib.splitString "." name) null pkgs;
   adwGtkPkg = resolvePkg "adw-gtk3";
@@ -69,6 +71,11 @@ in
         name = iconThemeName;
         package = iconThemePkg;
       };
+      # GTK 4 ignores gtk-theme-name and only loads ~/.config/gtk-4.0/gtk.css.
+      # Home Manager's gtk.gtk4.theme writes a store symlink to Breeze-Dark's
+      # baked CSS, which kde-gtk-config cannot replace. Leave it unset so
+      # Plasma can export colors.css and import the Breeze theme itself.
+      gtk4.theme = lib.mkIf plasmaOwnsGtk (lib.mkForce null);
       gtk3.extraConfig = {
         gtk-application-prefer-dark-theme = lib.mkForce preferDark;
       };

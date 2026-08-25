@@ -24,9 +24,9 @@ let
       "niri";
 
   # SDDM colors come straight from the shared Rose Pine scheme by host
-  # variant. This is independent of Stylix enablement: pure Plasma hosts
-  # skip Stylix but keep the same themed greeter, and when Stylix is on
-  # stylix.base16Scheme is set from this very mapping (modules/nixos/theme/stylix.nix).
+  # variant. This does not go through Stylix targets: Plasma-only hosts
+  # disable gtk/qt/kde but still share this mapping with stylix.base16Scheme
+  # (modules/nixos/theme/stylix.nix).
   scheme = import ../../theme/rose-pine.nix;
   colors = scheme.${v.features.stylix.variant};
   fg = colors.base00;

@@ -40,6 +40,7 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.hyprland.settings = { ... }` (applied only when `configBuilder = null`)
 - `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }`
 - `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
+- `desktop.hdrGame = { enable, monitor = { uuid, model, serial, fallbackConnector }, notifications.enable }` (enables the `hdr-game` wrapper)
 - `graphics.profile = "auto" | "none" | "amd" | "intel" | "nvidia" | "vm"`
 - `graphics.enable32Bit = true | false`
 - `graphics.nvidia = { modesetting.enable, powerManagement.enable, open, nvidiaSettings, useLatestDriver }`
@@ -57,7 +58,7 @@ and operational behavior that the option definitions alone do not show.
 - `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
 - `desktop.enable = true | false`
-- `features.stylix = { enable, variant }` (Stylix itself is skipped on pure Plasma hosts; `variant` still selects Rose Pine Moon/Main/Dawn for SDDM and the Plasma color scheme. Mixed hosts keep Stylix for the Niri/Hyprland session; see `modules/theme/stylix-enabled.nix`.)
+- `features.stylix = { enable, variant }` (On pure Plasma hosts Stylix stays on for anything Plasma does not theme — Ghostty, Kitty, browsers, CLI tools, and so on. Targets Plasma already owns (`gtk`, `qt`, `kde`, `gnome`, `fontconfig`) are disabled so Klassy/Breeze/Plasma fonts keep the desktop chrome. `variant` still selects Rose Pine Moon/Main/Dawn for SDDM and the Plasma color scheme. Mixed hosts keep those desktop targets for the Niri/Hyprland session; see `modules/theme/stylix-enabled.nix`.)
 - `features.shell = { fish.enable, zsh.enable, starship.enable }`
 - `features.nh = { enable, clean.enable, clean.extraArgs }`
 - `features.swap = { zram.enable, zram.memoryPercent, disk.enable, disk.path, disk.sizeMiB, swappiness }`
@@ -69,7 +70,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, `ghostty`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
-- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze`/`Breeze-Dark` on Plasma-only hosts. Icon theme is unchanged.)
+- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze` on Plasma-only hosts so kde-gtk-config can export Plasma colors. `Breeze-Dark` is a static palette and is not used. Icon theme is unchanged.)
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
 - `features.bluetooth.enable = true | false`
@@ -367,8 +368,16 @@ Noctalia's `kcolorscheme` template additionally supplies KDE colors to KDE and
 Kirigami applications opened under Niri. Plasma-only configurations use native
 KDE integration, and Niri-only configurations use qtct/Kvantum directly.
 GTK widget theming is user-global: Niri or Hyprland hosts (including mixed
-Plasma) keep `adw-gtk3`, while Plasma-only hosts use Breeze GTK so GTK apps
-follow Plasma/Klassy. Icon theme selection is independent of that split.
+Plasma) keep `adw-gtk3`, while Plasma-only hosts use the `Breeze` GTK theme
+(not `Breeze-Dark`) so kde-gtk-config can write `colors.css` from the active
+Plasma color scheme. Home Manager does not pin `gtk-4.0/gtk.css` on those
+hosts; GTK 4 ignores `gtk-theme-name` and would otherwise keep a baked
+Breeze-Dark import. Icon theme selection is independent of that split.
+On Plasma-only hosts Stylix remains enabled (`autoEnable`) so anything
+Plasma does not theme keeps the Rose Pine palette, but
+`stylix.targets.{gtk,qt,kde,gnome,fontconfig}` are off so they do not fight
+Klassy, Breeze, Plasma fonts, or write GNOME dconf. Mixed hosts leave those
+desktop targets on for Niri/Hyprland.
 Plasma sessions (default compositor or `extraCompositors`) also install
 `pkgs.klassy` and a Rose Pine color scheme generated from
 `features.stylix.variant`. The scheme is available in System Settings → Colors
@@ -385,6 +394,23 @@ desktop.startup.apps = [
 ```
 
 When `deviceId` is set, Home Manager installs `nagi-hushmic-tray`, which waits for the StatusNotifier watcher and a stable PipeWire node before `exec hushmic --tray`. Keep the node name host-scoped; leave `deviceId = null` on hosts without this tray.
+
+### HDR game wrapper
+
+```nix
+desktop.hdrGame = {
+  enable = true;
+  monitor = {
+    uuid = "<stable KScreen UUID>";
+    model = "Q27G3XMN";
+    serial = "1APR3JA002499";
+    fallbackConnector = "DP-3";
+  };
+  notifications.enable = true;
+};
+```
+
+When enabled, Home Manager installs `hdr-game`, a Steam Launch Options wrapper (`hdr-game %command%`) that switches the designated display to HDR+WCG while the game runs and restores the previous display state afterwards. The output is identified by stable KScreen UUID first, then verified against live EDID model/serial, with an EDID-verified fallback connector as last resort. Concurrency is reference-counted under `flock` in `$XDG_RUNTIME_DIR/hdr-game`; use `hdr-game --status` / `--on` / `--off` / `--restore` for manual control and recovery after a SIGKILLed wrapper. Game-side variables such as `PROTON_ENABLE_HDR=1` pass through untouched.
 
 ### Noctalia shell
 

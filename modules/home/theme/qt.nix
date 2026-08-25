@@ -21,20 +21,19 @@ in
   # option paths are rejected even under `mkIf false`, and without Stylix its
   # HM module may not be imported at all. optionalAttrs forces the predicate
   # while constructing this module's config.
-  config =
-    {
-      # Keep the generated qtct/Kvantum configuration for Niri, but leave the
-      # login environment native to Plasma. Niri overrides these for its children.
-      home.sessionVariables = lib.mkIf mixedNiriPlasma {
-        QT_QPA_PLATFORMTHEME = lib.mkForce "kde";
-        QT_STYLE_OVERRIDE = lib.mkForce "breeze";
-      };
-      systemd.user.sessionVariables = lib.mkIf mixedNiriPlasma {
-        QT_QPA_PLATFORMTHEME = lib.mkForce "kde";
-        QT_STYLE_OVERRIDE = lib.mkForce "breeze";
-      };
-    }
-    // lib.optionalAttrs mixedNiriPlasma {
-      stylix.targets.qt.platform = lib.mkForce "qtct";
+  config = {
+    # Keep the generated qtct/Kvantum configuration for Niri, but leave the
+    # login environment native to Plasma. Niri overrides these for its children.
+    home.sessionVariables = lib.mkIf mixedNiriPlasma {
+      QT_QPA_PLATFORMTHEME = lib.mkForce "kde";
+      QT_STYLE_OVERRIDE = lib.mkForce "breeze";
     };
+    systemd.user.sessionVariables = lib.mkIf mixedNiriPlasma {
+      QT_QPA_PLATFORMTHEME = lib.mkForce "kde";
+      QT_STYLE_OVERRIDE = lib.mkForce "breeze";
+    };
+  }
+  // lib.optionalAttrs mixedNiriPlasma {
+    stylix.targets.qt.platform = lib.mkForce "qtct";
+  };
 }

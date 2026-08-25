@@ -10,7 +10,11 @@ let
   ];
   schemes = import ../../theme/rose-pine.nix;
 
-  enabled = import ../../theme/stylix-enabled.nix { inherit lib; vars = v; };
+  stylixPolicy = import ../../theme/stylix-enabled.nix {
+    inherit lib;
+    vars = v;
+  };
+  enabled = stylixPolicy.enable;
 in
 {
   config = lib.mkMerge [
@@ -34,7 +38,10 @@ in
 
         targets = {
           grub.enable = false;
-        };
+        }
+        // lib.optionalAttrs stylixPolicy.plasmaOnly (
+          lib.removeAttrs stylixPolicy.plasmaOwnedTargets [ "kde" ]
+        );
       };
     })
   ];

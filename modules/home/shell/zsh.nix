@@ -18,11 +18,13 @@ let
     rev = "ce244cb048e19ef6207936c3087141c8a796bca5";
     hash = "sha256-oFHyel6nYOPdK9VbNp7KbKL/3WeBp/SFHzKTq/9Bhh8=";
   };
-  rosePineStarshipSettings = builtins.fromTOML (builtins.readFile "${rosePineStarship}/rose-pine.toml");
+  rosePineStarshipSettings = builtins.fromTOML (
+    builtins.readFile "${rosePineStarship}/rose-pine.toml"
+  );
   # Stylix would overwrite the upstream preset; skip it when Stylix is active.
   # When Stylix is inactive its HM module may not be imported, so this
   # definition must be omitted entirely (see modules/theme/stylix-enabled.nix).
-  stylixActive = import ../../theme/stylix-enabled.nix { inherit lib vars; };
+  stylixActive = (import ../../theme/stylix-enabled.nix { inherit lib vars; }).enable;
 in
 {
   # The stylix key must be structurally absent when Stylix is inactive:
