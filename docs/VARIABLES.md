@@ -53,7 +53,7 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false`
 - `desktop.session.keyring.enable = true | false` (unlocks gnome-keyring at login. On Plasma, `ksecretd` owns `org.freedesktop.secrets`; run `nagi-migrate-secrets-to-kwallet` once so Electron/libsecret clients such as T3 Code and Brave keep using credentials created under Hyprland/Niri. Plasma also unlocks KWallet from the SDDM login password via PAM; the wallet password must match the login password, or be empty.)
-- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }`
+- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }` (Idle lock is `swayidle` except on Noctalia Niri/Hyprland hosts and on Plasma-only hosts. Plasma uses PowerDevil and the screen locker, which honor video idle inhibitors; `swayidle` does not.)
 - `users.git = { name, email }`
 - `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`

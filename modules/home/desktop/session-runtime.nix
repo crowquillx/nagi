@@ -14,9 +14,13 @@ let
   compositors = [ compositor ] ++ extraCompositors;
   hasNiri = builtins.elem "niri" compositors;
   hasHyprland = builtins.elem "hyprland" compositors;
+  hasPlasma = builtins.elem "plasma" compositors;
   hasNoctaliaCompositor = hasNiri || hasHyprland;
   noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
   noctaliaIdleManage = noctaliaEnable && hasNoctaliaCompositor;
+  # swayidle does not honor video/fullscreen idle inhibitors. Plasma-only
+  # hosts use PowerDevil and kscreenlocker, which do.
+  plasmaOwnsIdle = hasPlasma && !hasNiri && !hasHyprland;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   waylandTarget = config.wayland.systemd.target;
 
@@ -138,7 +142,7 @@ in
             };
           };
         })
-        (lib.mkIf (lockEnable && !noctaliaIdleManage) {
+        (lib.mkIf (lockEnable && !noctaliaIdleManage && !plasmaOwnsIdle) {
           nagi-idle-lock = {
             Unit = {
               Description = "Tanos Idle Lock Service";
