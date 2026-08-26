@@ -109,6 +109,9 @@ let
         sleep 0.1
       done
 
+      # The daemon creates its control sockets here; --start refuses without it.
+      mkdir -p "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
+      chmod 700 "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
       gnome-keyring-daemon --start --components=secrets >/dev/null
       wait_secrets_owner gnome-keyring
 
@@ -133,6 +136,126 @@ let
       python ${migratePy} import --input "$workdir/gnome.json"
 
       echo "done. restart Brave and T3 Code so they reload OSCrypt keys from KWallet."
+    '';
+  };
+
+  # Reverse direction of `migrator`: after returning to a Hyprland/Niri
+  # session, gnome-keyring reclaims org.freedesktop.secrets but cannot see
+  # items written under Plasma by ksecretd. Copy those back.
+  migratorToGnome = pkgs.writeShellApplication {
+    name = "nagi-migrate-secrets-to-gnome";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.dbus
+      pkgs.findutils
+      pkgs.gawk
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.gnome-keyring
+      pkgs.kdePackages.kwallet
+      pkgs.procps
+      pkgs.systemd
+      python
+    ];
+    text = ''
+      set -euo pipefail
+
+      usage() {
+        cat <<EOF
+      Copy Secret Service items served by ksecretd/KWallet into gnome-keyring.
+
+      Run this when leaving Plasma: apps using --password-store=gnome-libsecret
+      (Brave, T3 Code) read OSCrypt keys from whoever owns
+      org.freedesktop.secrets. Under Hyprland that is gnome-keyring again, which
+      does not know keys created or changed while Plasma was active.
+
+      Close Brave and T3 Code before running this, then reopen them after.
+      EOF
+      }
+
+      if [ "''${1:-}" = "-h" ] || [ "''${1:-}" = "--help" ]; then
+        usage
+        exit 0
+      fi
+
+      owner_comm() {
+        busctl --user list 2>/dev/null \
+          | awk '$1 == "org.freedesktop.secrets" {print $4}'
+      }
+
+      wait_secrets_owner() {
+        local needle="$1"
+        local _ i=0
+        while [ "$i" -lt 150 ]; do
+          if printf '%s' "$(owner_comm)" | grep -q "$needle"; then
+            return 0
+          fi
+          sleep 0.1
+          i=$((i + 1))
+        done
+        echo "timed out waiting for secrets owner matching $needle" >&2
+        return 1
+      }
+
+      find_pid() {
+        # Match comm strictly; -f would match this script's own args.
+        ps -u "$(id -u)" -o pid=,comm= \
+          | awk -v n="$1" '$2 == n {print $1}'
+      }
+
+      echo "== backing up current Secret Service contents =="
+      workdir="$(mktemp -d "''${XDG_RUNTIME_DIR:-/tmp}/nagi-secret-migrate-gnome.XXXXXX")"
+      chmod 700 "$workdir"
+      cleanup() {
+        find "$workdir" -type f -exec shred -u {} + 2>/dev/null || true
+        rm -rf "$workdir"
+      }
+      trap cleanup EXIT
+
+      current="$(owner_comm)"
+      echo "current owner: ''${current:-none}"
+      python ${migratePy} dump --output "$workdir/before.json"
+
+      if ! printf '%s' "$current" | grep -q gnome-keyring; then
+        echo "== stopping current Secret Service provider so ksecretd can claim the bus =="
+      fi
+      find_pid gnome-keyring-daemon | while read -r pid; do
+        kill "$pid" || true
+      done
+      find_pid ksecretd | while read -r pid; do
+        kill "$pid" || true
+      done
+      sleep 0.5
+
+      echo "== starting ksecretd backed by KWallet =="
+      kwalletd6 >/dev/null 2>&1 &
+      disown || true
+      sleep 1
+      ksecretd >/dev/null 2>&1 &
+      disown || true
+      wait_secrets_owner ksecretd
+
+      echo "== dumping KWallet-backed store =="
+      python ${migratePy} dump --output "$workdir/kwallet.json" --summary
+      count="$(python -c 'import json,sys; print(len(json.load(open(sys.argv[1]))["items"]))' "$workdir/kwallet.json")"
+      if [ "$count" -eq 0 ]; then
+        echo "kwallet had 0 items; restarting gnome-keyring unchanged" >&2
+      else
+        echo "== handing org.freedesktop.secrets back to gnome-keyring =="
+        find_pid ksecretd | xargs -r kill || true
+        sleep 0.5
+        # The daemon creates its control sockets here; --start refuses without it.
+        mkdir -p "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
+        chmod 700 "''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/keyring"
+        gnome-keyring-daemon --start --components=pkcs11,secrets >/dev/null
+        wait_secrets_owner gnome-keyring
+
+        echo "== importing $count items into gnome-keyring =="
+        python ${migratePy} import --input "$workdir/kwallet.json"
+      fi
+
+      echo "== final owner: $(owner_comm) =="
+      echo "done. restart Brave and T3 Code so they reload OSCrypt keys from gnome-keyring."
     '';
   };
 in
@@ -162,8 +285,14 @@ in
         '';
       };
     })
-    (lib.mkIf (desktopEnabled && sessionEnabled && keyringEnable && hasPlasma) {
-      home.packages = [ migrator ];
+    (lib.mkIf (desktopEnabled && sessionEnabled && keyringEnable) {
+      # Install both directions regardless of the active compositor: a
+      # compositor switch is exactly when you need these, and gating on
+      # hasPlasma removes the tool from the session you are switching away to.
+      home.packages = [
+        migrator
+        migratorToGnome
+      ];
     })
   ];
 }

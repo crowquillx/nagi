@@ -39,6 +39,14 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 - Remove when: all revisions this repository intends to support expose `overlays.default`
 - Track: [llm-agents.nix overlay documentation](https://github.com/numtide/llm-agents.nix#using-overlay)
 
+### Compositor switch secret migration between gnome-keyring and KWallet
+
+- Introduced: 2026-08-25 (forward direction), 2026-08-26 (reverse)
+- Scope: desktop hosts switching `desktop.compositor` between `hyprland`/`niri` and `plasma`
+- Reason: Chromium-family apps (Brave, T3 Code, ChatGPT) encrypt local data with an OSCrypt key read from `org.freedesktop.secrets`. Hyprland/Niri sessions answer that name with gnome-keyring; Plasma sessions with ksecretd/KWallet. Either provider cannot see keys written by the other, so switching leaves apps unable to decrypt credentials, connections, or history until the Secret Service items are copied across.
+- `nagi-migrate-secrets-to-kwallet` and `nagi-migrate-secrets-to-gnome` are installed for every session (`modules/home/security/keyring.nix`) so the tool is present in whichever session you are leaving. Close affected apps first, run the tool matching your destination, then reopen them.
+- Remove when: a single Secret Service provider covers all compositor sessions
+
 ## Intentional independent input pins
 
 - T3 Code uses `pkgs.llm-agents.t3code` (CLI) and its `desktop` output. The desktop binary is wrapped with `--no-sandbox --password-store=gnome-libsecret`. The connection catalog is Electron OSCrypt (`application=t3code` from the AppImage era, `application=T3 Code (Alpha)` from the current desktop `setName`). Grok is injected via `providerPackages` using the local `SHELL=/bin/sh` launcher so T3's `grok agent stdio` path does not use the stock grok wrapper. `t3 serve` is opt-in; the desktop app already embeds a server, and a second unit shares `~/.t3` and starts a second tunnel.
