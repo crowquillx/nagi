@@ -31,7 +31,22 @@ in
                   description = "Enable editor packages.";
                 };
                 t3code = mkOption {
-                  type = packageToggle "T3 Code" true;
+                  type = types.submodule {
+                    options = {
+                      enable = enableOption "Enable T3 Code." true;
+                      service = mkOption {
+                        type = strictSubmodule {
+                          enable = enableOption "Run a headless `t3 serve` user unit. Leave off when using the desktop app; both write the same ~/.t3 state." false;
+                          extraArgs = mkOption {
+                            type = types.listOf types.str;
+                            default = [ ];
+                            description = "Extra arguments forwarded to `t3 serve`.";
+                          };
+                        };
+                        default = { };
+                      };
+                    };
+                  };
                   default = { };
                 };
                 cursor = mkOption {

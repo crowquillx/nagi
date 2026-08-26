@@ -53,7 +53,10 @@ in
       };
     };
 
+    # kdotool drives KWin's scripting API over DBus; used to bind shortcuts
+    # that act on the focused window (e.g. force-kill without the pick cursor).
     environment.systemPackages = [
+      pkgs.kdotool
       colorSchemePkg
     ]
     ++ lib.optionals (klassyPkg != null) [ klassyPkg ]

@@ -13,7 +13,6 @@ let
       packages.vortex
       packages.nixGaming
       packages.mo2Lint
-      packages.t3codeNightly
     ]
     ++ lib.optionals (packages.hyprland != null) [ packages.hyprland ]
     ++ lib.optionals (packages.hyprlandExtras != null) [ packages.hyprlandExtras ]

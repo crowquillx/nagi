@@ -27,6 +27,7 @@ let
     ../nixos/desktop/niri.nix
     ../nixos/desktop/hyprland.nix
     ../nixos/desktop/kde.nix
+    ../nixos/desktop/cursor.nix
     ../nixos/desktop/sddm.nix
     ../nixos/desktop/session-lifecycle.nix
   ];
@@ -42,6 +43,7 @@ let
     ../nixos/services/bluetooth.nix
     ../nixos/services/networking.nix
     ../nixos/services/ssh.nix
+    ../nixos/services/t3code.nix
     ../nixos/services/firewall.nix
     ../nixos/services/portals.nix
     ../nixos/services/filemanager.nix
@@ -109,6 +111,7 @@ let
 
   homeDesktop = [
     ../home/desktop/session-runtime.nix
+    ../home/desktop/pointer-cursor.nix
     ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix

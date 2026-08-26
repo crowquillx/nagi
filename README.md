@@ -141,15 +141,14 @@ The workflow runs only for pull requests. Pushes to `main` and manual dispatches
 
 ## Updating local binary packages
 
-T3 Code nightly and MO2-LINT expose `passthru.updateScript` and can be updated reproducibly with `nix-update`:
+MO2-LINT exposes `passthru.updateScript` and can be updated reproducibly with `nix-update`:
 
 ```bash
-nix run nixpkgs#nix-update -- --flake t3code-nightly
-nix build .#t3code-nightly
-
 nix run nixpkgs#nix-update -- --flake mo2-lint
 nix build .#mo2-lint
 ```
+
+T3 Code comes from the `llm-agents` flake input (`t3code` and its desktop output). `tcli update` / `nix flake update llm-agents` is what moves it.
 
 ## Documentation
 

@@ -41,7 +41,7 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Intentional independent input pins
 
-- T3 Code stays on the local nightly AppImage in `pkgs/t3code-nightly`. `llm-agents.nix` now ships `t3code` / `t3code-desktop`, but it tracks the last stable source tag (`0.0.33`) and injects the stock grok bubblewrap launcher, which fails when T3 starts `grok agent stdio`. Reconsider when upstream tracks nightlies (or current stable) and can take the T3-compatible grok wrapper.
+- T3 Code uses `pkgs.llm-agents.t3code` (CLI) and its `desktop` output. The desktop binary is wrapped with `--no-sandbox --password-store=gnome-libsecret`. The connection catalog is Electron OSCrypt (`application=t3code` from the AppImage era, `application=T3 Code (Alpha)` from the current desktop `setName`). Grok is injected via `providerPackages` using the local `SHELL=/bin/sh` launcher so T3's `grok agent stdio` path does not use the stock grok wrapper. `t3 serve` is opt-in; the desktop app already embeds a server, and a second unit shares `~/.t3` and starts a second tunnel.
 - Hyprland does not follow the root nixpkgs input. Its package, portal, and Hyprland libraries come from the upstream overlay together so their ABI and `hyprland.cachix.org` cache remain aligned.
 - nix-gaming does not follow the root nixpkgs input. Packages are reused from its flake output to retain `nix-gaming.cachix.org` compatibility.
 - llm-agents keeps its own nixpkgs pin. Upstream explicitly documents that this costs a second evaluation but preserves the tested package set and cache hits.

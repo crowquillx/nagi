@@ -14,6 +14,9 @@ let
   paseoEnabled = get [ "features" "codingTools" "paseo" "enable" ] codingToolsEnabled;
   editorsEnabled = get [ "features" "codingTools" "editors" "enable" ] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "t3code" "enable" ] true;
+  t3ServiceEnabled =
+    t3codeEnabled && get [ "features" "codingTools" "editors" "t3code" "service" "enable" ] true;
+  t3ServiceExtraArgs = get [ "features" "codingTools" "editors" "t3code" "service" "extraArgs" ] [ ];
   cursorEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "cursor" "enable" ] true;
   zedEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "zed" "enable" ] true;
   aiCliEnabled = get [ "features" "codingTools" "aiCli" "enable" ] codingToolsEnabled;
@@ -50,11 +53,8 @@ let
   herdrPkg = llmAgent "herdr";
   primeAgentPkg = llmAgent "prime-agent";
   grokUpstreamPkg = llmAgent "grok";
-  # The upstream Linux package uses bubblewrap to synthesize /bin/bash and
-  # /bin/zsh. That is useful for the standalone CLI, but T3 Code launches
-  # `grok agent stdio` from an already-managed desktop process, where the
-  # nested mount namespace can fail before ACP initialization. The official
-  # binary itself works when its shell is pinned to NixOS's /bin/sh.
+  # T3 launches `grok agent stdio` from an already-managed process. Pin the
+  # official binary's shell to NixOS /bin/sh instead of the stock launcher.
   grokPkg =
     if grokUpstreamPkg == null then
       null
@@ -99,18 +99,45 @@ let
     (lib.attrByPath [ "nixd" ] null pkgs)
     (lib.attrByPath [ "nil" ] null pkgs)
   ];
-  t3DesktopPkg =
-    let
-      base = lib.attrByPath [ "t3code" ] null pkgs;
-      llmCodex = llmAgent "codex";
-    in
-    if base != null && llmCodex != null then
-      base.override {
-        codex = llmCodex;
-        grok = if grokEnabled then grokPkg else null;
-      }
+  t3UpstreamPkg = llmAgent "t3code";
+  t3ProviderPackages = lib.filter (pkg: pkg != null) [
+    (llmAgent "codex")
+    claudeCodePkg
+    (llmAgent "cursor-agent")
+    (if grokEnabled then grokPkg else null)
+    (llmAgent "opencode")
+    (lib.attrByPath [ "gh" ] null pkgs)
+    (lib.attrByPath [ "git" ] null pkgs)
+  ];
+  t3codePkg =
+    if t3UpstreamPkg == null then
+      null
     else
-      base;
+      t3UpstreamPkg.override { providerPackages = t3ProviderPackages; };
+  t3DesktopPkg =
+    if t3codePkg == null then
+      null
+    else
+      pkgs.stdenvNoCC.mkDerivation {
+        pname = "t3code-desktop";
+        inherit (t3codePkg) version;
+        dontUnpack = true;
+        strictDeps = true;
+        nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+        installPhase = ''
+          runHook preInstall
+          mkdir -p "$out/bin"
+          makeWrapper ${lib.getExe' t3codePkg.desktop "t3code-desktop"} \
+            "$out/bin/t3code-desktop" \
+            --add-flags "--no-sandbox --password-store=gnome-libsecret"
+          ln -s ${t3codePkg.desktop}/share "$out/share"
+          runHook postInstall
+        '';
+        meta = t3codePkg.meta // {
+          description = "Desktop control surface for coding agents";
+          mainProgram = "t3code-desktop";
+        };
+      };
   t3DesktopProgram =
     if t3DesktopPkg == null then
       "t3code-desktop"
@@ -227,8 +254,16 @@ in
       message = "features.codingTools.nixTools.enable is true, but no Nix language server (nixd or nil) could be resolved.";
     }
     {
+      assertion = !(t3codeEnabled && t3codePkg == null);
+      message = "features.codingTools.editors.t3code.enable is true, but package 't3code' could not be resolved from llm-agents.nix.";
+    }
+    {
       assertion = !(t3codeEnabled && t3DesktopPkg == null);
-      message = "features.codingTools.editors.enable is true, but nixpkgs package 't3code' could not be resolved.";
+      message = "features.codingTools.editors.t3code.enable is true, but the t3code desktop output could not be resolved from llm-agents.nix.";
+    }
+    {
+      assertion = !(t3ServiceEnabled && t3codePkg == null);
+      message = "features.codingTools.editors.t3code.service.enable is true, but package 't3code' could not be resolved from llm-agents.nix.";
     }
     {
       assertion = !(nixToolsEnabled && ghPkg == null);
@@ -273,6 +308,7 @@ in
     ++ lib.optionals (nixToolsEnabled && alejandraPkg != null) [ alejandraPkg ]
     ++ lib.optionals (nixToolsEnabled && nixfmtPkg != null) [ nixfmtPkg ]
     ++ lib.optionals (nixToolsEnabled && nixLspPkg != null) [ nixLspPkg ]
+    ++ lib.optionals (t3codeEnabled && t3codePkg != null) [ t3codePkg ]
     ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [ t3DesktopPkg ]
     # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
     ++ lib.optionals (nixToolsEnabled && graphiteCliPkg != null) [ graphiteCliPkg ]
@@ -293,7 +329,7 @@ in
       icon = "t3code";
       mimeType = [ "x-scheme-handler/t3code" ];
       settings = {
-        StartupWMClass = "t3-code-desktop";
+        StartupWMClass = "t3code";
       };
     };
   };
@@ -307,9 +343,8 @@ in
     ];
   };
 
-  # T3 registers x-scheme-handler/t3code with process.execPath, which is
-  # the unwrapped AppImage ELF. NixOS cannot run that, so Clerk OAuth
-  # callbacks die in stub-ld. Rewrite the desktop file whenever T3 does.
+  # T3 may register x-scheme-handler/t3code with process.execPath, which
+  # is the unwrapped Electron binary. Rewrite the desktop file whenever T3 does.
   home.file.".local/share/applications/t3code-url-handler.desktop" =
     lib.mkIf (t3codeEnabled && t3DesktopPkg != null)
       {
@@ -317,21 +352,38 @@ in
         force = true;
       };
 
-  systemd.user.paths.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
-    Unit.Description = "Watch T3 Code protocol handler desktop file";
-    Path = {
-      PathChanged = t3UrlHandlerPath;
-      PathModified = t3UrlHandlerPath;
-      Unit = "nagi-t3code-url-handler.service";
+  systemd.user = {
+    paths.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
+      Unit.Description = "Watch T3 Code protocol handler desktop file";
+      Path = {
+        PathChanged = t3UrlHandlerPath;
+        PathModified = t3UrlHandlerPath;
+        Unit = "nagi-t3code-url-handler.service";
+      };
+      Install.WantedBy = [ "default.target" ];
     };
-    Install.WantedBy = [ "default.target" ];
-  };
 
-  systemd.user.services.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
-    Unit.Description = "Rewrite T3 Code protocol handler to the wrapped binary";
-    Service = {
-      Type = "oneshot";
-      ExecStart = t3UrlHandlerRewrite;
+    services.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {
+      Unit.Description = "Rewrite T3 Code protocol handler to the wrapped binary";
+      Service = {
+        Type = "oneshot";
+        ExecStart = t3UrlHandlerRewrite;
+      };
+    };
+
+    services.nagi-t3code = lib.mkIf (t3ServiceEnabled && t3codePkg != null) {
+      Unit = {
+        Description = "T3 Code headless server";
+        After = [ "network-online.target" ];
+      };
+      Service = {
+        ExecStart = "${lib.getExe t3codePkg} serve${
+          lib.optionalString (t3ServiceExtraArgs != [ ]) " ${lib.escapeShellArgs t3ServiceExtraArgs}"
+        }";
+        Restart = "always";
+        RestartSec = 5;
+      };
+      Install.WantedBy = [ "default.target" ];
     };
   };
 }

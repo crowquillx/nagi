@@ -13,6 +13,8 @@ let
   dedicatedServerOpenFirewall = gaming.steam.dedicatedServer.openFirewall;
   localTransfersOpenFirewall = gaming.steam.localNetworkGameTransfers.openFirewall;
   millenniumEnable = gaming.steam.millennium.enable;
+  cursorTheme = import ../../theme/cursor-theme.nix;
+  cursorPackage = lib.attrByPath [ cursorTheme.packageAttr ] null pkgs;
   gamemodeEnable = gaming.gamemode.enable;
   cheatengineEnable = gaming.cheatengine.enable;
   pcsx2Enable = gaming.pcsx2.enable;
@@ -151,6 +153,9 @@ in
       programs.steam = {
         enable = true;
         package = lib.mkIf millenniumEnable pkgs.millennium-steam;
+        # Steam's FHS env does not see Home Manager's icon path; without the
+        # theme here it falls back to the X11 core cursor.
+        extraPackages = lib.optionals (cursorPackage != null) [ cursorPackage ];
         gamescopeSession.enable = gamescopeSessionEnable;
         remotePlay.openFirewall = remotePlayOpenFirewall;
         dedicatedServer.openFirewall = dedicatedServerOpenFirewall;

@@ -13,7 +13,7 @@ let
   qtThemeEnabled =
     get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
   nvidia = get [ "graphics" "profile" ] "auto" == "nvidia";
-  cursorTheme = import ../cursor-theme.nix;
+  cursorTheme = import ../../../theme/cursor-theme.nix;
 
   mode =
     output:
@@ -84,6 +84,7 @@ in
 ''
   ${monitorConfig}
 
+  hl.env("XCURSOR_THEME", ${quote cursorTheme.name})
   hl.env("XCURSOR_SIZE", ${quote (toString cursorTheme.size)})
   hl.env("HYPRCURSOR_SIZE", ${quote (toString cursorTheme.size)})
   hl.env("NIXOS_OZONE_WL", "1")

@@ -33,6 +33,8 @@ let
   gtkThemeName =
     if hasAdwGtkCompositor then if preferDark then "adw-gtk3-dark" else "adw-gtk3" else "Breeze";
 
+  cursorTheme = import ../../theme/cursor-theme.nix;
+
   resolvePkg = name: lib.attrByPath (lib.splitString "." name) null pkgs;
   adwGtkPkg = resolvePkg "adw-gtk3";
   breezeGtkPkg = resolvePkg "kdePackages.breeze-gtk";
@@ -93,12 +95,16 @@ in
         color-scheme = if preferDark then "prefer-dark" else "prefer-light";
         gtk-theme = gtkThemeName;
         icon-theme = iconThemeName;
+        cursor-theme = cursorTheme.name;
+        cursor-size = cursorTheme.size;
       };
     };
 
     xfconf.settings.xsettings = {
       "Net/IconThemeName" = iconThemeName;
       "Net/ThemeName" = gtkThemeName;
+      "Gtk/CursorThemeName" = cursorTheme.name;
+      "Gtk/CursorThemeSize" = cursorTheme.size;
     };
   };
 }

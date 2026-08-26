@@ -76,7 +76,7 @@ let
   };
 
   colors = import ./colors.nix;
-  cursorTheme = import ../cursor-theme.nix;
+  cursorTheme = import ../../../theme/cursor-theme.nix;
 
   context = {
     inherit
