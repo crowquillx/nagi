@@ -72,9 +72,12 @@ in
         package = iconThemePkg;
       };
       # GTK 4 ignores gtk-theme-name and only loads ~/.config/gtk-4.0/gtk.css.
-      # Home Manager's gtk.gtk4.theme writes a store symlink to Breeze-Dark's
-      # baked CSS, which kde-gtk-config cannot replace. Leave it unset so
-      # Plasma can export colors.css and import the Breeze theme itself.
+      # Home Manager's gtk.*.theme writes a store symlink to Breeze CSS, which
+      # kde-gtk-config then replaces at login. That GFileMonitor event SIGSEGVs
+      # GTK3 processes (portal-gtk, blueman; nixpkgs #523091). Leave both
+      # unset so Plasma owns gtk.css / colors.css. settings.ini still gets
+      # gtk-theme-name=Breeze from gtk.theme above.
+      gtk3.theme = lib.mkIf plasmaOwnsGtk (lib.mkForce null);
       gtk4.theme = lib.mkIf plasmaOwnsGtk (lib.mkForce null);
       gtk3.extraConfig = {
         gtk-application-prefer-dark-theme = lib.mkForce preferDark;

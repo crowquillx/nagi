@@ -10,6 +10,7 @@ let
   inherit (v.desktop) compositor extraCompositors;
   hasPlasma = builtins.elem "plasma" ([ compositor ] ++ extraCompositors);
   klassyPkg = lib.attrByPath [ "klassy" ] null pkgs;
+  betterBlurDxPkg = lib.attrByPath [ "kwin-effects-better-blur-dx" ] null pkgs;
   stylixVariant = v.features.stylix.variant;
   rosePine = import ../../theme/rose-pine.nix;
   colorScheme = import ../../theme/plasma-color-scheme.nix {
@@ -29,6 +30,10 @@ in
       {
         assertion = klassyPkg != null;
         message = "pkgs.klassy is unavailable; Plasma installs Klassy as its window decoration and application style.";
+      }
+      {
+        assertion = betterBlurDxPkg != null;
+        message = "pkgs.kwin-effects-better-blur-dx is unavailable; Plasma installs Better Blur DX as a KWin effect.";
       }
     ];
 
@@ -51,6 +56,7 @@ in
     environment.systemPackages = [
       colorSchemePkg
     ]
-    ++ lib.optionals (klassyPkg != null) [ klassyPkg ];
+    ++ lib.optionals (klassyPkg != null) [ klassyPkg ]
+    ++ lib.optionals (betterBlurDxPkg != null) [ betterBlurDxPkg ];
   };
 }

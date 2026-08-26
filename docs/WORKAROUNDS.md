@@ -5,6 +5,16 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Active workarounds
 
+### Plasma-only hosts omit xdg-desktop-portal-gtk
+
+- Introduced: 2026-08-25
+- Scope: Plasma-only hosts (`desktop.compositor = "plasma"` and no Niri/Hyprland extra session)
+- Reason: `xdg-desktop-portal-gtk` 1.15.3 SIGSEGVs in `g_file_monitor_source_dispatch` a second after Plasma login, when kde-gtk-config replaces `~/.config/gtk-3.0/gtk.css`. DrKonqi reports it as a service crash. The KDE portal covers file choosers, settings, screenshots, and secrets.
+- Mixed Niri/Hyprland+Plasma hosts still install the GTK portal (needed for those sessions) and delay it on KDE until `gtk.css` is a regular file.
+- Remove when: nixpkgs ships a GTK portal/GLib that survives kde-gtk-config's rewrite
+- Track: [nixpkgs issue #523091](https://github.com/NixOS/nixpkgs/issues/523091)
+
+
 ### patool test skips
 
 - Introduced: 2026-07-17

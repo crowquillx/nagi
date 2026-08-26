@@ -31,6 +31,7 @@
     primary = "tan";
     extraPackages = [
       "spotify"
+      "kde-rounded-corners"
       "mpv"
       "pywalfox-native"
       "sops"

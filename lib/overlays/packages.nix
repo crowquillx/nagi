@@ -13,6 +13,10 @@ let
   hushmic = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
   };
+  kwinEffectsBetterBlurDx = final: _prev: {
+    kwin-effects-better-blur-dx =
+      inputs.kwin-effects-better-blur-dx.packages.${final.stdenv.hostPlatform.system}.default;
+  };
   vortex = final: _prev: {
     vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
   };
@@ -44,6 +48,7 @@ in
     hushmic
     hyprland
     hyprlandExtras
+    kwinEffectsBetterBlurDx
     mo2Lint
     nixGaming
     t3codeNightly

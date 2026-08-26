@@ -73,7 +73,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze` on Plasma-only hosts so kde-gtk-config can export Plasma colors. `Breeze-Dark` is a static palette and is not used. Icon theme is unchanged.)
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
-- `features.bluetooth.enable = true | false`
+- `features.bluetooth.enable = true | false` (enables BlueZ. Niri/Hyprland get Blueman; Plasma uses bluedevil and does not autostart Blueman)
 - `features.portals.enable = true | false`
 - `features.codingTools.enable = true | false`
 - `features.codingTools.editors.enable = true | false`
@@ -358,7 +358,10 @@ desktop = {
 
 When multiple sessions are installed, portal routing remains session-specific.
 Niri uses the GNOME portal, Hyprland uses XDG Desktop Portal Hyprland, and
-Plasma uses the KDE portal; all retain GTK fallbacks. Do not set
+Plasma uses the KDE portal. Niri, Hyprland, and mixed Plasma hosts retain GTK
+fallbacks. Plasma-only hosts do not install `xdg-desktop-portal-gtk`: that
+backend SIGSEGVs at login when kde-gtk-config rewrites `gtk.css` (nixpkgs
+[issue 523091](https://github.com/NixOS/nixpkgs/issues/523091)). Do not set
 `XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP` globally; SDDM sets the correct
 desktop identity for the selected session.
 When Niri and Plasma are both installed, Qt theming is session-scoped. The
@@ -370,18 +373,22 @@ KDE integration, and Niri-only configurations use qtct/Kvantum directly.
 GTK widget theming is user-global: Niri or Hyprland hosts (including mixed
 Plasma) keep `adw-gtk3`, while Plasma-only hosts use the `Breeze` GTK theme
 (not `Breeze-Dark`) so kde-gtk-config can write `colors.css` from the active
-Plasma color scheme. Home Manager does not pin `gtk-4.0/gtk.css` on those
-hosts; GTK 4 ignores `gtk-theme-name` and would otherwise keep a baked
-Breeze-Dark import. Icon theme selection is independent of that split.
+Plasma color scheme. Home Manager does not pin `gtk-3.0/gtk.css` or
+`gtk-4.0/gtk.css` on those hosts; a store symlink would be replaced at login
+and crash GTK3 file monitors. GTK 4 also ignores `gtk-theme-name` and would
+otherwise keep a baked Breeze-Dark import. Icon theme selection is independent
+of that split.
 On Plasma-only hosts Stylix remains enabled (`autoEnable`) so anything
 Plasma does not theme keeps the Rose Pine palette, but
 `stylix.targets.{gtk,qt,kde,gnome,fontconfig}` are off so they do not fight
 Klassy, Breeze, Plasma fonts, or write GNOME dconf. Mixed hosts leave those
 desktop targets on for Niri/Hyprland.
 Plasma sessions (default compositor or `extraCompositors`) also install
-`pkgs.klassy` and a Rose Pine color scheme generated from
-`features.stylix.variant`. The scheme is available in System Settings → Colors
-and is not applied automatically.
+`pkgs.klassy`, Better Blur DX (`pkgs.kwin-effects-better-blur-dx`), and a
+Rose Pine color scheme generated from `features.stylix.variant`. The scheme is
+available in System Settings → Colors and is not applied automatically. Enable
+Better Blur DX in System Settings → Desktop Effects and disable the stock Blur
+effect. After a KWin upgrade, rebuild so the plugin matches the compositor.
 
 ### Hushmic tray
 

@@ -66,6 +66,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # KWin plugin; follows host nixpkgs so it links against this KWin.
+    kwin-effects-better-blur-dx = {
+      url = "github:xarblu/kwin-effects-better-blur-dx";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Use niri-flake only for its KDL/Home Manager configuration API. The
     # compositor package comes from host nixpkgs to keep Mesa/ABI alignment.
     niri.url = "github:sodiboo/niri-flake";
