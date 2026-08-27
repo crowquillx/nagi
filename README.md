@@ -148,7 +148,10 @@ nix run nixpkgs#nix-update -- --flake mo2-lint
 nix build .#mo2-lint
 ```
 
-T3 Code comes from the `llm-agents` flake input (`t3code` and its desktop output). `tcli update` / `nix flake update llm-agents` is what moves it.
+The T3 Code CLI comes from `llm-agents`. The desktop comes from the independently
+pinned `t3code-nightly-nix` input, whose automation checks upstream every six
+hours, validates the newest nightly AppImage, and publishes it to Cachix.
+`tcli update` moves the local lock to the newest validated package revision.
 
 ## Documentation
 

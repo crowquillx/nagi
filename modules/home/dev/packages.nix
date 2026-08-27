@@ -10,7 +10,6 @@ let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
-  orcaEnabled = get [ "features" "codingTools" "orca" "enable" ] codingToolsEnabled;
   paseoEnabled = get [ "features" "codingTools" "paseo" "enable" ] codingToolsEnabled;
   editorsEnabled = get [ "features" "codingTools" "editors" "enable" ] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "t3code" "enable" ] true;
@@ -31,8 +30,6 @@ let
   primeAgentEnabled = get [ "features" "codingTools" "aiCli" "primeAgent" "enable" ] aiCliEnabled;
   nixToolsEnabled = get [ "features" "codingTools" "nixTools" "enable" ] codingToolsEnabled;
   system = pkgs.stdenv.hostPlatform.system;
-
-  orcaPkg = lib.attrByPath [ "orca-nix" "packages" system "default" ] null inputs;
 
   llmAgent = name: lib.attrByPath [ "llm-agents" name ] null pkgs;
 
@@ -100,6 +97,12 @@ let
     (lib.attrByPath [ "nil" ] null pkgs)
   ];
   t3UpstreamPkg = llmAgent "t3code";
+  t3NightlyPkg = lib.attrByPath [
+    "t3code-nightly-nix"
+    "packages"
+    system
+    "t3code-nightly"
+  ] null inputs;
   t3ProviderPackages = lib.filter (pkg: pkg != null) [
     (llmAgent "codex")
     claudeCodePkg
@@ -115,26 +118,27 @@ let
     else
       t3UpstreamPkg.override { providerPackages = t3ProviderPackages; };
   t3DesktopPkg =
-    if t3codePkg == null then
+    if t3NightlyPkg == null then
       null
     else
       pkgs.stdenvNoCC.mkDerivation {
         pname = "t3code-desktop";
-        inherit (t3codePkg) version;
+        inherit (t3NightlyPkg) version;
         dontUnpack = true;
         strictDeps = true;
         nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
         installPhase = ''
           runHook preInstall
           mkdir -p "$out/bin"
-          makeWrapper ${lib.getExe' t3codePkg.desktop "t3code-desktop"} \
+          makeWrapper ${lib.getExe t3NightlyPkg} \
             "$out/bin/t3code-desktop" \
-            --add-flags "--no-sandbox --password-store=gnome-libsecret"
-          ln -s ${t3codePkg.desktop}/share "$out/share"
+            --prefix PATH : ${lib.escapeShellArg (lib.makeBinPath t3ProviderPackages)}
+          ln -s t3code-desktop "$out/bin/t3code-nightly"
+          ln -s ${t3NightlyPkg}/share "$out/share"
           runHook postInstall
         '';
-        meta = t3codePkg.meta // {
-          description = "Desktop control surface for coding agents";
+        meta = t3NightlyPkg.meta // {
+          description = "Nightly desktop control surface for coding agents";
           mainProgram = "t3code-desktop";
         };
       };
@@ -181,10 +185,6 @@ let
 in
 {
   assertions = [
-    {
-      assertion = !(orcaEnabled && orcaPkg == null);
-      message = "features.codingTools.orca.enable is true, but the orca-nix package could not be resolved from the flake input.";
-    }
     {
       assertion = !(paseoEnabled && paseoPkg == null);
       message = "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
@@ -259,7 +259,7 @@ in
     }
     {
       assertion = !(t3codeEnabled && t3DesktopPkg == null);
-      message = "features.codingTools.editors.t3code.enable is true, but the t3code desktop output could not be resolved from llm-agents.nix.";
+      message = "features.codingTools.editors.t3code.enable is true, but package 't3code-nightly' could not be resolved from t3code-nightly-nix.";
     }
     {
       assertion = !(t3ServiceEnabled && t3codePkg == null);
@@ -289,7 +289,6 @@ in
 
   home.packages =
     lib.optionals codingToolsEnabled [ pkgs.nodejs ]
-    ++ lib.optionals (orcaEnabled && orcaPkg != null) [ orcaPkg ]
     ++ lib.optionals (paseoEnabled && paseoPkg != null) [ paseoPkg ]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [ geminiCliPkg ]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [ claudeCodePkg ]

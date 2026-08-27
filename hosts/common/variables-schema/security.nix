@@ -87,6 +87,12 @@ in
           };
           default = { };
         };
+        sudo = mkOption {
+          type = strictSubmodule {
+            passwordless = enableOption "Allow wheel users to sudo without a password." false;
+          };
+          default = { };
+        };
         yubikey = mkOption {
           type = packageToggle "YubiKey support" false;
           default = { };

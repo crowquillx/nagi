@@ -12,6 +12,7 @@
       "https://nix-community.cachix.org"
       "https://install.determinate.systems"
       "https://cache.numtide.com"
+      "https://crowquillx-t3code-nightly.cachix.org"
       "https://vortex-nix.cachix.org"
       "https://nix-gaming.cachix.org"
       "https://hushmic-nix.cachix.org"
@@ -25,6 +26,7 @@
       "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
       "cache.flakehub.com-3:hJuILl5sVK4iKm86JzgdXW12Y2Hwd5G07qKtHTOcDCM="
       "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+      "crowquillx-t3code-nightly.cachix.org-1:R+Cr24SRF6a4pGwdEhU5RiBzkIEMKlGdLWRQ7aPgef8="
       "vortex-nix.cachix.org-1:7+ZVU0umNp8sz1JqZV/bRcbVgemNuNtzN5KiJxihFRY="
       "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "hushmic-nix.cachix.org-1:29j1XWTAAnb869spxlZ937ITJI9MCU1Wre+z7+1HJUM="
@@ -104,6 +106,8 @@
       url = "github:numtide/llm-agents.nix";
     };
 
+    t3code-nightly-nix.url = "github:crowquillx/t3code-nightly-nix";
+
     millennium = {
       url = "github:SteamClientHomebrew/Millennium?dir=packages/nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -124,8 +128,6 @@
       url = "github:crowquillx/hushmic-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    orca-nix.url = "github:kevinpita/orca-nix";
 
     vortex-nix = {
       url = "github:crowquillx/vortex-nix";

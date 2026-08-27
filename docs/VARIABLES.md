@@ -80,7 +80,6 @@ and operational behavior that the option definitions alone do not show.
 - `features.codingTools.editors.<name>.enable = true | false` for `t3code`, `cursor`, and `zed`
 - `features.codingTools.editors.t3code.service.enable = true | false` (user systemd `t3 serve` for headless use; default `false` because it fights the desktop app's embedded server; enables lingering)
 - `features.codingTools.editors.t3code.service.extraArgs = [ ... ]` (extra arguments forwarded to `t3 serve`, for example `"--tailscale-serve"`)
-- `features.codingTools.orca.enable = true | false`
 - `features.codingTools.paseo.enable = true | false` (Paseo desktop from llm-agents.nix)
 - `features.codingTools.aiCli.enable = true | false`
 - `features.codingTools.aiCli.codex.enable = true | false`
@@ -125,6 +124,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.laptop.powertop.enable = true | false`
 - `features.laptop.fwupd.enable = true | false`
 - `features.laptop.logind = { lidSwitch, lidSwitchExternalPower, lidSwitchDocked }`
+- `security.sudo.passwordless = true | false` (defaults to `false`. When true, wheel users can `sudo` without a password via NixOS `security.sudo.wheelNeedsPassword = false`. Enabled for tandesk and tanlappy through `hosts/profiles/tan-common.nix`.)
 - `security.sops.enable = true | false`
 - `security.sops.defaultSopsFile = "<path>"` (defaults to `null`; required when `enable = true`)
 - `security.sops.ageKeyFile = "<path>"` (defaults to `/var/lib/sops-nix/key.txt`)

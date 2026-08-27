@@ -61,6 +61,7 @@ let
   ];
 
   nixosSecurity = [
+    ../nixos/security/sudo.nix
     ../nixos/security/noctalia-secrets.nix
     ../nixos/security/sops.nix
     ../nixos/security/kotomi.nix

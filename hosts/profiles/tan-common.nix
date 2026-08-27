@@ -194,6 +194,8 @@
     flatpak.enable = true;
   };
 
+  security.sudo.passwordless = true;
+
   security.sops = {
     enable = true;
     ageKeyFile = "/var/lib/sops-nix/key.txt";
