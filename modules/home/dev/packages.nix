@@ -117,6 +117,34 @@ let
       null
     else
       t3UpstreamPkg.override { providerPackages = t3ProviderPackages; };
+  # llm-agents desktop stores OSCrypt under application="T3 Code (Alpha)"
+  # (electron productName). The nightly AppImage looks up application="t3code"
+  # (asar package.json name). Copy the productName key onto t3code so the
+  # AppImage can decrypt ~/.t3/userdata/connection-catalog.json.
+  t3OscryptAlias = pkgs.writeShellApplication {
+    name = "nagi-t3code-alias-oscrypt";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.libsecret
+    ];
+    text = ''
+      set -euo pipefail
+      src="$(secret-tool lookup application "T3 Code (Alpha)" || true)"
+      if [ -z "$src" ]; then
+        echo "nagi-t3code-alias-oscrypt: no T3 Code (Alpha) OSCrypt key; skipping" >&2
+        exit 0
+      fi
+      dst="$(secret-tool lookup application t3code || true)"
+      if [ -n "$dst" ] && [ "$src" = "$dst" ]; then
+        exit 0
+      fi
+      printf '%s' "$src" | secret-tool store \
+        --label='Chromium Safe Storage' \
+        xdg:schema chrome_libsecret_os_crypt_password_v2 \
+        application t3code
+      echo "nagi-t3code-alias-oscrypt: aliased T3 Code (Alpha) OSCrypt key onto application=t3code" >&2
+    '';
+  };
   t3DesktopPkg =
     if t3NightlyPkg == null then
       null
@@ -126,13 +154,16 @@ let
         inherit (t3NightlyPkg) version;
         dontUnpack = true;
         strictDeps = true;
-        nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
         installPhase = ''
           runHook preInstall
           mkdir -p "$out/bin"
-          makeWrapper ${lib.getExe t3NightlyPkg} \
+          makeShellWrapper ${lib.getExe t3NightlyPkg} \
             "$out/bin/t3code-desktop" \
-            --prefix PATH : ${lib.escapeShellArg (lib.makeBinPath t3ProviderPackages)}
+            --prefix PATH : ${
+              lib.escapeShellArg (lib.makeBinPath (t3ProviderPackages ++ [ pkgs.libsecret ]))
+            } \
+            --run ${lib.escapeShellArg (lib.getExe t3OscryptAlias)}
           ln -s t3code-desktop "$out/bin/t3code-nightly"
           ln -s ${t3NightlyPkg}/share "$out/share"
           runHook postInstall
@@ -308,7 +339,10 @@ in
     ++ lib.optionals (nixToolsEnabled && nixfmtPkg != null) [ nixfmtPkg ]
     ++ lib.optionals (nixToolsEnabled && nixLspPkg != null) [ nixLspPkg ]
     ++ lib.optionals (t3codeEnabled && t3codePkg != null) [ t3codePkg ]
-    ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [ t3DesktopPkg ]
+    ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [
+      t3DesktopPkg
+      t3OscryptAlias
+    ]
     # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
     ++ lib.optionals (nixToolsEnabled && graphiteCliPkg != null) [ graphiteCliPkg ]
     ++ lib.optionals (aiCliEnabled && skillsPkg != null) [ skillsPkg ]
