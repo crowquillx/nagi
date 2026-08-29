@@ -136,7 +136,7 @@ in
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "File manager" })
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen"), { description = "Zen Browser" })
   hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("mullvad-browser"), { description = "Mullvad Browser" })
-  ${cmdBind "mainMod .. \" + O\"" handyToggleCommand "{ description = \"Toggle Handy transcription\" }"}
+  ${cmdBind "mainMod .. \" + O\"" handyToggleCommand "{ description = \"Toggle Handy transcription\", dont_inhibit = true }"}
   hl.bind("mouse:276", ${chatMuteAction}, { description = ${quote chatMuteDescription} })
   ${cmdBind "mainMod .. \" + B\"" actions.controlCenter "{ description = \"Control center\" }"}${cmdBind "mainMod .. \" + N\"" actions.notifications "{ description = \"Notifications\" }"}${cmdBind "mainMod .. \" + comma\"" actions.settings "{ description = \"Settings\" }"}${cmdBind "mainMod .. \" + Y\"" actions.wallpaper "{ description = \"Wallpaper\" }"}${cmdBind "\"XF86AudioRaiseVolume\"" actions.volumeUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioLowerVolume\"" actions.volumeDown "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioMute\"" actions.volumeMute "{ locked = true }"}${cmdBind "\"XF86MonBrightnessUp\"" actions.brightnessUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86MonBrightnessDown\"" actions.brightnessDown "{ locked = true, repeating = true }"}
 

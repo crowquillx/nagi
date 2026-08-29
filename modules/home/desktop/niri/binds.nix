@@ -25,6 +25,16 @@ let
   packageNames = get [ "users" "extraPackages" ] [ ];
   handyEnabled = builtins.elem "handy" packageNames;
   handyToggleCommand = if handyEnabled then "nagi-handy-toggle-transcription" else null;
+  handyToggleBind =
+    if handyToggleCommand == null then
+      null
+    else
+      node "Mod+O" {
+        "hotkey-overlay-title" = "Toggle Handy transcription";
+        "allow-inhibiting" = false;
+      } [
+        (leaf "spawn-sh" handyToggleCommand)
+      ];
   effectiveChatClient =
     if chatClient != "none" then
       chatClient
@@ -112,7 +122,7 @@ in
       (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
         (leaf "spawn" [ "mullvad-browser" ])
       ])
-      (cmdBind "Mod+O" "Toggle Handy transcription" handyToggleCommand)
+      handyToggleBind
       (node "MouseForward" { "hotkey-overlay-title" = "Chat: Toggle Mute"; } chatMuteAction)
       (cmdBind "Super+B" "Control Center" actions.controlCenter)
       (cmdBind "Mod+N" "Notification Center" actions.notifications)

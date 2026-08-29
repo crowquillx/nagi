@@ -17,21 +17,22 @@ let
       set -euo pipefail
 
       uid="$(id -u)"
-      if ! pgrep -u "$uid" -x handy >/dev/null 2>&1; then
+      handy_process='/bin/handy( |$)'
+      if ! pgrep -u "$uid" -f "$handy_process" >/dev/null 2>&1; then
         ${pkgs.handy}/bin/handy --start-hidden >/dev/null 2>&1 &
 
         for _ in $(seq 1 50); do
-          if pgrep -u "$uid" -x handy >/dev/null 2>&1; then
+          if pgrep -u "$uid" -f "$handy_process" >/dev/null 2>&1; then
             break
           fi
           sleep 0.1
         done
 
-        pgrep -u "$uid" -x handy >/dev/null 2>&1 || exit 1
+        pgrep -u "$uid" -f "$handy_process" >/dev/null 2>&1 || exit 1
         sleep 0.25
       fi
 
-      exec ${pkgs.procps}/bin/pkill -USR2 -u "$uid" -x handy
+      exec ${pkgs.procps}/bin/pkill -USR2 -u "$uid" -f "$handy_process"
     '';
   };
 in
