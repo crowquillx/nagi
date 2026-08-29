@@ -1,5 +1,5 @@
 {
-  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, Noctalia, and sops-nix";
+  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, session shells, and sops-nix";
 
   # This literal is the source of truth for both --accept-flake-config and the
   # installed Nix daemon settings. Nix rejects imported/thunked nixConfig
@@ -85,6 +85,22 @@
 
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
+    };
+
+    # Do not follow nixpkgs: the flake builds dms-shell against the consumer pkgs.
+    dms.url = "github:AvengeMedia/DankMaterialShell";
+
+    caelestia-shell = {
+      url = "github:caelestia-dots/shell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Do not follow nixpkgs: the Home Manager module builds against consumer pkgs.
+    inir.url = "github:snowarch/iNiR";
+
+    illogical-impulse = {
+      url = "github:end-4/dots-hyprland";
+      flake = false;
     };
 
     zen-browser = {

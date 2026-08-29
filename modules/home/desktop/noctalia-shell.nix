@@ -7,16 +7,8 @@ let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  hasNoctaliaCompositor = builtins.any (
-    candidate:
-    builtins.elem candidate [
-      "niri"
-      "hyprland"
-    ]
-  ) ([ compositor ] ++ extraCompositors);
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
+  shell = import ./session-shell/lib.nix { inherit lib vars; };
+  inherit (shell) noctaliaEnable hasWaylandCompositor;
   kdeThemeEnable = get [ "features" "theme" "qt" "enable" ] true;
   noctaliaSettings = get [ "desktop" "noctalia" "settings" ] { };
 
@@ -30,7 +22,7 @@ let
   };
 in
 {
-  config = lib.mkIf (desktopEnabled && hasNoctaliaCompositor && noctaliaEnable) {
+  config = lib.mkIf (desktopEnabled && hasWaylandCompositor && noctaliaEnable) {
     programs.noctalia = {
       enable = true;
       systemd.enable = false;

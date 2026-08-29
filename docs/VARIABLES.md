@@ -38,7 +38,8 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.hyprland.configBuilder` (primary; default Lua builder at `modules/home/desktop/hyprland/default.nix`; set `null` for the upstream Home Manager settings path)
 - `desktop.hyprland.outputs = { "<output-name>" = { scale, position, mode, transform, variableRefreshRate, workspaceBase, bitDepth, colorManagement, sdrBrightness, sdrSaturation, sdrMaxLuminance, focusAtStartup }; ... }`
 - `desktop.hyprland.settings = { ... }` (applied only when `configBuilder = null`)
-- `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }`
+- `desktop.sessionShell = "noctalia" | "dms" | "caelestia" | "inir" | "ii" | "none"` (one active session shell. Default is noctalia when niri or hyprland is in compositor/extraCompositors, else none on Plasma-only hosts. Caelestia and ii cannot share a host with niri.)
+- `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }` (`enable` is derived from `sessionShell == "noctalia"`)
 - `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
 - `desktop.hdrGame = { enable, monitor = { uuid, model, serial, fallbackConnector }, notifications.enable }` (enables the `hdr-game` wrapper)
 - `graphics.profile = "auto" | "none" | "amd" | "intel" | "nvidia" | "vm"`
@@ -51,9 +52,9 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.startup.backend = "systemd" | "niri" | "hyprland"`
 - `desktop.startup.apps = [ "<cmd>" ... ]`
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
-- `desktop.session.polkit.enable = true | false`
+- `desktop.session.polkit.enable = true | false` (starts mate-polkit only when `sessionShell = "none"`. Full shells provide their own agent. The niri-flake agent stays off.)
 - `desktop.session.keyring.enable = true | false` (unlocks gnome-keyring at login. On Plasma, `ksecretd` owns `org.freedesktop.secrets`; run `nagi-migrate-secrets-to-kwallet` once so Electron/libsecret clients such as T3 Code and Brave keep using credentials created under Hyprland/Niri. Plasma also unlocks KWallet from the SDDM login password via PAM; the wallet password must match the login password, or be empty.)
-- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }` (Idle lock is `swayidle` except on Noctalia Niri/Hyprland hosts and on Plasma-only hosts. Plasma uses PowerDevil and the screen locker, which honor video idle inhibitors; `swayidle` does not.)
+- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }` (`command` defaults from `sessionShell`. Idle lock is `swayidle` only when `sessionShell = "none"` on Niri/Hyprland. Full shells own idle themselves. Plasma-only hosts use PowerDevil and the screen locker, which honor video idle inhibitors; `swayidle` does not.)
 - `users.git = { name, email }`
 - `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
@@ -421,11 +422,54 @@ desktop.hdrGame = {
 
 When enabled, Home Manager installs `hdr-game`, a Steam Launch Options wrapper (`hdr-game %command%`) that switches the designated display to HDR+WCG while the game runs and restores the previous display state afterwards. The output is identified by stable KScreen UUID first, then verified against live EDID model/serial, with an EDID-verified fallback connector as last resort. Concurrency is reference-counted under `flock` in `$XDG_RUNTIME_DIR/hdr-game`; use `hdr-game --status` / `--on` / `--off` / `--restore` for manual control and recovery after a SIGKILLed wrapper. Game-side variables such as `PROTON_ENABLE_HDR=1` pass through untouched.
 
+### Session shell
+
+```nix
+desktop.sessionShell = "noctalia"; # or "dms" | "caelestia" | "inir" | "ii" | "none"
+```
+
+One shell is active. Compositor keybinds go through a shared action table, so
+Hyprland and Niri call the same verbs (Niri keeps overview on Mod+Space/Tab).
+Each full shell starts from the compositor spawn hook, not systemd.
+`desktop.shellStartupCommand` stays unused.
+
+- `noctalia`: current default on Niri/Hyprland hosts. Nested `desktop.noctalia.*`
+  knobs still apply.
+- `dms`: DankMaterialShell. Home Manager module is injected only when selected.
+  Niri sets `background-color "transparent"` in the generated layout and seeds
+  writable `~/.config/niri/dms/{colors,layout}.kdl` for DMS to fill at runtime.
+  `niri validate` runs in the Nix sandbox, so those home-path files cannot be
+  `include`d in the generated config. Hyprland requires `dms.colors` only so
+  scrolling layout is not replaced by dwindle.
+- `caelestia`: Hyprland-only. Illegal if niri is in compositor or extraCompositors.
+- `inir`: iNiR. Niri-first Quickshell shell; Hyprland is allowed. Home Manager
+  module is injected only when selected. systemd stays off; compositor spawn
+  runs `inir run`. Niri uses a transparent layout background so the wallpaper
+  layer can show through. Seeds
+  `appearance.wallpaperTheming.enableAppsAndShell` / `enableQtApps` /
+  `enableTerminal` false in `~/.config/illogical-impulse/config.json` so
+  matugen does not overwrite Stylix palettes.
+- `ii`: illogical-impulse Quickshell tree only, wrapped by nagi. Hyprland-only.
+  Illegal if niri is in compositor or extraCompositors. Does not import their
+  Hyprland dots, fish, or kitty. Spawn is the wrapped `ii` (`qs -c ii`).
+  Settings is a second Quickshell process (`ii-settings`). Idle lock is a
+  runtime gap. nagi does not install their hypridle, and the QML lock may not
+  listen for logind idle on its own.
+- `none`: no full shell. Binds fall back to fuzzel, cliphist, wpctl, brightnessctl,
+  and loginctl. Idle uses swayidle. There is no waybar+mako stack.
+
+Stylix stays Rose Pine for apps. Toolkit env overlays per shell: qt5ct/Kvantum on
+noctalia, gtk3 on dms, qt6ct on caelestia, inir, and ii. Hyprland writes those
+through UWSM because `withUWSM = true`.
+
+Hosts stay on noctalia until you change `sessionShell`. Live switching is out of
+scope.
+
 ### Noctalia shell
 
 ```nix
+desktop.sessionShell = "noctalia";
 desktop.noctalia = {
-  enable = true;
   command = "nagi-noctalia-shell";
   assistantPanel.secrets = {
     googleApiKey = "noctalia-ap-google-api-key";
@@ -433,11 +477,12 @@ desktop.noctalia = {
 };
 ```
 
-This enables Home Manager's current `programs.noctalia.*` module with
-`systemd.enable = false`. Noctalia starts through the selected Niri or Hyprland
-compositor startup hook. The module enables the `kcolorscheme` theme template
-and uses `desktop.noctalia.command` (default `nagi-noctalia-shell`) for startup
-and IPC keybinds.
+`desktop.noctalia.enable` follows `sessionShell == "noctalia"` and should not be
+set on its own. This enables Home Manager's current `programs.noctalia.*` module
+with `systemd.enable = false`. Noctalia starts through the selected Niri or
+Hyprland compositor startup hook. The module enables the `kcolorscheme` theme
+template and uses `desktop.noctalia.command` (default `nagi-noctalia-shell`) for
+startup and IPC keybinds.
 
 Noctalia's GUI-managed `~/.local/state/noctalia/settings.toml` is applied after
 the declarative config. If that file already contains

@@ -14,6 +14,8 @@
       "pywalfox-native"
       "sops"
       "qbittorrent"
+      "handy"
+      "wtype"
     ];
   };
 
@@ -32,6 +34,7 @@
     };
     startup.apps = [
       "spotify"
+      "handy --start-hidden"
     ];
     startup.backend = "niri";
   };

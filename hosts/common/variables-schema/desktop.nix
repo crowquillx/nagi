@@ -187,10 +187,33 @@ in
           };
           default = { };
         };
+        sessionShell = mkOption {
+          type = types.enum [
+            "noctalia"
+            "dms"
+            "caelestia"
+            "inir"
+            "ii"
+            "none"
+          ];
+          default =
+            let
+              compositors = [ desktopArgs.config.compositor ] ++ desktopArgs.config.extraCompositors;
+            in
+            if builtins.elem "niri" compositors || builtins.elem "hyprland" compositors then
+              "noctalia"
+            else
+              "none";
+          description = ''
+            Active desktop session shell. One value; there is no extraShells list.
+            Default is noctalia when niri or hyprland is in compositor/extraCompositors, else none (Plasma-only).
+            Caelestia and ii cannot share a host with niri.
+          '';
+        };
         shellStartupCommand = mkOption {
           type = types.nullOr types.nonEmptyStr;
           default = null;
-          description = "Optional command used to start the desktop shell.";
+          description = "Optional command used to start the desktop shell. Unused; compositor spawn starts the selected sessionShell.";
         };
         startup = mkOption {
           type = strictSubmodule {
@@ -232,7 +255,24 @@ in
                 enable = enableOption "Enable session locking." true;
                 command = mkOption {
                   type = types.nonEmptyStr;
-                  default = "loginctl lock-session";
+                  default =
+                    let
+                      shell = desktopArgs.config.sessionShell;
+                      noctaliaCommand = desktopArgs.config.noctalia.command;
+                    in
+                    if shell == "noctalia" then
+                      "${noctaliaCommand} msg session lock"
+                    else if shell == "dms" then
+                      "dms ipc call lock lock"
+                    else if shell == "caelestia" then
+                      "caelestia shell lock lock"
+                    else if shell == "inir" then
+                      "inir lock activate"
+                    else if shell == "ii" then
+                      "ii ipc call lock activate"
+                    else
+                      "loginctl lock-session";
+                  description = "Lock command. Default follows desktop.sessionShell.";
                 };
                 idleSeconds = mkOption {
                   type = types.ints.positive;
@@ -248,7 +288,9 @@ in
         };
         noctalia = mkOption {
           type = strictSubmodule {
-            enable = enableOption "Enable Noctalia shell." false;
+            enable = enableOption "Enable Noctalia shell. Derived from desktop.sessionShell == \"noctalia\"." (
+              desktopArgs.config.sessionShell == "noctalia"
+            );
             command = mkOption {
               type = types.nonEmptyStr;
               default = "nagi-noctalia-shell";

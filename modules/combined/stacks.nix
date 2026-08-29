@@ -30,6 +30,7 @@ let
     ../nixos/desktop/cursor.nix
     ../nixos/desktop/sddm.nix
     ../nixos/desktop/session-lifecycle.nix
+    ../nixos/desktop/session-shell-pam.nix
   ];
 
   nixosShells = [
@@ -112,12 +113,14 @@ let
 
   homeDesktop = [
     ../home/desktop/session-runtime.nix
+    ../home/desktop/session-shell/default.nix
     ../home/desktop/pointer-cursor.nix
     ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
     ../home/desktop/noctalia-hyprland-workspaces.nix
     ../home/desktop/hushmic-tray.nix
+    ../home/desktop/handy.nix
     ../home/desktop/hdr-game.nix
   ];
 

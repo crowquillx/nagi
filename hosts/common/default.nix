@@ -50,7 +50,10 @@ in
       inherit self inputs combined;
     };
     users.${primaryUser} = {
-      imports = homeModulesFor { niri = hasNiri; };
+      imports = homeModulesFor {
+        niri = hasNiri;
+        sessionShell = v.desktop.sessionShell;
+      };
       home.username = lib.mkForce primaryUser;
       home.homeDirectory = lib.mkForce "/home/${primaryUser}";
       xdg.configHome = lib.mkForce "/home/${primaryUser}/.config";

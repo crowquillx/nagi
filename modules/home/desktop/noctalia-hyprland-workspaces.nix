@@ -7,18 +7,8 @@
 let
   get = path: default: lib.attrByPath path default vars;
   desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  compositors = [ compositor ] ++ extraCompositors;
-  hasHyprland = builtins.elem "hyprland" compositors;
-  hasNoctaliaCompositor = builtins.any (
-    candidate:
-    builtins.elem candidate [
-      "niri"
-      "hyprland"
-    ]
-  ) compositors;
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
+  shell = import ./session-shell/lib.nix { inherit lib vars; };
+  inherit (shell) hasHyprland noctaliaEnable;
 
   hyprlandOutputs = get [ "desktop" "hyprland" "outputs" ] { };
   workspaceOutputs = lib.filterAttrs (

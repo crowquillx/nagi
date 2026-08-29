@@ -39,8 +39,8 @@
       zen.enable = true;
       helium.enable = true;
     };
+    sessionShell = "noctalia";
     noctalia = {
-      enable = true;
       command = "nagi-noctalia-shell";
       assistantPanel.secrets = { };
     };
@@ -49,7 +49,6 @@
       keyring.enable = true;
       lock = {
         enable = true;
-        command = "nagi-noctalia-shell msg session lock";
         idleSeconds = 300;
         beforeSleep = true;
         onLidClose = true;

@@ -9,9 +9,22 @@
 }:
 let
   get = path: default: lib.attrByPath path default vars;
-  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
+  actions = import ../session-shell/actions.nix {
+    inherit lib pkgs vars;
+    compositor = "niri";
+  };
+  cmdBind =
+    key: title: command:
+    if command == null then
+      null
+    else
+      node key { "hotkey-overlay-title" = title; } [
+        (leaf "spawn-sh" command)
+      ];
   chatClient = get [ "features" "chat" "client" ] "none";
   packageNames = get [ "users" "extraPackages" ] [ ];
+  handyEnabled = builtins.elem "handy" packageNames;
+  handyToggleCommand = if handyEnabled then "nagi-handy-toggle-transcription" else null;
   effectiveChatClient =
     if chatClient != "none" then
       chatClient
@@ -63,13 +76,8 @@ in
 [
   (node "binds"
     [ ]
-    [
-      (node "Mod+D"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg panel-toggle launcher")
-        ]
-      )
+    (lib.remove null [
+      (cmdBind "Mod+D" "Launcher" actions.launcher)
       (node "Mod+Space" { repeat = false; } [
         (flag "toggle-overview")
       ])
@@ -89,24 +97,8 @@ in
       (node "Mod+Return" { "hotkey-overlay-title" = "Open Ghostty"; } [
         (leaf "spawn" [ "ghostty" ])
       ])
-      (node "Mod+V" { "hotkey-overlay-title" = "Clipboard Manager"; } [
-        (leaf "spawn" [
-          "dms"
-          "ipc"
-          "call"
-          "clipboard"
-          "toggle"
-        ])
-      ])
-      (node "Mod+M" { "hotkey-overlay-title" = "Task Manager"; } [
-        (leaf "spawn" [
-          "dms"
-          "ipc"
-          "call"
-          "processlist"
-          "focusOrToggle"
-        ])
-      ])
+      (cmdBind "Mod+V" "Clipboard Manager" actions.clipboard)
+      (cmdBind "Mod+M" "Task Manager" actions.taskManager)
       # Package wrapper already forces Electron onto X11/XWayland; just spawn it.
       (node "Mod+Alt+P" { "hotkey-overlay-title" = "Awakened PoE Trade"; } [
         (leaf "spawn" [ "awakened-poe-trade" ])
@@ -120,41 +112,18 @@ in
       (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
         (leaf "spawn" [ "mullvad-browser" ])
       ])
+      (cmdBind "Mod+O" "Toggle Handy transcription" handyToggleCommand)
       (node "MouseForward" { "hotkey-overlay-title" = "Chat: Toggle Mute"; } chatMuteAction)
-      (node "Super+B" { "hotkey-overlay-title" = "Assistant Panel: Toggle"; } [
-        (leaf "spawn-sh" "${noctaliaCommand} msg panel-toggle control-center")
-      ])
+      (cmdBind "Super+B" "Control Center" actions.controlCenter)
+      (cmdBind "Mod+N" "Notification Center" actions.notifications)
+      (cmdBind "Mod+Comma" "Settings" actions.settings)
+      (cmdBind "Mod+Y" "Wallpaper" actions.wallpaper)
 
-      (node "XF86AudioRaiseVolume"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg volume-up")
-        ]
-      )
-      (node "XF86AudioLowerVolume"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg volume-down")
-        ]
-      )
-      (node "XF86AudioMute"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg volume-mute")
-        ]
-      )
-      (node "XF86MonBrightnessUp"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg brightness-up")
-        ]
-      )
-      (node "XF86MonBrightnessDown"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg brightness-down")
-        ]
-      )
+      (cmdBind "XF86AudioRaiseVolume" "Volume Up" actions.volumeUp)
+      (cmdBind "XF86AudioLowerVolume" "Volume Down" actions.volumeDown)
+      (cmdBind "XF86AudioMute" "Volume Mute" actions.volumeMute)
+      (cmdBind "XF86MonBrightnessUp" "Brightness Up" actions.brightnessUp)
+      (cmdBind "XF86MonBrightnessDown" "Brightness Down" actions.brightnessDown)
 
       (node "Mod+Q" { repeat = false; } [
         (flag "close-window")
@@ -232,12 +201,7 @@ in
           (flag "focus-window-up")
         ]
       )
-      (node "Mod+L"
-        [ ]
-        [
-          (leaf "spawn-sh" "${noctaliaCommand} msg session lock")
-        ]
-      )
+      (cmdBind "Mod+L" "Lock Session" actions.lock)
 
       (node "Mod+Shift+Left"
         [ ]
@@ -448,15 +412,7 @@ in
         ]
       )
 
-      (node "Ctrl+Shift+R" { "hotkey-overlay-title" = "Rename Workspace"; } [
-        (leaf "spawn" [
-          "dms"
-          "ipc"
-          "call"
-          "workspace-rename"
-          "open"
-        ])
-      ])
+      (cmdBind "Ctrl+Shift+R" "Rename Workspace" actions.workspaceRename)
 
       (node "Mod+Shift+Page_Down"
         [ ]
@@ -780,6 +736,6 @@ in
           (flag "power-off-monitors")
         ]
       )
-    ]
+    ])
   )
 ]

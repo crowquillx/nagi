@@ -8,12 +8,11 @@ let
   get = path: default: lib.attrByPath path default vars;
   outputs = get [ "desktop" "hyprland" "outputs" ] { };
   startup = import ../startup.nix { inherit lib vars; };
-  noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] false;
-  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
-  qtThemeEnabled =
-    get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
-  nvidia = get [ "graphics" "profile" ] "auto" == "nvidia";
+  shell = import ../session-shell/lib.nix { inherit lib vars; };
   cursorTheme = import ../../../theme/cursor-theme.nix;
+  toolkitEnvLua = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (name: value: "hl.env(${quote name}, ${quote value})") shell.toolkitEnv
+  );
 
   mode =
     output:
@@ -75,7 +74,7 @@ let
   );
   focusOutput = if focusedOutputs == [ ] then null else builtins.head focusedOutputs;
   startupCommands =
-    lib.optionals noctaliaEnabled [ noctaliaCommand ]
+    lib.optionals (shell.startupCommand != null) [ shell.startupCommand ]
     ++ lib.optionals (startup.startupBackend == "hyprland") startup.effectiveStartupApps;
   startupLua = lib.concatMapStringsSep "\n" (
     command: "  hl.exec_cmd(${quote command})"
@@ -87,14 +86,11 @@ in
   hl.env("XCURSOR_THEME", ${quote cursorTheme.name})
   hl.env("XCURSOR_SIZE", ${quote (toString cursorTheme.size)})
   hl.env("HYPRCURSOR_SIZE", ${quote (toString cursorTheme.size)})
-  hl.env("NIXOS_OZONE_WL", "1")
-  hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
-  ${lib.optionalString qtThemeEnabled ''
-    hl.env("QT_QPA_PLATFORMTHEME", "qt5ct")
-    hl.env("QT_STYLE_OVERRIDE", "kvantum")
-  ''}
-  ${lib.optionalString nvidia ''
-    hl.env("NVD_BACKEND", "direct")
+  hl.env("NIXOS_OZONE_WL", ${quote shell.sharedEnv.NIXOS_OZONE_WL})
+  hl.env("ELECTRON_OZONE_PLATFORM_HINT", ${quote shell.sharedEnv.ELECTRON_OZONE_PLATFORM_HINT})
+  ${toolkitEnvLua}
+  ${lib.optionalString (shell.sharedEnv ? NVD_BACKEND) ''
+    hl.env("NVD_BACKEND", ${quote shell.sharedEnv.NVD_BACKEND})
   ''}
 
   hl.config({
@@ -185,16 +181,4 @@ in
   ) "  hl.dispatch(hl.dsp.focus({ monitor = ${quote focusOutput} }))"}
   end)
 
-  ${lib.optionalString noctaliaEnabled ''
-    hl.layer_rule({
-      name = "noctalia",
-      match = {
-        namespace = "^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher)$",
-      },
-      no_anim = true,
-      ignore_alpha = 0.5,
-      blur = true,
-      blur_popups = true,
-    })
-  ''}
 ''

@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   vars ? { },
   ...
 }:
@@ -11,15 +12,7 @@ let
   codexEnabled = get [ "features" "codingTools" "aiCli" "codex" "enable" ] aiCliEnabled;
   codexPkg = lib.attrByPath [ "llm-agents" "codex" ] null pkgs;
   chatgptPkg = lib.attrByPath [ "llm-agents" "chatgpt" ] null pkgs;
-  openaiBundledMarketplace = "${chatgptPkg}/lib/chatgpt/resources/plugins/openai-bundled";
-  nodeReplCommand = "${chatgptPkg}/lib/chatgpt/resources/cua_node/bin/node_repl";
-  nodeReplNodePath = "${chatgptPkg}/lib/chatgpt/resources/cua_node/bin/node";
-  # Version segment from the package name, e.g. chatgpt-26.810.52044
-  chatgptAppVersion =
-    let
-      m = builtins.match ".*-([0-9]+\\.[0-9]+\\.[0-9]+)$" chatgptPkg.name;
-    in
-    if m != null then builtins.head m else "";
+  chatgptBinName = if chatgptPkg == null then "chatgpt" else chatgptPkg.meta.mainProgram or "chatgpt";
   configureChatgptConfig = ./configure-codex-desktop.py;
 in
 {
@@ -42,11 +35,38 @@ in
         chatgptPkg
       ];
 
+      # llm-agents wraps chatgpt with makeShellWrapper (bin + share only).
+      # CUA resources live on the unwrapped output; resolve that at activation
+      # so eval does not have to realize the package.
       home.activation.configureCodexDesktopPlugins = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-        CODEX_MARKETPLACE_SOURCE=${lib.escapeShellArg openaiBundledMarketplace} \
-        CODEX_NODE_REPL_COMMAND=${lib.escapeShellArg nodeReplCommand} \
-        CODEX_NODE_REPL_NODE_PATH=${lib.escapeShellArg nodeReplNodePath} \
-        CODEX_DESKTOP_APP_VERSION=${lib.escapeShellArg chatgptAppVersion} \
+        wrapped=${lib.escapeShellArg (toString chatgptPkg)}
+        cua_root="$wrapped"
+        if [ ! -x "$cua_root/lib/chatgpt/resources/cua_node/bin/node_repl" ]; then
+          wrapper="$wrapped/bin/${chatgptBinName}"
+          cua_root="$(${pkgs.gnused}/bin/sed -n 's/.*exec "\([^"]*\)\/bin\/chatgpt".*/\1/p' "$wrapper" | ${pkgs.coreutils}/bin/head -n1)"
+        fi
+        if [ ! -x "$cua_root/lib/chatgpt/resources/cua_node/bin/node_repl" ]; then
+          echo "configureCodexDesktopPlugins: node_repl not found under $wrapped or its wrapper target ($cua_root)" >&2
+          exit 1
+        fi
+        resources="$cua_root/lib/chatgpt/resources"
+        version="$(${pkgs.coreutils}/bin/basename "$cua_root")"
+        version="''${version##*-}"
+        mkdir -p "$HOME/.config/environment.d"
+        ${pkgs.coreutils}/bin/printf 'CODEX_CODE_MODE_HOST_PATH=%s\n' "$resources/codex-code-mode-host" \
+          > "$HOME/.config/environment.d/99-codex-code-mode-host.conf"
+        if [ -f "$HOME/.config/systemd/user/codex-remote-control.service.d/code-mode-host.conf" ]; then
+          ${pkgs.coreutils}/bin/printf '[Service]\nEnvironment=CODEX_CODE_MODE_HOST_PATH=%s\n' \
+            "$resources/codex-code-mode-host" \
+            > "$HOME/.config/systemd/user/codex-remote-control.service.d/code-mode-host.conf"
+        fi
+        CODEX_MARKETPLACE_SOURCE="$resources/plugins/openai-bundled" \
+        CODEX_NODE_REPL_COMMAND="$resources/cua_node/bin/node_repl" \
+        CODEX_NODE_REPL_NODE_PATH="$resources/cua_node/bin/node" \
+        CODEX_NODE_REPL_NODE_MODULE_DIRS="$resources/cua_node/lib/node_modules" \
+        CODEX_NODE_REPL_TRUSTED_CODE_PATHS="${config.home.homeDirectory}/.codex:$resources/cua_node/lib/node_modules" \
+        CODEX_CLI_PATH="$resources/codex" \
+        CODEX_DESKTOP_APP_VERSION="$version" \
           ${pkgs.python3}/bin/python ${configureChatgptConfig}
       '';
     })

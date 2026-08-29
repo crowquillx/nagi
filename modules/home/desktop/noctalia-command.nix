@@ -8,16 +8,9 @@
 let
   get = path: default: lib.attrByPath path default vars;
   desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  hasNoctaliaCompositor = builtins.any (
-    candidate:
-    builtins.elem candidate [
-      "niri"
-      "hyprland"
-    ]
-  ) ([ compositor ] ++ extraCompositors);
-  noctaliaEnabled = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
+  shell = import ./session-shell/lib.nix { inherit lib vars; };
+  inherit (shell) hasWaylandCompositor;
+  noctaliaEnabled = shell.noctaliaEnable;
   secrets = get [ "desktop" "noctalia" "assistantPanel" "secrets" ] { };
 
   mkSecretPath = name: if lib.isString name && name != "" then "/run/secrets/${name}" else null;
@@ -45,7 +38,7 @@ let
   '';
 in
 {
-  config = lib.mkIf (desktopEnabled && hasNoctaliaCompositor && noctaliaEnabled) {
+  config = lib.mkIf (desktopEnabled && hasWaylandCompositor && noctaliaEnabled) {
     home.packages = [ noctaliaCommandWrapper ];
   };
 }

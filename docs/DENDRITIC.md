@@ -23,6 +23,7 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
   - publishes `flake.nixosModules.<host>` and `flake.homeModules.default`
   - builds the real `nixosConfigurations` and `homeConfigurations`
   - publishes serializable `nagiHostMetadata` for tooling and CI
+  - injects DMS, Caelestia, and iNiR Home Manager modules only when `desktop.sessionShell` selects them. `ii` injects a nagi-owned Quickshell wrap, not an upstream rice module.
 - `modules/flake/packages.nix`
   - defines `perSystem.packages` for wrapped/custom packages
   - includes wrapped + upstream package outputs (`nagi-noctalia`, `nagi-zen`, `nagi-helium`)

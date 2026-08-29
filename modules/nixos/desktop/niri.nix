@@ -29,7 +29,8 @@ in
       package = niriPackage;
     };
 
-    # Noctalia provides the authentication agent in Niri sessions.
+    # Full session shells provide the authentication agent. mate-polkit is
+    # used only when desktop.sessionShell = "none".
     systemd.user.services.niri-flake-polkit.enable = false;
   };
 }

@@ -50,8 +50,8 @@
       outputs = { };
       settings = { };
     };
+    sessionShell = "noctalia";
     noctalia = {
-      enable = true;
       command = "nagi-noctalia-shell";
       settings = { };
     };
@@ -61,7 +61,6 @@
       keyring.enable = true;
       lock = {
         enable = true;
-        command = "nagi-noctalia-shell msg session lock";
         idleSeconds = 300;
         beforeSleep = true;
         onLidClose = true;

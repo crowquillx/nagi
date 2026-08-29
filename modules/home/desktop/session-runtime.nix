@@ -14,19 +14,14 @@ let
   compositors = [ compositor ] ++ extraCompositors;
   hasNiri = builtins.elem "niri" compositors;
   hasHyprland = builtins.elem "hyprland" compositors;
-  hasPlasma = builtins.elem "plasma" compositors;
-  hasNoctaliaCompositor = hasNiri || hasHyprland;
-  noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (desktopEnabled && hasNoctaliaCompositor);
-  noctaliaIdleManage = noctaliaEnable && hasNoctaliaCompositor;
-  # swayidle does not honor video/fullscreen idle inhibitors. Plasma-only
-  # hosts use PowerDevil and kscreenlocker, which do.
-  plasmaOwnsIdle = hasPlasma && !hasNiri && !hasHyprland;
+  shell = import ./session-shell/lib.nix { inherit lib vars; };
+  inherit (shell) shellOwnsIdle plasmaOwnsIdle matePolkitEnable;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   waylandTarget = config.wayland.systemd.target;
 
   polkitEnable = get [ "desktop" "session" "polkit" "enable" ] true;
   lockEnable = get [ "desktop" "session" "lock" "enable" ] true;
-  lockCommand = get [ "desktop" "session" "lock" "command" ] "loginctl lock-session";
+  lockCommand = get [ "desktop" "session" "lock" "command" ] shell.lockCommand;
   idleSeconds = get [ "desktop" "session" "lock" "idleSeconds" ] 600;
   lockBeforeSleep = get [ "desktop" "session" "lock" "beforeSleep" ] true;
   startupCommand = get [ "desktop" "shellStartupCommand" ] null;
@@ -125,7 +120,7 @@ in
     }
     (lib.mkIf (desktopEnabled && sessionEnabled) {
       systemd.user.services = lib.mkMerge [
-        (lib.mkIf polkitEnable {
+        (lib.mkIf (polkitEnable && matePolkitEnable) {
           nagi-polkit-agent = {
             Unit = {
               Description = "Tanos Polkit Authentication Agent";
@@ -142,7 +137,7 @@ in
             };
           };
         })
-        (lib.mkIf (lockEnable && !noctaliaIdleManage && !plasmaOwnsIdle) {
+        (lib.mkIf (lockEnable && !shellOwnsIdle && !plasmaOwnsIdle) {
           nagi-idle-lock = {
             Unit = {
               Description = "Tanos Idle Lock Service";

@@ -8,23 +8,17 @@
   ...
 }:
 let
-  get = path: default: lib.attrByPath path default vars;
-  qtThemeEnabled =
-    get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
+  shell = import ../session-shell/lib.nix { inherit lib vars; };
   hostName = vars.host.name or "";
   isTanlappy = hostName == "tanlappy";
+  toolkitLeaves = lib.mapAttrsToList (name: value: leaf name value) shell.toolkitEnv;
 in
 [
   # Named workspaces initially appear in declaration order.
   (optionalNode isTanlappy (leaf "workspace" "1"))
   (optionalNode isTanlappy (leaf "workspace" "2"))
 
-  (optionalNode qtThemeEnabled (
-    plain "environment" [
-      (leaf "QT_QPA_PLATFORMTHEME" "qt5ct")
-      (leaf "QT_STYLE_OVERRIDE" "kvantum")
-    ]
-  ))
+  (optionalNode (toolkitLeaves != [ ]) (plain "environment" toolkitLeaves))
   (plain "hotkey-overlay" [ (flag "skip-at-startup") ])
   (flag "prefer-no-csd")
   (leaf "screenshot-path" "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png")

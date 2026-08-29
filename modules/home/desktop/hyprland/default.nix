@@ -20,4 +20,5 @@ lib.concatStringsSep "\n" [
   (import ./windowrules.nix context)
   (import ./workspaces.nix context)
   (import ./binds.nix context)
+  (import ./session-shell.nix context)
 ]

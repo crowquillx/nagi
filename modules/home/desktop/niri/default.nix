@@ -103,9 +103,9 @@ normalize [
   (import ./layout.nix context)
   (import ./cursor.nix context)
   (import ./blur.nix context)
-  (import ./noctalia.nix context)
   (import ./windowrules.nix context)
   (import ./config-fragments.nix context)
   (import ./startup-apps.nix context)
   (import ./binds.nix context)
+  (import ./session-shell.nix context)
 ]

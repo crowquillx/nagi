@@ -11,6 +11,32 @@ let
 
   homeModule = import ../../users/default/home.nix;
   noctaliaHmModule = lib.attrByPath [ "noctalia" "homeModules" "default" ] null inputs;
+  dmsHmModule = lib.attrByPath [ "dms" "homeModules" "default" ] null inputs;
+  caelestiaHmModule =
+    let
+      fromHomeManager = lib.attrByPath [ "caelestia-shell" "homeManagerModules" "default" ] null inputs;
+      fromHome = lib.attrByPath [ "caelestia-shell" "homeModules" "default" ] null inputs;
+    in
+    if fromHomeManager != null then fromHomeManager else fromHome;
+  inirHmModule =
+    let
+      fromHome = lib.attrByPath [ "inir" "homeModules" "inir" ] null inputs;
+      fromHomeManager = lib.attrByPath [ "inir" "homeManagerModules" "inir" ] null inputs;
+      fromHomeDefault = lib.attrByPath [ "inir" "homeModules" "default" ] null inputs;
+      fromHomeManagerDefault = lib.attrByPath [ "inir" "homeManagerModules" "default" ] null inputs;
+    in
+    if fromHome != null then
+      fromHome
+    else if fromHomeManager != null then
+      fromHomeManager
+    else if fromHomeDefault != null then
+      fromHomeDefault
+    else
+      fromHomeManagerDefault;
+  dmsNagiModule = ../../modules/home/desktop/session-shell/dms.nix;
+  caelestiaNagiModule = ../../modules/home/desktop/session-shell/caelestia.nix;
+  inirNagiModule = ../../modules/home/desktop/session-shell/inir.nix;
+  iiNagiModule = ../../modules/home/desktop/session-shell/ii.nix;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
   importVariables = files: lib.foldl' lib.recursiveUpdate { } (map import files);
   # Validate each host's raw variables against the schema and materialise
@@ -48,9 +74,23 @@ let
     {
       standalone ? false,
       niri ? false,
+      sessionShell ? "none",
     }:
     [ homeModule ]
     ++ sharedHomeModules
+    ++ lib.optionals (sessionShell == "dms" && dmsHmModule != null) [
+      dmsHmModule
+      dmsNagiModule
+    ]
+    ++ lib.optionals (sessionShell == "caelestia" && caelestiaHmModule != null) [
+      caelestiaHmModule
+      caelestiaNagiModule
+    ]
+    ++ lib.optionals (sessionShell == "inir" && inirHmModule != null) [
+      inirHmModule
+      inirNagiModule
+    ]
+    ++ lib.optionals (sessionShell == "ii") [ iiNagiModule ]
     ++ lib.optionals niri [
       niriHmConfigModule
       niriHomeModule
@@ -120,6 +160,7 @@ let
         homeModulesFor {
           standalone = true;
           niri = niriEnabled vars;
+          sessionShell = vars.desktop.sessionShell;
         }
         ++ [
           {

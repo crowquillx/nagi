@@ -7,9 +7,14 @@
 }:
 let
   get = path: default: lib.attrByPath path default vars;
-  noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
+  actions = import ../session-shell/actions.nix {
+    inherit lib pkgs vars;
+    compositor = "hyprland";
+  };
   chatClient = get [ "features" "chat" "client" ] "none";
   packageNames = get [ "users" "extraPackages" ] [ ];
+  handyEnabled = builtins.elem "handy" packageNames;
+  handyToggleCommand = if handyEnabled then "nagi-handy-toggle-transcription" else null;
   effectiveChatClient =
     if chatClient != "none" then
       chatClient
@@ -28,18 +33,6 @@ let
       "hl.dsp.exec_cmd(${quote "notify-send 'Chat mute' 'No chat client is configured.'"})";
   chatMuteDescription =
     if effectiveChatClient == "discord" then "Discord: toggle mute" else "Chat: toggle mute";
-  workspaceRenameScript = pkgs.writeShellApplication {
-    name = "nagi-hyprland-rename-workspace";
-    runtimeInputs = [
-      pkgs.fuzzel
-      pkgs.hyprland
-    ];
-    text = ''
-      name="$(printf '\n' | fuzzel --dmenu --prompt 'Workspace name: ')"
-      [[ -n "$name" ]] || exit 0
-      hyprctl dispatch renameworkspace "current $name"
-    '';
-  };
   windowHeightScript = pkgs.writeShellApplication {
     name = "nagi-hyprland-window-height";
     runtimeInputs = [
@@ -76,7 +69,9 @@ let
       hyprctl dispatch resizeactive "0 $((target_height - current_height))"
     '';
   };
-  noctalia = message: "${noctaliaCommand} msg ${message}";
+  cmdBind =
+    key: command: opts:
+    lib.optionalString (command != null) "  hl.bind(${key}, hl.dsp.exec_cmd(${quote command}), ${opts})\n";
 in
 ''
   local mainMod = "SUPER"
@@ -120,17 +115,17 @@ in
     })
   end
 
-  hl.bind(mainMod .. " + D", hl.dsp.exec_cmd(${quote (noctalia "panel-toggle launcher")}), { description = "Launcher" })
-  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote (noctalia "window-switcher")}), { description = "Window switcher" })
-  hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote (noctalia "window-switcher")}), { description = "Window switcher" })
+  ${cmdBind "mainMod .. \" + D\"" actions.launcher "{ description = \"Launcher\" }"}${lib.optionalString (actions.windowSwitcher.mode == "command") ''
+  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
+  hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
+  ''}
   hl.bind(mainMod .. " + SHIFT + slash", hl.dsp.exec_cmd("ghostty -e sh -lc 'hyprctl binds | less'"), { description = "Show keybinds" })
 
   hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("kitty"), { description = "Open Kitty" })
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("ghostty"), { description = "Open Ghostty" })
   hl.bind(mainMod .. " + S", toggleScratchpad, { description = "Toggle scratchpad", dont_inhibit = true })
   hl.bind(mainMod .. " + SHIFT + S", moveActiveWindowToScratchpad, { description = "Move window to scratchpad", dont_inhibit = true })
-  hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(${quote (noctalia "panel-toggle clipboard")}), { description = "Clipboard manager" })
-  hl.bind(mainMod .. " + M", hl.dsp.exec_cmd("ghostty -e htop"), { description = "Task manager" })
+  ${cmdBind "mainMod .. \" + V\"" actions.clipboard "{ description = \"Clipboard manager\" }"}${cmdBind "mainMod .. \" + M\"" actions.taskManager "{ description = \"Task manager\" }"}
   hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("awakened-poe-trade"), { description = "Awakened PoE Trade", dont_inhibit = true })
   -- Price-check keys stay unbound so APT's globalShortcut handler runs.
   hl.bind(
@@ -141,14 +136,9 @@ in
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "File manager" })
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen"), { description = "Zen Browser" })
   hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("mullvad-browser"), { description = "Mullvad Browser" })
+  ${cmdBind "mainMod .. \" + O\"" handyToggleCommand "{ description = \"Toggle Handy transcription\" }"}
   hl.bind("mouse:276", ${chatMuteAction}, { description = ${quote chatMuteDescription} })
-  hl.bind(mainMod .. " + B", hl.dsp.exec_cmd(${quote (noctalia "panel-toggle control-center")}), { description = "Control center" })
-
-  hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd(${quote (noctalia "volume-up")}), { locked = true, repeating = true })
-  hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd(${quote (noctalia "volume-down")}), { locked = true, repeating = true })
-  hl.bind("XF86AudioMute", hl.dsp.exec_cmd(${quote (noctalia "volume-mute")}), { locked = true })
-  hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd(${quote (noctalia "brightness-up")}), { locked = true, repeating = true })
-  hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd(${quote (noctalia "brightness-down")}), { locked = true, repeating = true })
+  ${cmdBind "mainMod .. \" + B\"" actions.controlCenter "{ description = \"Control center\" }"}${cmdBind "mainMod .. \" + N\"" actions.notifications "{ description = \"Notifications\" }"}${cmdBind "mainMod .. \" + comma\"" actions.settings "{ description = \"Settings\" }"}${cmdBind "mainMod .. \" + Y\"" actions.wallpaper "{ description = \"Wallpaper\" }"}${cmdBind "\"XF86AudioRaiseVolume\"" actions.volumeUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioLowerVolume\"" actions.volumeDown "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioMute\"" actions.volumeMute "{ locked = true }"}${cmdBind "\"XF86MonBrightnessUp\"" actions.brightnessUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86MonBrightnessDown\"" actions.brightnessDown "{ locked = true, repeating = true }"}
 
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + F", toggleColumnWidth, { description = "Toggle column between 50% and 100%" })
@@ -164,7 +154,7 @@ in
   hl.bind(mainMod .. " + H", layout("focus l"))
   hl.bind(mainMod .. " + J", layout("focus d"))
   hl.bind(mainMod .. " + K", layout("focus u"))
-  hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(${quote (noctalia "session lock")}))
+  ${cmdBind "mainMod .. \" + L\"" actions.lock "{ }"}
 
   hl.bind(mainMod .. " + SHIFT + left", layout("swapcol l"))
   hl.bind(mainMod .. " + SHIFT + down", hl.dsp.window.move({ direction = "down" }))
@@ -204,7 +194,7 @@ in
   hl.bind(mainMod .. " + CTRL + up", function() focusRelativeLocalWorkspace(-1) end)
   hl.bind(mainMod .. " + CTRL + U", function() focusRelativeLocalWorkspace(1) end)
   hl.bind(mainMod .. " + CTRL + I", function() focusRelativeLocalWorkspace(-1) end)
-  hl.bind("CTRL + SHIFT + R", hl.dsp.exec_cmd(${quote "${workspaceRenameScript}/bin/nagi-hyprland-rename-workspace"}), { description = "Rename workspace" })
+  ${cmdBind "\"CTRL + SHIFT + R\"" actions.workspaceRename "{ description = \"Rename workspace\" }"}
 
   hl.bind(mainMod .. " + SHIFT + Page_Down", function() moveActiveWorkspaceRelative(1) end)
   hl.bind(mainMod .. " + SHIFT + Page_Up", function() moveActiveWorkspaceRelative(-1) end)

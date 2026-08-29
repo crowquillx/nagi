@@ -1,6 +1,6 @@
 # 凪 nagi
 
-Multi-host NixOS flake with integrated Home Manager. Sessions: Hyprland, Niri, or Plasma behind SDDM. Theming via Stylix, secrets via `sops-nix`, rebuilds via `tcli`/`nh`. Targets `nixpkgs-unstable` and Determinate Nix.
+Multi-host NixOS flake with integrated Home Manager. Sessions: Hyprland, Niri, or Plasma behind SDDM. Desktop chrome is `desktop.sessionShell` (`noctalia`, `dms`, `caelestia`, `inir`, `ii`, or `none`). Theming via Stylix, secrets via `sops-nix`, rebuilds via `tcli`/`nh`. Targets `nixpkgs-unstable` and Determinate Nix.
 
 ## Hosts
 

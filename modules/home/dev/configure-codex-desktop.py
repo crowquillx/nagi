@@ -10,20 +10,27 @@ from pathlib import Path
 
 MARKETPLACE_NAME = "openai-bundled"
 NODE_REPL_SERVER = "node_repl"
+FEATURE_FLAGS = {
+    "plugins": "true",
+    "code_mode_host": "true",
+}
 
 
-def upsert_features_plugins(text: str) -> str:
+def upsert_feature_flags(text: str, flags: dict[str, str] | None = None) -> str:
+    flags = FEATURE_FLAGS if flags is None else flags
     features_re = re.compile(r"(?ms)^\[features\]\n(?P<body>.*?)(?=^\[|\Z)")
     match = features_re.search(text)
     if match is None:
         prefix = "\n" if text and not text.endswith("\n") else ""
-        return f"{text}{prefix}[features]\nplugins = true\n"
+        body = "".join(f"{key} = {value}\n" for key, value in flags.items())
+        return f"{text}{prefix}[features]\n{body}"
 
     body = match.group("body")
-    if re.search(r"(?m)^plugins\s*=", body):
-        body = re.sub(r"(?m)^plugins\s*=.*$", "plugins = true", body)
-    else:
-        body = f"{body.rstrip()}\nplugins = true\n"
+    for key, value in flags.items():
+        if re.search(rf"(?m)^{re.escape(key)}\s*=", body):
+            body = re.sub(rf"(?m)^{re.escape(key)}\s*=.*$", f"{key} = {value}", body)
+        else:
+            body = f"{body.rstrip()}\n{key} = {value}\n"
 
     return text[: match.start("body")] + body + text[match.end("body") :]
 
@@ -60,6 +67,10 @@ def rewrite_node_repl_paths(
     command: str,
     node_path: str,
     app_version: str,
+    *,
+    node_module_dirs: str = "",
+    trusted_code_paths: str = "",
+    codex_cli_path: str = "",
 ) -> str:
     """Refresh existing node_repl paths without inventing the server entry."""
     env_re = re.compile(
@@ -72,6 +83,22 @@ def rewrite_node_repl_paths(
         env_body = _replace_assignment(
             env_body, "NODE_REPL_NODE_PATH", _toml_str(node_path)
         )
+        if node_module_dirs:
+            env_body = _replace_assignment(
+                env_body,
+                "NODE_REPL_NODE_MODULE_DIRS",
+                _toml_str(node_module_dirs),
+            )
+        if trusted_code_paths:
+            env_body = _replace_assignment(
+                env_body,
+                "NODE_REPL_TRUSTED_CODE_PATHS",
+                _toml_str(trusted_code_paths),
+            )
+        if codex_cli_path:
+            env_body = _replace_assignment(
+                env_body, "CODEX_CLI_PATH", _toml_str(codex_cli_path)
+            )
         if app_version:
             env_body = _replace_assignment(
                 env_body,
@@ -83,6 +110,25 @@ def rewrite_node_repl_paths(
             + env_body
             + text[env_match.end("body") :]
         )
+
+    policy_re = re.compile(
+        r"(?ms)^(?P<header>\[shell_environment_policy\.set\]\n)"
+        r"(?P<body>.*?)(?=^\[|\Z)"
+    )
+    policy_match = policy_re.search(text)
+    if policy_match is not None and trusted_code_paths:
+        policy_body = policy_match.group("body")
+        if re.search(r"(?m)^NODE_REPL_TRUSTED_CODE_PATHS\s*=", policy_body):
+            policy_body = _replace_assignment(
+                policy_body,
+                "NODE_REPL_TRUSTED_CODE_PATHS",
+                _toml_str(trusted_code_paths),
+            )
+            text = (
+                text[: policy_match.start("body")]
+                + policy_body
+                + text[policy_match.end("body") :]
+            )
 
     section_re = re.compile(
         rf"(?ms)^(?P<header>\[mcp_servers\.{re.escape(NODE_REPL_SERVER)}\]\n)"
@@ -105,14 +151,20 @@ def transform_config(
     node_repl_command: str,
     node_repl_node_path: str,
     app_version: str,
+    node_repl_node_module_dirs: str = "",
+    node_repl_trusted_code_paths: str = "",
+    codex_cli_path: str = "",
 ) -> str:
-    transformed = upsert_features_plugins(text)
+    transformed = upsert_feature_flags(text)
     transformed = upsert_marketplace(transformed, source)
     transformed = rewrite_node_repl_paths(
         transformed,
         command=node_repl_command,
         node_path=node_repl_node_path,
         app_version=app_version,
+        node_module_dirs=node_repl_node_module_dirs,
+        trusted_code_paths=node_repl_trusted_code_paths,
+        codex_cli_path=codex_cli_path,
     )
     # Refuse to replace a user's config if either existing content or a
     # transformation produced invalid TOML.
@@ -150,6 +202,9 @@ def configure_config(
     node_repl_command: str,
     node_repl_node_path: str,
     app_version: str,
+    node_repl_node_module_dirs: str = "",
+    node_repl_trusted_code_paths: str = "",
+    codex_cli_path: str = "",
 ) -> None:
     try:
         text = config_path.read_text(encoding="utf-8")
@@ -162,6 +217,9 @@ def configure_config(
         node_repl_command=node_repl_command,
         node_repl_node_path=node_repl_node_path,
         app_version=app_version,
+        node_repl_node_module_dirs=node_repl_node_module_dirs,
+        node_repl_trusted_code_paths=node_repl_trusted_code_paths,
+        codex_cli_path=codex_cli_path,
     )
     atomic_write(config_path, transformed)
 
@@ -176,6 +234,13 @@ def main() -> None:
         node_repl_command=os.environ["CODEX_NODE_REPL_COMMAND"],
         node_repl_node_path=os.environ["CODEX_NODE_REPL_NODE_PATH"],
         app_version=os.environ.get("CODEX_DESKTOP_APP_VERSION", ""),
+        node_repl_node_module_dirs=os.environ.get(
+            "CODEX_NODE_REPL_NODE_MODULE_DIRS", ""
+        ),
+        node_repl_trusted_code_paths=os.environ.get(
+            "CODEX_NODE_REPL_TRUSTED_CODE_PATHS", ""
+        ),
+        codex_cli_path=os.environ.get("CODEX_CLI_PATH", ""),
     )
 
 
