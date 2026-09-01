@@ -10,6 +10,7 @@ let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
+  orcaEnabled = get [ "features" "codingTools" "orca" "enable" ] codingToolsEnabled;
   paseoEnabled = get [ "features" "codingTools" "paseo" "enable" ] codingToolsEnabled;
   editorsEnabled = get [ "features" "codingTools" "editors" "enable" ] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "t3code" "enable" ] true;
@@ -32,6 +33,7 @@ let
   system = pkgs.stdenv.hostPlatform.system;
 
   llmAgent = name: lib.attrByPath [ "llm-agents" name ] null pkgs;
+  orcaPkg = llmAgent "orca";
 
   geminiCliPkg =
     let
@@ -217,6 +219,10 @@ in
 {
   assertions = [
     {
+      assertion = !(orcaEnabled && orcaPkg == null);
+      message = "features.codingTools.orca.enable is true, but package 'orca' (the orca-ide executable) could not be resolved from llm-agents.nix.";
+    }
+    {
       assertion = !(paseoEnabled && paseoPkg == null);
       message = "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
     }
@@ -320,6 +326,7 @@ in
 
   home.packages =
     lib.optionals codingToolsEnabled [ pkgs.nodejs ]
+    ++ lib.optionals (orcaEnabled && orcaPkg != null) [ orcaPkg ]
     ++ lib.optionals (paseoEnabled && paseoPkg != null) [ paseoPkg ]
     ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [ geminiCliPkg ]
     ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [ claudeCodePkg ]

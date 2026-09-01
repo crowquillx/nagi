@@ -103,6 +103,7 @@
     };
     codingTools = {
       enable = true;
+      orca.enable = true;
       editors = {
         enable = true;
         t3code.enable = true;
@@ -127,6 +128,26 @@
         repositories = [
           {
             path = "/home/tan/nagi";
+            autoCheckpoint = true;
+          }
+          {
+            path = "/home/tan/REPOS/anibridge";
+            autoCheckpoint = true;
+          }
+          {
+            path = "/home/tan/REPOS/Shokofin";
+            autoCheckpoint = true;
+          }
+          {
+            path = "/home/tan/REPOS/shoko-companion";
+            autoCheckpoint = true;
+          }
+          {
+            path = "/home/tan/REPOS/shoko-simkl-sync";
+            autoCheckpoint = true;
+          }
+          {
+            path = "/home/tan/REPOS/silo-anilist-sync";
             autoCheckpoint = true;
           }
           {

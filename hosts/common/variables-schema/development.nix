@@ -14,6 +14,10 @@ in
       type = types.submodule (codingToolsArgs: {
         options = {
           enable = enableOption "Enable coding tools." true;
+          orca = mkOption {
+            type = packageToggle "Orca IDE" codingToolsArgs.config.enable;
+            default = { };
+          };
           paseo = mkOption {
             type = packageToggle "Paseo" codingToolsArgs.config.enable;
             default = { };
