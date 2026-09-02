@@ -7,8 +7,17 @@ let
     };
   };
 
-  hyprland = lib.attrByPath [ "hyprland" "overlays" "hyprland-packages" ] null inputs;
-  hyprlandExtras = lib.attrByPath [ "hyprland" "overlays" "hyprland-extras" ] null inputs;
+  # hyprland.cachix.org only serves packages built against upstream's pinned
+  # nixpkgs. Upstream's overlays callPackage against the consumer tree and
+  # always miss, so re-export the flake packages instead.
+  hyprlandPackages =
+    final: _prev:
+    let
+      packages = inputs.hyprland.packages.${final.stdenv.hostPlatform.system};
+    in
+    {
+      inherit (packages) hyprland xdg-desktop-portal-hyprland;
+    };
 
   hushmic = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
@@ -40,8 +49,7 @@ in
   inherit
     determinateNix
     hushmic
-    hyprland
-    hyprlandExtras
+    hyprlandPackages
     kwinEffectsBetterBlurDx
     mo2Lint
     nixGaming

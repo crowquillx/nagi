@@ -103,7 +103,8 @@ and operational behavior that the option definitions alone do not show.
   - A clean peer restores a compatible checkpoint as uncommitted work. Dirty peers and mismatched bases are never overwritten.
   - Checkpointing refuses obvious private-key material and plaintext YAML under `secrets/`.
 - `features.mcp.nixos.enable = true | false`
-- `features.tailscale = { enable, acceptDns, exitNode }`
+- `features.tailscale = { enable, acceptDns, disableUpstreamLogging, exitNode }`
+  - `disableUpstreamLogging` (bool, default `false`): set Tailscale `TS_NO_LOGS_NO_SUPPORT` so this device does not send client logs upstream. Tailscale support for the node is limited without those logs.
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys, autoTmux }`
   - `enable` (bool, default `false`): enable the OpenSSH daemon. Keep disabled until `authorizedKeys` are set.
   - `openFirewall` (bool, default `true`): open the SSH port in the firewall.

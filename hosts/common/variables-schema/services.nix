@@ -16,6 +16,7 @@ in
       type = strictSubmodule {
         enable = enableOption "Enable Tailscale." true;
         acceptDns = enableOption "Accept Tailscale DNS." true;
+        disableUpstreamLogging = enableOption "Disable sending Tailscale client logs upstream." false;
         exitNode = nullableString "Tailscale exit-node address.";
       };
       default = { };

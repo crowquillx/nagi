@@ -78,7 +78,10 @@
     # compositor package comes from host nixpkgs to keep Mesa/ABI alignment.
     niri.url = "github:sodiboo/niri-flake";
 
-    # Do not follow nixpkgs: hyprland.cachix.org caches against upstream's pin.
+    # Do not follow nixpkgs: hyprland.cachix.org only serves packages built
+    # against upstream's pin. Consume inputs.hyprland.packages (see
+    # lib/overlays/packages.nix); upstream's overlays rebuild against the
+    # consumer tree and always miss the cache.
     hyprland = {
       url = "github:hyprwm/Hyprland";
     };

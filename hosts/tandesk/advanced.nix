@@ -11,6 +11,8 @@
       };
     };
 
+    tailscale.disableUpstreamLogging = true;
+
     codingTools.aiCli.gemini.enable = true;
     videoEditing.kdenlive.enable = true;
     razer = {

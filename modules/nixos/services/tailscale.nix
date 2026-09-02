@@ -5,7 +5,7 @@
 }:
 let
   v = config.nagi.variables;
-  inherit (v.features.tailscale) acceptDns exitNode;
+  inherit (v.features.tailscale) acceptDns disableUpstreamLogging exitNode;
   enabled = v.features.tailscale.enable;
 in
 {
@@ -23,6 +23,7 @@ in
       services.tailscale = {
         enable = true;
         openFirewall = true;
+        inherit disableUpstreamLogging;
         extraUpFlags = [
           "--accept-dns=${lib.boolToString acceptDns}"
           "--accept-routes"

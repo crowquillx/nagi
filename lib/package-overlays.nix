@@ -9,13 +9,12 @@ let
     [
       packages.determinateNix
       packages.hushmic
+      packages.hyprlandPackages
       packages.kwinEffectsBetterBlurDx
       packages.vortex
       packages.nixGaming
       packages.mo2Lint
     ]
-    ++ lib.optionals (packages.hyprland != null) [ packages.hyprland ]
-    ++ lib.optionals (packages.hyprlandExtras != null) [ packages.hyprlandExtras ]
     ++ lib.optional vars.features.gaming.steam.millennium.enable inputs.millennium.overlays.default
     ++ lib.optionals vars.features.gaming.cheatengine.enable [
       inputs.cheatengine-flake.overlays.default
