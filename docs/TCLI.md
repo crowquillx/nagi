@@ -175,7 +175,6 @@ Shell aliases are set by Home Manager:
 - `ncg` -> `tcli gc`
 - `winblows` -> reboot into the Windows boot entry
 - `enterbios` -> reboot into firmware setup
-- `uc` -> `jellyfin-uc`
 
 Fish and Zsh also define `codebox`, `tanime`, and `tanmedia` as SSH shortcuts.
 
