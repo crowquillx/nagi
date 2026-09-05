@@ -13,6 +13,8 @@ let
   codexEnabled = get [ "features" "codingTools" "aiCli" "codex" "enable" ] aiCliEnabled;
   opencodeEnabled = get [ "features" "codingTools" "aiCli" "opencode" "enable" ] aiCliEnabled;
   nixosMcpEnabled = get [ "features" "mcp" "nixos" "enable" ] aiCliEnabled;
+  computerUseEnabled = get [ "features" "mcp" "computerUseLinux" "enable" ] false;
+  mcpRegistryEnabled = nixosMcpEnabled || computerUseEnabled;
 
   llmAgent = name: lib.attrByPath [ "llm-agents" name ] null pkgs;
 
@@ -55,11 +57,13 @@ in
       programs.opencode = {
         enable = true;
         package = opencodePkg;
-        enableMcpIntegration = nixosMcpEnabled;
+        enableMcpIntegration = mcpRegistryEnabled;
       };
     })
-    (lib.mkIf nixosMcpEnabled {
+    (lib.mkIf mcpRegistryEnabled {
       programs.mcp.enable = true;
+    })
+    (lib.mkIf nixosMcpEnabled {
       mcp-servers.programs.nixos.enable = true;
     })
   ];

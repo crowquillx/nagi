@@ -187,6 +187,10 @@ in
           };
           default = { };
         };
+        options.computerUseLinux = mkOption {
+          type = packageToggle "computer-use-linux desktop MCP" false;
+          default = { };
+        };
       };
       default = { };
     };

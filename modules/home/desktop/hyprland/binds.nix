@@ -134,7 +134,7 @@ in
     { description = "APT: toggle overlay", dont_inhibit = true }
   )
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "File manager" })
-  hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen"), { description = "Zen Browser" })
+  hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen-beta"), { description = "Zen Browser (Beta)" })
   hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("mullvad-browser"), { description = "Mullvad Browser" })
   ${cmdBind "mainMod .. \" + O\"" handyToggleCommand "{ description = \"Toggle Handy transcription\", dont_inhibit = true }"}
   hl.bind("mouse:276", ${chatMuteAction}, { description = ${quote chatMuteDescription} })

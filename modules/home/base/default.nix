@@ -160,6 +160,13 @@ let
       configuredFlakeDirectory;
 
   zenPkg = lib.attrByPath [ "zen-browser" "packages" system "default" ] null inputs;
+  zenDesktopFile =
+    if zenPkg == null then
+      "zen.desktop"
+    else if (zenPkg.pname or "") == "zen-beta" then
+      "zen-beta.desktop"
+    else
+      zenPkg.meta.desktopFileName or "zen.desktop";
   thunarPkg =
     let
       topLevelPkg = lib.attrByPath [ "thunar" ] null pkgs;
@@ -229,7 +236,7 @@ let
   desktopFileFor =
     pkg: fallback: if pkg == null then fallback else (pkg.meta.desktopFileName or fallback);
   browserDesktopMap = {
-    zen = desktopFileFor zenPkg "zen.desktop";
+    zen = zenDesktopFile;
     helium = desktopFileFor heliumPkg "helium.desktop";
     mullvadBrowser = desktopFileFor pkgs.mullvad-browser "mullvad-browser.desktop";
   };

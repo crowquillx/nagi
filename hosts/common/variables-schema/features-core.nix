@@ -211,6 +211,10 @@ in
       };
       default = { };
     };
+    blender = mkOption {
+      type = packageToggle "Blender" false;
+      default = { };
+    };
     theme = mkOption {
       type = strictSubmodule {
         gtk = mkOption {

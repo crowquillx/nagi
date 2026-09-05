@@ -6,7 +6,7 @@ in
   hl.window_rule({
     name = "picture-in-picture",
     match = {
-      class = "(?i)^(zen|mullvad-browser|Mullvad Browser)$",
+      class = "(?i)^(zen|zen-beta|mullvad-browser|Mullvad Browser)$",
       title = "^Picture-in-Picture$",
     },
     float = true,

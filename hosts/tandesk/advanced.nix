@@ -14,7 +14,9 @@
     tailscale.disableUpstreamLogging = true;
 
     codingTools.aiCli.gemini.enable = true;
+    mcp.computerUseLinux.enable = true;
     videoEditing.kdenlive.enable = true;
+    blender.enable = true;
     razer = {
       openrazer = {
         enable = true;
@@ -49,6 +51,7 @@
       cheatengine.enable = true;
       pcsx2.enable = true;
       gamemode.enable = true;
+      godot.enable = true;
     };
     virtualisation = {
       vmHost = {

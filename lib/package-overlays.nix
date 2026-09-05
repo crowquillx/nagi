@@ -14,6 +14,7 @@ let
       packages.vortex
       packages.nixGaming
       packages.mo2Lint
+      packages.computerUseLinux
     ]
     ++ lib.optional vars.features.gaming.steam.millennium.enable inputs.millennium.overlays.default
     ++ lib.optionals vars.features.gaming.cheatengine.enable [

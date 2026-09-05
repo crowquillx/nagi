@@ -14,6 +14,14 @@ let
   chatgptPkg = lib.attrByPath [ "llm-agents" "chatgpt" ] null pkgs;
   chatgptBinName = if chatgptPkg == null then "chatgpt" else chatgptPkg.meta.mainProgram or "chatgpt";
   configureChatgptConfig = ./configure-codex-desktop.py;
+  computerUseEnabled = get [ "features" "mcp" "computerUseLinux" "enable" ] false;
+  computerUseCommand = lib.attrByPath [
+    "programs"
+    "mcp"
+    "servers"
+    "computer-use-linux"
+    "command"
+  ] null config;
 in
 {
   config = lib.mkMerge [
@@ -26,6 +34,10 @@ in
         {
           assertion = !(codexEnabled && chatgptPkg == null);
           message = "features.codingTools.aiCli.codex.enable is true, but the chatgpt desktop package could not be resolved from llm-agents.nix.";
+        }
+        {
+          assertion = !(codexEnabled && computerUseEnabled) || computerUseCommand != null;
+          message = "features.mcp.computerUseLinux.enable is true with Codex, but programs.mcp.servers.computer-use-linux.command is missing.";
         }
       ];
     }
@@ -67,6 +79,12 @@ in
         CODEX_NODE_REPL_TRUSTED_CODE_PATHS="${config.home.homeDirectory}/.codex:$resources/cua_node/lib/node_modules" \
         CODEX_CLI_PATH="$resources/codex" \
         CODEX_DESKTOP_APP_VERSION="$version" \
+        ${
+          lib.optionalString (computerUseEnabled && computerUseCommand != null) ''
+            CODEX_COMPUTER_USE_LINUX_COMMAND=${lib.escapeShellArg computerUseCommand} \
+            CODEX_COMPUTER_USE_LINUX_CWD=${lib.escapeShellArg config.home.homeDirectory} \
+          ''
+        } \
           ${pkgs.python3}/bin/python ${configureChatgptConfig}
       '';
     })

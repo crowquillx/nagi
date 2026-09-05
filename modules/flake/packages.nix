@@ -102,6 +102,7 @@
         nagi-helium = heliumPkg;
         nagi-noctalia = noctaliaPkg;
         mo2-lint = pkgs.callPackage ../../pkgs/mo2-lint { };
+        computer-use-linux = pkgs.callPackage ../../pkgs/computer-use-linux { };
         nagi-noctalia-hyprland-local-workspaces =
           pkgs.callPackage ../../pkgs/noctalia-plugins/hyprland-local-workspaces
             { };

@@ -116,8 +116,8 @@ in
       (node "Super+E" { "hotkey-overlay-title" = "File Manager"; } [
         (leaf "spawn" [ "thunar" ])
       ])
-      (node "Mod+Z" { "hotkey-overlay-title" = "Zen Browser"; } [
-        (leaf "spawn" [ "zen" ])
+      (node "Mod+Z" { "hotkey-overlay-title" = "Zen Browser (Beta)"; } [
+        (leaf "spawn" [ "zen-beta" ])
       ])
       (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
         (leaf "spawn" [ "mullvad-browser" ])

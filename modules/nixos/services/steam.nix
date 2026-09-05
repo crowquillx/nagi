@@ -18,6 +18,7 @@ let
   gamemodeEnable = gaming.gamemode.enable;
   cheatengineEnable = gaming.cheatengine.enable;
   pcsx2Enable = gaming.pcsx2.enable;
+  godotEnable = gaming.godot.enable;
   primaryUser = v.users.primary;
   cheatengineGroup = "cheatengine";
   lutrisPkg = pkgs.lutris or null;
@@ -46,6 +47,7 @@ let
   bottlesPkg = pkgs.bottles or null;
   cheatenginePkg = pkgs.cheatengine or null;
   pcsx2Pkg = pkgs.pcsx2 or null;
+  godotPkg = pkgs.godot or null;
   mo2LintPkg = pkgs.mo2-lint or null;
   rustyPathOfBuildingPkg = pkgs.rusty-path-of-building or null;
   awakenedPoeTradeBase = pkgs.awakened-poe-trade or null;
@@ -144,6 +146,10 @@ in
           message = "features.gaming.pcsx2.enable is true, but nixpkgs package 'pcsx2' could not be resolved.";
         }
         {
+          assertion = !(enabled && godotEnable) || godotPkg != null;
+          message = "features.gaming.godot.enable is true, but nixpkgs package 'godot' could not be resolved.";
+        }
+        {
           assertion = !cheatengineEnable || cheatenginePkg != null;
           message = "features.gaming.cheatengine.enable is true, but the 'cheatengine' package could not be resolved. Ensure the cheatengine-flake overlay is applied.";
         }
@@ -183,7 +189,8 @@ in
         awakenedPoeTradePkg
       ]
       ++ lib.optionals cheatengineEnable [ cheatenginePkg ]
-      ++ lib.optionals pcsx2Enable [ pcsx2Pkg ];
+      ++ lib.optionals pcsx2Enable [ pcsx2Pkg ]
+      ++ lib.optionals (enabled && godotEnable) [ godotPkg ];
     })
     (lib.mkIf (enabled && gamemodeEnable) {
       # GameMode: gamemoderun on PATH plus the polkit/setcap plumbing so the

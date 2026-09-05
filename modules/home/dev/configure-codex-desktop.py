@@ -10,6 +10,17 @@ from pathlib import Path
 
 MARKETPLACE_NAME = "openai-bundled"
 NODE_REPL_SERVER = "node_repl"
+COMPUTER_USE_LINUX_SERVER = "computer-use-linux"
+COMPUTER_USE_LINUX_ENV_VARS = (
+    "DBUS_SESSION_BUS_ADDRESS",
+    "DISPLAY",
+    "HYPRLAND_INSTANCE_SIGNATURE",
+    "WAYLAND_DISPLAY",
+    "XDG_CURRENT_DESKTOP",
+    "XDG_RUNTIME_DIR",
+    "XDG_SESSION_DESKTOP",
+    "YDOTOOL_SOCKET",
+)
 FEATURE_FLAGS = {
     "plugins": "true",
     "code_mode_host": "true",
@@ -144,6 +155,49 @@ def rewrite_node_repl_paths(
     return text[: match.start("body")] + body + text[match.end("body") :]
 
 
+def _toml_array(values: list[str]) -> str:
+    return "[" + ", ".join(_toml_str(value) for value in values) + "]"
+
+
+def _remove_toml_tables(text: str, header_prefix: str) -> str:
+    pattern = re.compile(
+        rf"(?ms)^\[{re.escape(header_prefix)}(?:\.[^\]]+)?\]\n.*?(?=^\[|\Z)"
+    )
+    previous = None
+    while previous != text:
+        previous = text
+        text = pattern.sub("", text)
+    return text.rstrip()
+
+
+def upsert_computer_use_linux(
+    text: str,
+    command: str,
+    *,
+    cwd: str = "",
+) -> str:
+    """Own [mcp_servers.computer-use-linux]. Empty command removes the tables."""
+    text = _remove_toml_tables(text, f"mcp_servers.{COMPUTER_USE_LINUX_SERVER}")
+    command = command.strip()
+    if not command:
+        return text
+
+    lines = [
+        f"[mcp_servers.{COMPUTER_USE_LINUX_SERVER}]",
+        f"command = {_toml_str(command)}",
+        f"args = {_toml_array(['mcp'])}",
+        f"env_vars = {_toml_array(list(COMPUTER_USE_LINUX_ENV_VARS))}",
+        "startup_timeout_sec = 30",
+        "tool_timeout_sec = 120",
+        'default_tools_approval_mode = "writes"',
+        "enabled = true",
+    ]
+    if cwd:
+        lines.insert(4, f"cwd = {_toml_str(cwd)}")
+    section = "\n".join(lines) + "\n"
+    return f"{text}\n\n{section}" if text else section
+
+
 def transform_config(
     text: str,
     *,
@@ -154,6 +208,8 @@ def transform_config(
     node_repl_node_module_dirs: str = "",
     node_repl_trusted_code_paths: str = "",
     codex_cli_path: str = "",
+    computer_use_linux_command: str = "",
+    computer_use_linux_cwd: str = "",
 ) -> str:
     transformed = upsert_feature_flags(text)
     transformed = upsert_marketplace(transformed, source)
@@ -165,6 +221,11 @@ def transform_config(
         node_module_dirs=node_repl_node_module_dirs,
         trusted_code_paths=node_repl_trusted_code_paths,
         codex_cli_path=codex_cli_path,
+    )
+    transformed = upsert_computer_use_linux(
+        transformed,
+        computer_use_linux_command,
+        cwd=computer_use_linux_cwd,
     )
     # Refuse to replace a user's config if either existing content or a
     # transformation produced invalid TOML.
@@ -205,6 +266,8 @@ def configure_config(
     node_repl_node_module_dirs: str = "",
     node_repl_trusted_code_paths: str = "",
     codex_cli_path: str = "",
+    computer_use_linux_command: str = "",
+    computer_use_linux_cwd: str = "",
 ) -> None:
     try:
         text = config_path.read_text(encoding="utf-8")
@@ -220,6 +283,8 @@ def configure_config(
         node_repl_node_module_dirs=node_repl_node_module_dirs,
         node_repl_trusted_code_paths=node_repl_trusted_code_paths,
         codex_cli_path=codex_cli_path,
+        computer_use_linux_command=computer_use_linux_command,
+        computer_use_linux_cwd=computer_use_linux_cwd,
     )
     atomic_write(config_path, transformed)
 
@@ -241,6 +306,10 @@ def main() -> None:
             "CODEX_NODE_REPL_TRUSTED_CODE_PATHS", ""
         ),
         codex_cli_path=os.environ.get("CODEX_CLI_PATH", ""),
+        computer_use_linux_command=os.environ.get(
+            "CODEX_COMPUTER_USE_LINUX_COMMAND", ""
+        ),
+        computer_use_linux_cwd=os.environ.get("CODEX_COMPUTER_USE_LINUX_CWD", ""),
     )
 
 

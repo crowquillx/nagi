@@ -109,6 +109,86 @@ class TransformConfigTests(unittest.TestCase):
         transformed = self.transform('[unrelated]\nvalue = "kept"\n')
         self.assertNotIn("[mcp_servers.node_repl]", transformed)
 
+    def test_adds_computer_use_linux_mcp_server(self) -> None:
+        command = "/nix/store/cul/bin/computer-use-linux"
+        transformed = configurator.transform_config(
+            '[unrelated]\nvalue = "kept"\n',
+            **ARGS,
+            computer_use_linux_command=command,
+            computer_use_linux_cwd="/home/user",
+        )
+        parsed = configurator.tomllib.loads(transformed)
+        server = parsed["mcp_servers"]["computer-use-linux"]
+        self.assertEqual(server["command"], command)
+        self.assertEqual(server["args"], ["mcp"])
+        self.assertEqual(server["cwd"], "/home/user")
+        self.assertEqual(server["startup_timeout_sec"], 30)
+        self.assertEqual(server["tool_timeout_sec"], 120)
+        self.assertEqual(server["default_tools_approval_mode"], "writes")
+        self.assertTrue(server["enabled"])
+        self.assertIn("WAYLAND_DISPLAY", server["env_vars"])
+        self.assertIn("HYPRLAND_INSTANCE_SIGNATURE", server["env_vars"])
+        self.assertIn('value = "kept"', transformed)
+
+    def test_rewrites_existing_computer_use_linux_and_keeps_node_repl(self) -> None:
+        original = (
+            "[mcp_servers.node_repl]\n"
+            'command = "/nix/store/old/node_repl"\n\n'
+            "[mcp_servers.computer-use-linux]\n"
+            'command = "/old/computer-use-linux"\n'
+            'args = ["mcp"]\n\n'
+            "[mcp_servers.computer-use-linux.env]\n"
+            'STALE = "1"\n'
+        )
+        command = "/nix/store/cul/bin/computer-use-linux"
+        transformed = configurator.transform_config(
+            original,
+            **ARGS,
+            computer_use_linux_command=command,
+        )
+        parsed = configurator.tomllib.loads(transformed)
+        self.assertEqual(
+            parsed["mcp_servers"]["computer-use-linux"]["command"], command
+        )
+        self.assertNotIn("env", parsed["mcp_servers"]["computer-use-linux"])
+        self.assertEqual(
+            parsed["mcp_servers"]["node_repl"]["command"],
+            ARGS["node_repl_command"],
+        )
+        self.assertEqual(transformed.count("[mcp_servers.computer-use-linux]"), 1)
+
+    def test_removes_computer_use_linux_when_command_empty(self) -> None:
+        original = (
+            "[mcp_servers.computer-use-linux]\n"
+            'command = "/old/computer-use-linux"\n'
+            'args = ["mcp"]\n\n'
+            "[mcp_servers.computer-use-linux.env]\n"
+            'STALE = "1"\n\n'
+            "[unrelated]\n"
+            'value = "kept"\n'
+        )
+        transformed = self.transform(original)
+        parsed = configurator.tomllib.loads(transformed)
+        self.assertNotIn("computer-use-linux", parsed.get("mcp_servers", {}))
+        self.assertIn('value = "kept"', transformed)
+
+    def test_does_not_clobber_similar_mcp_server_names(self) -> None:
+        original = (
+            "[mcp_servers.computer-use-linux-extra]\n"
+            'command = "/keep-me"\n'
+        )
+        transformed = configurator.transform_config(
+            original,
+            **ARGS,
+            computer_use_linux_command="/nix/store/cul/bin/computer-use-linux",
+        )
+        parsed = configurator.tomllib.loads(transformed)
+        self.assertEqual(
+            parsed["mcp_servers"]["computer-use-linux-extra"]["command"],
+            "/keep-me",
+        )
+        self.assertIn("computer-use-linux", parsed["mcp_servers"])
+
 
 class SafeWriteTests(unittest.TestCase):
     def test_invalid_config_is_not_replaced(self) -> None:

@@ -47,6 +47,7 @@ let
     ../nixos/services/t3code.nix
     ../nixos/services/firewall.nix
     ../nixos/services/portals.nix
+    ../nixos/services/computer-use-linux.nix
     ../nixos/services/filemanager.nix
     ../nixos/services/printing.nix
     ../nixos/services/flatpak.nix
@@ -85,12 +86,14 @@ let
   homeDev = [
     ../home/dev/packages.nix
     ../home/dev/mcp.nix
+    ../home/dev/computer-use-linux.nix
     ../home/dev/codex-desktop.nix
     ../home/dev/repo-sync.nix
   ];
 
   homeMedia = [
     ../home/media/video-editing.nix
+    ../home/media/blender.nix
   ];
 
   homeTerminals = [

@@ -66,7 +66,7 @@ in
 
   (plain "window-rule" [
     (leaf "match" {
-      app-id = "zen$";
+      app-id = "^(zen|zen-beta)$";
       title = "^Picture-in-Picture$";
     })
     (leaf "open-floating" true)

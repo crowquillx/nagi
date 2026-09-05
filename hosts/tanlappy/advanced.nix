@@ -25,6 +25,7 @@
         dedicatedServer.openFirewall = false;
         localNetworkGameTransfers.openFirewall = false;
       };
+      godot.enable = false;
     };
     virtualisation = {
       vmHost = {

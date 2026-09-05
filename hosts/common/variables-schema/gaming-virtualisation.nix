@@ -55,6 +55,10 @@ in
           type = packageToggle "GameMode" false;
           default = { };
         };
+        godot = mkOption {
+          type = packageToggle "Godot" false;
+          default = { };
+        };
       };
       default = { };
     };

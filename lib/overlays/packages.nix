@@ -44,9 +44,14 @@ let
   mo2Lint = final: _prev: {
     mo2-lint = final.callPackage ../../pkgs/mo2-lint { };
   };
+
+  computerUseLinux = final: _prev: {
+    computer-use-linux = final.callPackage ../../pkgs/computer-use-linux { };
+  };
 in
 {
   inherit
+    computerUseLinux
     determinateNix
     hushmic
     hyprlandPackages

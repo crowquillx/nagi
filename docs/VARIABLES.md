@@ -71,6 +71,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.terminals.<name>.enable = true | false` for `alacritty`, `foot`, `ghostty`, and `kitty`
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
+- `features.blender.enable = true | false`
 - `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze` on Plasma-only hosts so kde-gtk-config can export Plasma colors. `Breeze-Dark` is a static palette and is not used. Icon theme is unchanged.)
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
@@ -103,6 +104,13 @@ and operational behavior that the option definitions alone do not show.
   - A clean peer restores a compatible checkpoint as uncommitted work. Dirty peers and mismatched bases are never overwritten.
   - Checkpointing refuses obvious private-key material and plaintext YAML under `secrets/`.
 - `features.mcp.nixos.enable = true | false`
+- `features.mcp.computerUseLinux.enable = true | false` (off by default. Enabled on tandesk.)
+  - Installs [computer-use-linux](https://github.com/agent-sh/computer-use-linux) and registers it as a stdio MCP server (`computer-use-linux mcp`) in `~/.config/mcp/mcp.json`.
+  - When Codex is enabled, the same server is written into `~/.codex/config.toml` as `[mcp_servers.computer-use-linux]`. That is what Codex CLI and Codex Desktop actually load. The bundled `computer-use@openai-bundled` plugin is OpenAI's macOS Sky runtime and is left alone.
+  - Enables AT-SPI, loads `uinput`, and runs a per-user `ydotoold` with a `0600` socket under `$XDG_RUNTIME_DIR`.
+  - Agents that load this server can screenshot, click, and type on the live desktop. Do not set `COMPUTER_USE_LINUX_ENABLE_SHELL`.
+  - Hyprland window targeting uses `hyprctl`. Plasma uses KWin DBus. Niri has no window backend yet.
+  - After switch: log out once so the uinput udev rule applies, restart already-running GTK/Qt/Electron apps so they join the accessibility bus, and accept the screenshot portal prompt on first capture.
 - `features.tailscale = { enable, acceptDns, disableUpstreamLogging, exitNode }`
   - `disableUpstreamLogging` (bool, default `false`): set Tailscale `TS_NO_LOGS_NO_SUPPORT` so this device does not send client logs upstream. Tailscale support for the node is limited without those logs.
 - `features.ssh = { enable, openFirewall, port, passwordAuthentication, permitRootLogin, authorizedKeys, autoTmux }`
@@ -117,7 +125,7 @@ and operational behavior that the option definitions alone do not show.
 - `features.fileManager.thunar.enable = true | false`
 - `features.services = { fstrim.enable, resolved.enable, powerProfilesDaemon.enable }`
 - `features.flatpak = { enable, packages = [ "<app-id>" ... ] }`
-- `features.gaming = { enable, steam.gamescopeSession.enable, steam.remotePlay.openFirewall, steam.dedicatedServer.openFirewall, steam.localNetworkGameTransfers.openFirewall, cheatengine.enable, pcsx2.enable, gamemode.enable }`
+- `features.gaming = { enable, steam.gamescopeSession.enable, steam.remotePlay.openFirewall, steam.dedicatedServer.openFirewall, steam.localNetworkGameTransfers.openFirewall, cheatengine.enable, pcsx2.enable, gamemode.enable, godot.enable }`
 - `features.virtualisation.vmHost = { enable, spiceUSBRedirection.enable }`
 - `features.virtualisation.containers = { podman.enable, docker.enable }`
 - `features.laptop.enable = true | false`
@@ -617,6 +625,14 @@ from the unfree `davinci-resolve` package for `edition = "free"` or
 `davinci-resolve-studio` for `edition = "studio"`; this repo already enables
 unfree packages globally.
 
+### Blender
+
+```nix
+features.blender.enable = true;
+```
+
+This installs Blender from nixpkgs. It is independent of `features.videoEditing`.
+
 ### Flatpak
 
 ```nix
@@ -669,12 +685,15 @@ features.gaming = {
     localNetworkGameTransfers.openFirewall = true;
   };
   gamemode.enable = true;
+  godot.enable = true;
 };
 ```
 
 `features.gaming.gamemode.enable = true` installs GameMode (`gamemoderun`) and adds the primary user to the `gamemode` group. In Steam, set game launch options to `gamemoderun %command%`.
 
 `features.gaming.pcsx2.enable = true` installs the PCSX2 emulator from nixpkgs (cached upstream; no Flatpak needed).
+
+`features.gaming.godot.enable = true` installs the Godot game engine from nixpkgs. It is active only when `features.gaming.enable = true`.
 
 ### Virtualization (VM host + containers)
 

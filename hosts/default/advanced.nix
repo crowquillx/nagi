@@ -26,6 +26,7 @@
         edition = "free";
       };
     };
+    blender.enable = false;
     theme = {
       gtk = {
         enable = true;
@@ -59,6 +60,7 @@
         dedicatedServer.openFirewall = false;
         localNetworkGameTransfers.openFirewall = false;
       };
+      godot.enable = false;
     };
     virtualisation = {
       vmHost = {
