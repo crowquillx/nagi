@@ -11,6 +11,8 @@ let
     inherit lib pkgs vars;
     compositor = "hyprland";
   };
+  shell = import ../session-shell/lib.nix { inherit lib vars; };
+  noctaliaPanelBinds = shell.noctaliaEnable;
   chatClient = get [ "features" "chat" "client" ] "none";
   packageNames = get [ "users" "extraPackages" ] [ ];
   handyEnabled = builtins.elem "handy" packageNames;
@@ -33,6 +35,48 @@ let
       "hl.dsp.exec_cmd(${quote "notify-send 'Chat mute' 'No chat client is configured.'"})";
   chatMuteDescription =
     if effectiveChatClient == "discord" then "Discord: toggle mute" else "Chat: toggle mute";
+  focusNoctaliaPanel = pkgs.writeShellApplication {
+    name = "nagi-hyprland-focus-noctalia-panel";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.hyprland
+      pkgs.jq
+    ];
+    text = ''
+      set -euo pipefail
+
+      panels() {
+        hyprctl -j layers | jq '[.. | objects | select(.namespace == "noctalia-panel" or .namespace == "noctalia-window-switcher")]'
+      }
+
+      count() {
+        panels | jq 'length'
+      }
+
+      before="$(count)"
+      "$@"
+      for _ in $(seq 1 40); do
+        after="$(count)"
+        if [ "$before" = 0 ] && [ "$after" != 0 ]; then
+          # Noctalia drops Exclusive keyboard after 100ms; wait out that refocus.
+          sleep 0.12
+          read -r x y < <(panels | jq -r '.[0] | "\((.x + .w / 2) | floor) \((.y + .h / 2) | floor)"')
+          hyprctl dispatch "hl.dsp.cursor.move({ x = ''${x}, y = ''${y} })" >/dev/null
+          exit 0
+        fi
+        if [ "$before" != 0 ] && [ "$after" = 0 ]; then
+          exit 0
+        fi
+        sleep 0.025
+      done
+    '';
+  };
+  noctaliaPanelCmd =
+    command:
+    if command == null then
+      null
+    else
+      "${focusNoctaliaPanel}/bin/nagi-hyprland-focus-noctalia-panel ${command}";
   windowHeightScript = pkgs.writeShellApplication {
     name = "nagi-hyprland-window-height";
     runtimeInputs = [
@@ -115,17 +159,35 @@ in
     })
   end
 
-  ${cmdBind "mainMod .. \" + D\"" actions.launcher "{ description = \"Launcher\" }"}${lib.optionalString (actions.windowSwitcher.mode == "command") ''
+  ${
+    if noctaliaPanelBinds then
+      cmdBind "mainMod .. \" + D\"" (noctaliaPanelCmd actions.launcher) "{ description = \"Launcher\" }"
+    else
+      cmdBind "mainMod .. \" + D\"" actions.launcher "{ description = \"Launcher\" }"
+  }${
+    if noctaliaPanelBinds && actions.windowSwitcher.mode == "command" then
+      ''
+  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
+  hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
+''
+    else
+      lib.optionalString (actions.windowSwitcher.mode == "command") ''
   hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
   hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
-  ''}
+''
+  }
   hl.bind(mainMod .. " + SHIFT + slash", hl.dsp.exec_cmd("ghostty -e sh -lc 'hyprctl binds | less'"), { description = "Show keybinds" })
 
   hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("kitty"), { description = "Open Kitty" })
   hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd("ghostty"), { description = "Open Ghostty" })
   hl.bind(mainMod .. " + S", toggleScratchpad, { description = "Toggle scratchpad", dont_inhibit = true })
   hl.bind(mainMod .. " + SHIFT + S", moveActiveWindowToScratchpad, { description = "Move window to scratchpad", dont_inhibit = true })
-  ${cmdBind "mainMod .. \" + V\"" actions.clipboard "{ description = \"Clipboard manager\" }"}${cmdBind "mainMod .. \" + M\"" actions.taskManager "{ description = \"Task manager\" }"}
+  ${
+    if noctaliaPanelBinds then
+      cmdBind "mainMod .. \" + V\"" (noctaliaPanelCmd actions.clipboard) "{ description = \"Clipboard manager\" }"
+    else
+      cmdBind "mainMod .. \" + V\"" actions.clipboard "{ description = \"Clipboard manager\" }"
+  }${cmdBind "mainMod .. \" + M\"" actions.taskManager "{ description = \"Task manager\" }"}
   hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("awakened-poe-trade"), { description = "Awakened PoE Trade", dont_inhibit = true })
   -- Price-check keys stay unbound so APT's globalShortcut handler runs.
   hl.bind(
