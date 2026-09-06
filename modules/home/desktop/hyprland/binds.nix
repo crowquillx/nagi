@@ -190,10 +190,23 @@ in
   }${cmdBind "mainMod .. \" + M\"" actions.taskManager "{ description = \"Task manager\" }"}
   hl.bind(mainMod .. " + ALT + P", hl.dsp.exec_cmd("awakened-poe-trade"), { description = "Awakened PoE Trade", dont_inhibit = true })
   -- Price-check keys stay unbound so APT's globalShortcut handler runs.
+  -- Overlay toggle is Shift+Space; only steal it while PoE or APT is focused.
+  local aptOverlayClasses = {
+    ["awakened-poe-trade"] = true,
+    ["steam_app_238960"] = true,
+    ["steam_app_2694490"] = true,
+  }
   hl.bind(
     "SHIFT + Space",
-    hl.dsp.pass({ window = "class:awakened-poe-trade" }),
-    { description = "APT: toggle overlay", dont_inhibit = true }
+    function()
+      local win = hl.get_active_window()
+      local class = win and win.class or ""
+      if aptOverlayClasses[class] then
+        return hl.dispatch(hl.dsp.pass({ window = "class:awakened-poe-trade" }))
+      end
+      return { ok = false }
+    end,
+    { description = "APT: toggle overlay", dont_inhibit = true, auto_consuming = true }
   )
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "File manager" })
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen-beta"), { description = "Zen Browser (Beta)" })
