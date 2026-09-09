@@ -37,6 +37,19 @@ let
   shellStartupEnable = effectiveShellStartupCommand != null;
   appStartupEnable = effectiveStartupApps != [ ];
   appStartupSystemdEnable = appStartupEnable && startupBackend == "systemd";
+  startupAppSessionCondition = pkgs.writeShellScript "nagi-startup-app-not-umbriel" ''
+    case ":''${XDG_CURRENT_DESKTOP:-}:" in
+      *:umbriel:*|*:Umbriel:*)
+        exit 1
+        ;;
+    esac
+
+    case ":''${XDG_SESSION_DESKTOP:-}:" in
+      *:umbriel:*|*:Umbriel:*)
+        exit 1
+        ;;
+    esac
+  '';
 
   mkStartupService = index: command: {
     name = "nagi-startup-app-${toString index}";
@@ -47,6 +60,7 @@ let
         After = [ waylandTarget ];
       };
       Service = {
+        ExecCondition = startupAppSessionCondition;
         ExecStart = "${pkgs.bash}/bin/bash -lc ${lib.escapeShellArg command}";
         Restart = "on-failure";
         RestartSec = 2;

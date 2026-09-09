@@ -51,7 +51,7 @@ and operational behavior that the option definitions alone do not show.
 - `storage.mounts = [ { device, mountPoint, fsType ? "auto", options ? [ ] } ... ]`
 - `boot.secureBoot = { enable, includeMicrosoftKeys, autoEnroll, pkiBundle }` (Lanzaboote-based secure boot)
 - `desktop.shellStartupCommand = "<command>"`
-- `desktop.startup.backend = "systemd" | "niri" | "hyprland"` (tandesk uses `systemd` for application startup. Its mutable Umbriel config starts Noctalia only, to avoid duplicate application startup.)
+- `desktop.startup.backend = "systemd" | "niri" | "hyprland"` (tandesk keeps `systemd` as the configured backend, but its generated startup services skip Umbriel sessions. Umbriel's mutable config owns its native startup commands to avoid duplicate launches.)
 - `desktop.startup.apps = [ "<cmd>" ... ]`
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false` (starts mate-polkit only when `sessionShell = "none"`. Full shells provide their own agent. The niri-flake agent stays off.)
@@ -213,6 +213,8 @@ desktop.startup = {
 ```
 
 `backend = "systemd"` manages the apps as Home Manager user services under `wayland.systemd.target`, which means they can be restarted during `rebuild switch`.
+Umbriel sessions skip these services because Umbriel runs the same commands once
+from `[general].autostart` in `~/.config/umbriel/config.toml`.
 
 For Niri hosts, use:
 
