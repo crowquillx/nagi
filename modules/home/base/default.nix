@@ -35,123 +35,13 @@ let
   sessionShellLib = import ../desktop/session-shell/lib.nix { inherit lib vars; };
   noctaliaEnabled = sessionShellLib.noctaliaEnable;
   sessionShellName = sessionShellLib.sessionShell;
-  restartShellBodyFish =
-    if sessionShellName == "noctalia" then
-      ''
-        if systemctl --user list-unit-files noctalia.service --no-legend 2>/dev/null | read -l unit
-          systemctl --user restart noctalia.service
-          return
-        end
-
-        pkill -u $USER -x noctalia 2>/dev/null
-        nohup nagi-noctalia-shell >/dev/null 2>&1 &
-        disown
-      ''
-    else if sessionShellName == "dms" then
-      ''
-        if systemctl --user list-unit-files dms.service --no-legend 2>/dev/null | read -l unit
-          systemctl --user restart dms.service
-          return
-        end
-
-        pkill -u $USER -f 'dms run' 2>/dev/null
-        nohup dms run >/dev/null 2>&1 &
-        disown
-      ''
-    else if sessionShellName == "caelestia" then
-      ''
-        if systemctl --user list-unit-files caelestia.service --no-legend 2>/dev/null | read -l unit
-          systemctl --user restart caelestia.service
-          return
-        end
-
-        pkill -u $USER -f caelestia-shell 2>/dev/null
-        nohup caelestia shell -d >/dev/null 2>&1 &
-        disown
-      ''
-    else if sessionShellName == "inir" then
-      ''
-        if systemctl --user list-unit-files inir.service --no-legend 2>/dev/null | read -l unit
-          systemctl --user restart inir.service
-          return
-        end
-
-        pkill -u $USER -f 'inir run' 2>/dev/null
-        nohup inir run >/dev/null 2>&1 &
-        disown
-      ''
-    else if sessionShellName == "ii" then
-      ''
-        pkill -u $USER -f 'qs -c ii' 2>/dev/null
-        nohup ii >/dev/null 2>&1 &
-        disown
-      ''
-    else
-      null;
-  restartShellBodyZsh =
-    if sessionShellName == "noctalia" then
-      ''
-        restart-shell() {
-          if systemctl --user list-unit-files noctalia.service --no-legend 2>/dev/null | read -r _; then
-            systemctl --user restart noctalia.service
-            return
-          fi
-
-          pkill -u "$USER" -x noctalia 2>/dev/null
-          nohup nagi-noctalia-shell >/dev/null 2>&1 &
-          disown
-        }
-        restart-noctalia() { restart-shell; }
-      ''
-    else if sessionShellName == "dms" then
-      ''
-        restart-shell() {
-          if systemctl --user list-unit-files dms.service --no-legend 2>/dev/null | read -r _; then
-            systemctl --user restart dms.service
-            return
-          fi
-
-          pkill -u "$USER" -f 'dms run' 2>/dev/null
-          nohup dms run >/dev/null 2>&1 &
-          disown
-        }
-      ''
-    else if sessionShellName == "caelestia" then
-      ''
-        restart-shell() {
-          if systemctl --user list-unit-files caelestia.service --no-legend 2>/dev/null | read -r _; then
-            systemctl --user restart caelestia.service
-            return
-          fi
-
-          pkill -u "$USER" -f caelestia-shell 2>/dev/null
-          nohup caelestia shell -d >/dev/null 2>&1 &
-          disown
-        }
-      ''
-    else if sessionShellName == "inir" then
-      ''
-        restart-shell() {
-          if systemctl --user list-unit-files inir.service --no-legend 2>/dev/null | read -r _; then
-            systemctl --user restart inir.service
-            return
-          fi
-
-          pkill -u "$USER" -f 'inir run' 2>/dev/null
-          nohup inir run >/dev/null 2>&1 &
-          disown
-        }
-      ''
-    else if sessionShellName == "ii" then
-      ''
-        restart-shell() {
-          pkill -u "$USER" -f 'qs -c ii' 2>/dev/null
-          nohup ii >/dev/null 2>&1 &
-          disown
-        }
-      ''
-    else
-      "";
+  restartShellPackage = import ../desktop/session-shell/restart.nix {
+    inherit pkgs;
+    inherit (sessionShellLib) restart;
+  };
+  restartShellCommand = lib.optionalString (
+    restartShellPackage != null
+  ) "${restartShellPackage}/bin/nagi-restart-shell";
   configuredFlakeDirectory = get [ "users" "flakeDirectory" ] null;
   flakeDirectory =
     if configuredFlakeDirectory == null then
@@ -367,6 +257,7 @@ in
         wget
         curl
       ])
+      ++ lib.optional (restartShellPackage != null) restartShellPackage
       ++ lib.optionals alacrittyEnabled [ pkgs.alacritty ]
       ++ lib.optionals footEnabled [ pkgs.foot ]
       ++ lib.optionals (thunarEnabled && thunarPkg != null) [ thunarPkg ]
@@ -421,9 +312,9 @@ in
         set -g fish_greeting
       '';
       functions =
-        lib.optionalAttrs (restartShellBodyFish != null) {
+        lib.optionalAttrs (restartShellCommand != "") {
           restart-shell = {
-            body = restartShellBodyFish;
+            body = restartShellCommand;
           };
         }
         // lib.optionalAttrs noctaliaEnabled {
@@ -432,7 +323,10 @@ in
           };
         };
     };
-    zsh.initContent = lib.mkIf (zshEnabled && restartShellBodyZsh != "") restartShellBodyZsh;
+    zsh.initContent = lib.mkIf (zshEnabled && restartShellCommand != "") ''
+      restart-shell() { ${restartShellCommand}; }
+      ${lib.optionalString (sessionShellName == "noctalia") "restart-noctalia() { restart-shell; }"}
+    '';
   };
 
   xdg = {

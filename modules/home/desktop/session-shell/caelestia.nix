@@ -1,5 +1,4 @@
-_:
-{
+_: {
   programs.caelestia = {
     enable = true;
     systemd.enable = false;

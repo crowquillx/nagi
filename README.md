@@ -137,6 +137,13 @@ Pull requests run a fast, unprivileged validation tier with Determinate Nix:
 - focused tcli, repo-sync, orphan-scanner, and Codex Desktop transformation tests
 - `nix flake check --no-build --accept-flake-config`, which evaluates every published NixOS and standalone Home Manager configuration
 
+The lightweight checks run in one `nix build` command. All check definitions live
+in `modules/flake/checks.nix`. For local iteration, build the affected host with
+`tcli rebuild build <host>`, or select a check with
+`nix build --no-link --accept-flake-config .#checks.x86_64-linux.nixos-tandesk`.
+The full evaluation in CI still covers all registered hosts and standalone Home
+Manager configurations.
+
 The workflow runs only for pull requests. Pushes to `main` and manual dispatches do not start CI.
 
 ## Updating local binary packages

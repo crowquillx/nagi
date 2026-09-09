@@ -21,6 +21,15 @@ let
       node key { "hotkey-overlay-title" = title; } [
         (leaf "spawn-sh" command)
       ];
+  flagBind = key: action: node key [ ] [ (flag action) ];
+  leafBind =
+    key: action: value:
+    node key [ ] [ (leaf action value) ];
+  nonRepeatingFlagBind = key: action: node key { repeat = false; } [ (flag action) ];
+  cooldownFlagBind = key: action: node key { "cooldown-ms" = 150; } [ (flag action) ];
+  workspaceBinds =
+    modifier: action:
+    map (workspace: leafBind "${modifier}${toString workspace}" action workspace) (lib.range 1 9);
   chatClient = get [ "features" "chat" "client" ] "none";
   packageNames = get [ "users" "extraPackages" ] [ ];
   handyEnabled = builtins.elem "handy" packageNames;
@@ -29,12 +38,14 @@ let
     if handyToggleCommand == null then
       null
     else
-      node "Mod+O" {
-        "hotkey-overlay-title" = "Toggle Handy transcription";
-        "allow-inhibiting" = false;
-      } [
-        (leaf "spawn-sh" handyToggleCommand)
-      ];
+      node "Mod+O"
+        {
+          "hotkey-overlay-title" = "Toggle Handy transcription";
+          "allow-inhibiting" = false;
+        }
+        [
+          (leaf "spawn-sh" handyToggleCommand)
+        ];
   effectiveChatClient =
     if chatClient != "none" then
       chatClient
@@ -84,668 +95,159 @@ let
       ];
 in
 [
-  (node "binds"
-    [ ]
-    (lib.remove null [
-      (cmdBind "Mod+D" "Launcher" actions.launcher)
-      (node "Mod+Space" { repeat = false; } [
-        (flag "toggle-overview")
-      ])
-      (node "Mod+Tab" { repeat = false; } [
-        (flag "toggle-overview")
-      ])
-      (node "Mod+Shift+Slash"
-        [ ]
-        [
-          (flag "show-hotkey-overlay")
-        ]
-      )
+  (node "binds" [ ] (
+    lib.flatten (
+      lib.remove null [
+        (cmdBind "Mod+D" "Launcher" actions.launcher)
+        (nonRepeatingFlagBind "Mod+Space" "toggle-overview")
+        (nonRepeatingFlagBind "Mod+Tab" "toggle-overview")
+        (node "Mod+Shift+Slash"
+          [ ]
+          [
+            (flag "show-hotkey-overlay")
+          ]
+        )
 
-      (node "Mod+T" { "hotkey-overlay-title" = "Open Kitty"; } [
-        (leaf "spawn" [ "kitty" ])
-      ])
-      (node "Mod+Return" { "hotkey-overlay-title" = "Open Ghostty"; } [
-        (leaf "spawn" [ "ghostty" ])
-      ])
-      (cmdBind "Mod+V" "Clipboard Manager" actions.clipboard)
-      (cmdBind "Mod+M" "Task Manager" actions.taskManager)
-      # Package wrapper already forces Electron onto X11/XWayland; just spawn it.
-      (node "Mod+Alt+P" { "hotkey-overlay-title" = "Awakened PoE Trade"; } [
-        (leaf "spawn" [ "awakened-poe-trade" ])
-      ])
-      (node "Super+E" { "hotkey-overlay-title" = "File Manager"; } [
-        (leaf "spawn" [ "thunar" ])
-      ])
-      (node "Mod+Z" { "hotkey-overlay-title" = "Zen Browser (Beta)"; } [
-        (leaf "spawn" [ "zen-beta" ])
-      ])
-      (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
-        (leaf "spawn" [ "mullvad-browser" ])
-      ])
-      handyToggleBind
-      (node "MouseForward" { "hotkey-overlay-title" = "Chat: Toggle Mute"; } chatMuteAction)
-      (cmdBind "Super+B" "Control Center" actions.controlCenter)
-      (cmdBind "Mod+N" "Notification Center" actions.notifications)
-      (cmdBind "Mod+Comma" "Settings" actions.settings)
-      (cmdBind "Mod+Y" "Wallpaper" actions.wallpaper)
+        (node "Mod+T" { "hotkey-overlay-title" = "Open Kitty"; } [
+          (leaf "spawn" [ "kitty" ])
+        ])
+        (node "Mod+Return" { "hotkey-overlay-title" = "Open Ghostty"; } [
+          (leaf "spawn" [ "ghostty" ])
+        ])
+        (cmdBind "Mod+V" "Clipboard Manager" actions.clipboard)
+        (cmdBind "Mod+M" "Task Manager" actions.taskManager)
+        # Package wrapper already forces Electron onto X11/XWayland; just spawn it.
+        (node "Mod+Alt+P" { "hotkey-overlay-title" = "Awakened PoE Trade"; } [
+          (leaf "spawn" [ "awakened-poe-trade" ])
+        ])
+        (node "Super+E" { "hotkey-overlay-title" = "File Manager"; } [
+          (leaf "spawn" [ "thunar" ])
+        ])
+        (node "Mod+Z" { "hotkey-overlay-title" = "Zen Browser (Beta)"; } [
+          (leaf "spawn" [ "zen-beta" ])
+        ])
+        (node "Mod+Shift+Z" { "hotkey-overlay-title" = "Mullvad Browser"; } [
+          (leaf "spawn" [ "mullvad-browser" ])
+        ])
+        handyToggleBind
+        (node "MouseForward" { "hotkey-overlay-title" = "Chat: Toggle Mute"; } chatMuteAction)
+        (cmdBind "Super+B" "Control Center" actions.controlCenter)
+        (cmdBind "Mod+N" "Notification Center" actions.notifications)
+        (cmdBind "Mod+Comma" "Settings" actions.settings)
+        (cmdBind "Mod+Y" "Wallpaper" actions.wallpaper)
 
-      (cmdBind "XF86AudioRaiseVolume" "Volume Up" actions.volumeUp)
-      (cmdBind "XF86AudioLowerVolume" "Volume Down" actions.volumeDown)
-      (cmdBind "XF86AudioMute" "Volume Mute" actions.volumeMute)
-      (cmdBind "XF86MonBrightnessUp" "Brightness Up" actions.brightnessUp)
-      (cmdBind "XF86MonBrightnessDown" "Brightness Down" actions.brightnessDown)
+        (cmdBind "XF86AudioRaiseVolume" "Volume Up" actions.volumeUp)
+        (cmdBind "XF86AudioLowerVolume" "Volume Down" actions.volumeDown)
+        (cmdBind "XF86AudioMute" "Volume Mute" actions.volumeMute)
+        (cmdBind "XF86MonBrightnessUp" "Brightness Up" actions.brightnessUp)
+        (cmdBind "XF86MonBrightnessDown" "Brightness Down" actions.brightnessDown)
 
-      (node "Mod+Q" { repeat = false; } [
-        (flag "close-window")
-      ])
-      (node "Mod+F"
-        [ ]
-        [
-          (flag "maximize-column")
-        ]
-      )
-      (node "Mod+Shift+F"
-        [ ]
-        [
-          (flag "fullscreen-window")
-        ]
-      )
-      (node "Mod+Shift+T"
-        [ ]
-        [
-          (flag "toggle-window-floating")
-        ]
-      )
-      (node "Mod+Shift+V"
-        [ ]
-        [
-          (flag "switch-focus-between-floating-and-tiling")
-        ]
-      )
-      (node "Mod+W"
-        [ ]
-        [
-          (flag "toggle-column-tabbed-display")
-        ]
-      )
+        (nonRepeatingFlagBind "Mod+Q" "close-window")
+        (flagBind "Mod+F" "maximize-column")
+        (flagBind "Mod+Shift+F" "fullscreen-window")
+        (flagBind "Mod+Shift+T" "toggle-window-floating")
+        (flagBind "Mod+Shift+V" "switch-focus-between-floating-and-tiling")
+        (flagBind "Mod+W" "toggle-column-tabbed-display")
 
-      (node "Mod+Left"
-        [ ]
-        [
-          (flag "focus-column-left")
-        ]
-      )
-      (node "Mod+Down"
-        [ ]
-        [
-          (flag "focus-window-down")
-        ]
-      )
-      (node "Mod+Up"
-        [ ]
-        [
-          (flag "focus-window-up")
-        ]
-      )
-      (node "Mod+Right"
-        [ ]
-        [
-          (flag "focus-column-right")
-        ]
-      )
-      (node "Mod+H"
-        [ ]
-        [
-          (flag "focus-column-left")
-        ]
-      )
-      (node "Mod+J"
-        [ ]
-        [
-          (flag "focus-window-down")
-        ]
-      )
-      (node "Mod+K"
-        [ ]
-        [
-          (flag "focus-window-up")
-        ]
-      )
-      (cmdBind "Mod+L" "Lock Session" actions.lock)
+        (flagBind "Mod+Left" "focus-column-left")
+        (flagBind "Mod+Down" "focus-window-down")
+        (flagBind "Mod+Up" "focus-window-up")
+        (flagBind "Mod+Right" "focus-column-right")
+        (flagBind "Mod+H" "focus-column-left")
+        (flagBind "Mod+J" "focus-window-down")
+        (flagBind "Mod+K" "focus-window-up")
+        (cmdBind "Mod+L" "Lock Session" actions.lock)
 
-      (node "Mod+Shift+Left"
-        [ ]
-        [
-          (flag "move-column-left")
-        ]
-      )
-      (node "Mod+Shift+Down"
-        [ ]
-        [
-          (flag "move-window-down")
-        ]
-      )
-      (node "Mod+Shift+Up"
-        [ ]
-        [
-          (flag "move-window-up")
-        ]
-      )
-      (node "Mod+Shift+Right"
-        [ ]
-        [
-          (flag "move-column-right")
-        ]
-      )
-      (node "Mod+Shift+H"
-        [ ]
-        [
-          (flag "move-column-left")
-        ]
-      )
-      (node "Mod+Shift+J"
-        [ ]
-        [
-          (flag "move-window-down")
-        ]
-      )
-      (node "Mod+Shift+K"
-        [ ]
-        [
-          (flag "move-window-up")
-        ]
-      )
-      (node "Mod+Shift+L"
-        [ ]
-        [
-          (flag "move-column-right")
-        ]
-      )
+        (flagBind "Mod+Shift+Left" "move-column-left")
+        (flagBind "Mod+Shift+Down" "move-window-down")
+        (flagBind "Mod+Shift+Up" "move-window-up")
+        (flagBind "Mod+Shift+Right" "move-column-right")
+        (flagBind "Mod+Shift+H" "move-column-left")
+        (flagBind "Mod+Shift+J" "move-window-down")
+        (flagBind "Mod+Shift+K" "move-window-up")
+        (flagBind "Mod+Shift+L" "move-column-right")
 
-      (node "Mod+Home"
-        [ ]
-        [
-          (flag "focus-column-first")
-        ]
-      )
-      (node "Mod+End"
-        [ ]
-        [
-          (flag "focus-column-last")
-        ]
-      )
-      (node "Mod+Ctrl+Home"
-        [ ]
-        [
-          (flag "move-column-to-first")
-        ]
-      )
-      (node "Mod+Ctrl+End"
-        [ ]
-        [
-          (flag "move-column-to-last")
-        ]
-      )
+        (flagBind "Mod+Home" "focus-column-first")
+        (flagBind "Mod+End" "focus-column-last")
+        (flagBind "Mod+Ctrl+Home" "move-column-to-first")
+        (flagBind "Mod+Ctrl+End" "move-column-to-last")
 
-      (node "Mod+Ctrl+Left"
-        [ ]
-        [
-          (flag "focus-monitor-left")
-        ]
-      )
-      (node "Mod+Ctrl+Right"
-        [ ]
-        [
-          (flag "focus-monitor-right")
-        ]
-      )
-      (node "Mod+Ctrl+H"
-        [ ]
-        [
-          (flag "focus-monitor-left")
-        ]
-      )
-      (node "Mod+Ctrl+J"
-        [ ]
-        [
-          (flag "focus-monitor-down")
-        ]
-      )
-      (node "Mod+Ctrl+K"
-        [ ]
-        [
-          (flag "focus-monitor-up")
-        ]
-      )
-      (node "Mod+Ctrl+L"
-        [ ]
-        [
-          (flag "focus-monitor-right")
-        ]
-      )
+        (flagBind "Mod+Ctrl+Left" "focus-monitor-left")
+        (flagBind "Mod+Ctrl+Right" "focus-monitor-right")
+        (flagBind "Mod+Ctrl+H" "focus-monitor-left")
+        (flagBind "Mod+Ctrl+J" "focus-monitor-down")
+        (flagBind "Mod+Ctrl+K" "focus-monitor-up")
+        (flagBind "Mod+Ctrl+L" "focus-monitor-right")
 
-      (node "Mod+Shift+Ctrl+Left"
-        [ ]
-        [
-          (flag "move-column-to-monitor-left")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+Down"
-        [ ]
-        [
-          (flag "move-column-to-monitor-down")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+Up"
-        [ ]
-        [
-          (flag "move-column-to-monitor-up")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+Right"
-        [ ]
-        [
-          (flag "move-column-to-monitor-right")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+H"
-        [ ]
-        [
-          (flag "move-column-to-monitor-left")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+J"
-        [ ]
-        [
-          (flag "move-column-to-monitor-down")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+K"
-        [ ]
-        [
-          (flag "move-column-to-monitor-up")
-        ]
-      )
-      (node "Mod+Shift+Ctrl+L"
-        [ ]
-        [
-          (flag "move-column-to-monitor-right")
-        ]
-      )
+        (flagBind "Mod+Shift+Ctrl+Left" "move-column-to-monitor-left")
+        (flagBind "Mod+Shift+Ctrl+Down" "move-column-to-monitor-down")
+        (flagBind "Mod+Shift+Ctrl+Up" "move-column-to-monitor-up")
+        (flagBind "Mod+Shift+Ctrl+Right" "move-column-to-monitor-right")
+        (flagBind "Mod+Shift+Ctrl+H" "move-column-to-monitor-left")
+        (flagBind "Mod+Shift+Ctrl+J" "move-column-to-monitor-down")
+        (flagBind "Mod+Shift+Ctrl+K" "move-column-to-monitor-up")
+        (flagBind "Mod+Shift+Ctrl+L" "move-column-to-monitor-right")
 
-      (node "Mod+Page_Down"
-        [ ]
-        [
-          (flag "focus-workspace-down")
-        ]
-      )
-      (node "Mod+Page_Up"
-        [ ]
-        [
-          (flag "focus-workspace-up")
-        ]
-      )
-      (node "Mod+U"
-        [ ]
-        [
-          (flag "focus-workspace-down")
-        ]
-      )
-      (node "Mod+I"
-        [ ]
-        [
-          (flag "focus-workspace-up")
-        ]
-      )
-      (node "Mod+Ctrl+Down"
-        [ ]
-        [
-          (flag "focus-workspace-down")
-        ]
-      )
-      (node "Mod+Ctrl+Up"
-        [ ]
-        [
-          (flag "focus-workspace-up")
-        ]
-      )
-      (node "Mod+Ctrl+U"
-        [ ]
-        [
-          (flag "focus-workspace-down")
-        ]
-      )
-      (node "Mod+Ctrl+I"
-        [ ]
-        [
-          (flag "focus-workspace-up")
-        ]
-      )
+        (flagBind "Mod+Page_Down" "focus-workspace-down")
+        (flagBind "Mod+Page_Up" "focus-workspace-up")
+        (flagBind "Mod+U" "focus-workspace-down")
+        (flagBind "Mod+I" "focus-workspace-up")
+        (flagBind "Mod+Ctrl+Down" "focus-workspace-down")
+        (flagBind "Mod+Ctrl+Up" "focus-workspace-up")
+        (flagBind "Mod+Ctrl+U" "focus-workspace-down")
+        (flagBind "Mod+Ctrl+I" "focus-workspace-up")
 
-      (cmdBind "Ctrl+Shift+R" "Rename Workspace" actions.workspaceRename)
+        (cmdBind "Ctrl+Shift+R" "Rename Workspace" actions.workspaceRename)
 
-      (node "Mod+Shift+Page_Down"
-        [ ]
-        [
-          (flag "move-workspace-down")
-        ]
-      )
-      (node "Mod+Shift+Page_Up"
-        [ ]
-        [
-          (flag "move-workspace-up")
-        ]
-      )
-      (node "Mod+Shift+U"
-        [ ]
-        [
-          (flag "move-workspace-down")
-        ]
-      )
-      (node "Mod+Shift+I"
-        [ ]
-        [
-          (flag "move-workspace-up")
-        ]
-      )
+        (flagBind "Mod+Shift+Page_Down" "move-workspace-down")
+        (flagBind "Mod+Shift+Page_Up" "move-workspace-up")
+        (flagBind "Mod+Shift+U" "move-workspace-down")
+        (flagBind "Mod+Shift+I" "move-workspace-up")
 
-      (node "Mod+WheelScrollDown" { "cooldown-ms" = 150; } [
-        (flag "focus-workspace-down")
-      ])
-      (node "Mod+WheelScrollUp" { "cooldown-ms" = 150; } [
-        (flag "focus-workspace-up")
-      ])
-      (node "Mod+Ctrl+WheelScrollDown" { "cooldown-ms" = 150; } [
-        (flag "move-column-to-workspace-down")
-      ])
-      (node "Mod+Ctrl+WheelScrollUp" { "cooldown-ms" = 150; } [
-        (flag "move-column-to-workspace-up")
-      ])
-      (node "Mod+WheelScrollRight"
-        [ ]
-        [
-          (flag "focus-column-right")
-        ]
-      )
-      (node "Mod+WheelScrollLeft"
-        [ ]
-        [
-          (flag "focus-column-left")
-        ]
-      )
-      (node "Mod+Ctrl+WheelScrollRight"
-        [ ]
-        [
-          (flag "move-column-right")
-        ]
-      )
-      (node "Mod+Ctrl+WheelScrollLeft"
-        [ ]
-        [
-          (flag "move-column-left")
-        ]
-      )
-      (node "Mod+Shift+WheelScrollDown"
-        [ ]
-        [
-          (flag "focus-column-right")
-        ]
-      )
-      (node "Mod+Shift+WheelScrollUp"
-        [ ]
-        [
-          (flag "focus-column-left")
-        ]
-      )
-      (node "Mod+Ctrl+Shift+WheelScrollDown"
-        [ ]
-        [
-          (flag "move-column-right")
-        ]
-      )
-      (node "Mod+Ctrl+Shift+WheelScrollUp"
-        [ ]
-        [
-          (flag "move-column-left")
-        ]
-      )
+        (cooldownFlagBind "Mod+WheelScrollDown" "focus-workspace-down")
+        (cooldownFlagBind "Mod+WheelScrollUp" "focus-workspace-up")
+        (cooldownFlagBind "Mod+Ctrl+WheelScrollDown" "move-column-to-workspace-down")
+        (cooldownFlagBind "Mod+Ctrl+WheelScrollUp" "move-column-to-workspace-up")
+        (flagBind "Mod+WheelScrollRight" "focus-column-right")
+        (flagBind "Mod+WheelScrollLeft" "focus-column-left")
+        (flagBind "Mod+Ctrl+WheelScrollRight" "move-column-right")
+        (flagBind "Mod+Ctrl+WheelScrollLeft" "move-column-left")
+        (flagBind "Mod+Shift+WheelScrollDown" "focus-column-right")
+        (flagBind "Mod+Shift+WheelScrollUp" "focus-column-left")
+        (flagBind "Mod+Ctrl+Shift+WheelScrollDown" "move-column-right")
+        (flagBind "Mod+Ctrl+Shift+WheelScrollUp" "move-column-left")
 
-      (node "Mod+1"
-        [ ]
-        [
-          (leaf "focus-workspace" 1)
-        ]
-      )
-      (node "Mod+2"
-        [ ]
-        [
-          (leaf "focus-workspace" 2)
-        ]
-      )
-      (node "Mod+3"
-        [ ]
-        [
-          (leaf "focus-workspace" 3)
-        ]
-      )
-      (node "Mod+4"
-        [ ]
-        [
-          (leaf "focus-workspace" 4)
-        ]
-      )
-      (node "Mod+5"
-        [ ]
-        [
-          (leaf "focus-workspace" 5)
-        ]
-      )
-      (node "Mod+6"
-        [ ]
-        [
-          (leaf "focus-workspace" 6)
-        ]
-      )
-      (node "Mod+7"
-        [ ]
-        [
-          (leaf "focus-workspace" 7)
-        ]
-      )
-      (node "Mod+8"
-        [ ]
-        [
-          (leaf "focus-workspace" 8)
-        ]
-      )
-      (node "Mod+9"
-        [ ]
-        [
-          (leaf "focus-workspace" 9)
-        ]
-      )
+        (workspaceBinds "Mod+" "focus-workspace")
 
-      (node "Mod+Shift+1"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 1)
-        ]
-      )
-      (node "Mod+Shift+2"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 2)
-        ]
-      )
-      (node "Mod+Shift+3"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 3)
-        ]
-      )
-      (node "Mod+Shift+4"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 4)
-        ]
-      )
-      (node "Mod+Shift+5"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 5)
-        ]
-      )
-      (node "Mod+Shift+6"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 6)
-        ]
-      )
-      (node "Mod+Shift+7"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 7)
-        ]
-      )
-      (node "Mod+Shift+8"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 8)
-        ]
-      )
-      (node "Mod+Shift+9"
-        [ ]
-        [
-          (leaf "move-column-to-workspace" 9)
-        ]
-      )
+        (workspaceBinds "Mod+Shift+" "move-column-to-workspace")
 
-      (node "Mod+BracketLeft"
-        [ ]
-        [
-          (flag "consume-or-expel-window-left")
-        ]
-      )
-      (node "Mod+BracketRight"
-        [ ]
-        [
-          (flag "consume-or-expel-window-right")
-        ]
-      )
-      (node "Mod+Period"
-        [ ]
-        [
-          (flag "expel-window-from-column")
-        ]
-      )
+        (flagBind "Mod+BracketLeft" "consume-or-expel-window-left")
+        (flagBind "Mod+BracketRight" "consume-or-expel-window-right")
+        (flagBind "Mod+Period" "expel-window-from-column")
 
-      (node "Mod+R"
-        [ ]
-        [
-          (flag "switch-preset-column-width")
-        ]
-      )
-      (node "Mod+Shift+R"
-        [ ]
-        [
-          (flag "switch-preset-window-height")
-        ]
-      )
-      (node "Mod+Ctrl+R"
-        [ ]
-        [
-          (flag "reset-window-height")
-        ]
-      )
-      (node "Mod+Ctrl+F"
-        [ ]
-        [
-          (flag "expand-column-to-available-width")
-        ]
-      )
-      (node "Mod+C"
-        [ ]
-        [
-          (flag "center-column")
-        ]
-      )
-      (node "Mod+Ctrl+C"
-        [ ]
-        [
-          (flag "center-visible-columns")
-        ]
-      )
+        (flagBind "Mod+R" "switch-preset-column-width")
+        (flagBind "Mod+Shift+R" "switch-preset-window-height")
+        (flagBind "Mod+Ctrl+R" "reset-window-height")
+        (flagBind "Mod+Ctrl+F" "expand-column-to-available-width")
+        (flagBind "Mod+C" "center-column")
+        (flagBind "Mod+Ctrl+C" "center-visible-columns")
 
-      (node "Mod+Minus"
-        [ ]
-        [
-          (leaf "set-column-width" "-10%")
-        ]
-      )
-      (node "Mod+Equal"
-        [ ]
-        [
-          (leaf "set-column-width" "+10%")
-        ]
-      )
-      (node "Mod+Shift+Minus"
-        [ ]
-        [
-          (leaf "set-window-height" "-10%")
-        ]
-      )
-      (node "Mod+Shift+Equal"
-        [ ]
-        [
-          (leaf "set-window-height" "+10%")
-        ]
-      )
+        (leafBind "Mod+Minus" "set-column-width" "-10%")
+        (leafBind "Mod+Equal" "set-column-width" "+10%")
+        (leafBind "Mod+Shift+Minus" "set-window-height" "-10%")
+        (leafBind "Mod+Shift+Equal" "set-window-height" "+10%")
 
-      (node "XF86Launch1"
-        [ ]
-        [
-          (flag "screenshot")
-        ]
-      )
-      (node "Ctrl+XF86Launch1"
-        [ ]
-        [
-          (flag "screenshot-screen")
-        ]
-      )
-      (node "Alt+XF86Launch1"
-        [ ]
-        [
-          (flag "screenshot-window")
-        ]
-      )
-      (node "Print"
-        [ ]
-        [
-          (flag "screenshot")
-        ]
-      )
-      (node "Ctrl+Print"
-        [ ]
-        [
-          (flag "screenshot-screen")
-        ]
-      )
-      (node "Alt+Print"
-        [ ]
-        [
-          (flag "screenshot-window")
-        ]
-      )
-      (node "Mod+Escape" { "allow-inhibiting" = false; } [
-        (flag "toggle-keyboard-shortcuts-inhibit")
-      ])
-      (node "Mod+Shift+P"
-        [ ]
-        [
-          (flag "power-off-monitors")
-        ]
-      )
-    ])
-  )
+        (flagBind "XF86Launch1" "screenshot")
+        (flagBind "Ctrl+XF86Launch1" "screenshot-screen")
+        (flagBind "Alt+XF86Launch1" "screenshot-window")
+        (flagBind "Print" "screenshot")
+        (flagBind "Ctrl+Print" "screenshot-screen")
+        (flagBind "Alt+Print" "screenshot-window")
+        (node "Mod+Escape" { "allow-inhibiting" = false; } [
+          (flag "toggle-keyboard-shortcuts-inhibit")
+        ])
+        (flagBind "Mod+Shift+P" "power-off-monitors")
+      ]
+    )
+  ))
 ]

@@ -23,6 +23,7 @@ let
     builtins.elem compositor [
       "niri"
       "hyprland"
+      "umbriel"
     ]
   ) compositors;
   plasmaOwnsGtk = desktopEnabled && !hasAdwGtkCompositor;

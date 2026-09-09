@@ -9,6 +9,7 @@ let
     packageToggle
     strictSubmodule
     ;
+  sessionCommands = import ../../../lib/session-shell-commands.nix;
 in
 {
   options.desktop = mkOption {
@@ -19,6 +20,7 @@ in
           type = types.enum [
             "niri"
             "hyprland"
+            "umbriel"
             "plasma"
           ];
           # Keep generic/new hosts on Hyprland unless they explicitly select another session.
@@ -29,6 +31,7 @@ in
             types.enum [
               "niri"
               "hyprland"
+              "umbriel"
               "plasma"
             ]
           );
@@ -200,13 +203,17 @@ in
             let
               compositors = [ desktopArgs.config.compositor ] ++ desktopArgs.config.extraCompositors;
             in
-            if builtins.elem "niri" compositors || builtins.elem "hyprland" compositors then
+            if
+              builtins.elem "niri" compositors
+              || builtins.elem "hyprland" compositors
+              || builtins.elem "umbriel" compositors
+            then
               "noctalia"
             else
               "none";
           description = ''
             Active desktop session shell. One value; there is no extraShells list.
-            Default is noctalia when niri or hyprland is in compositor/extraCompositors, else none (Plasma-only).
+            Default is noctalia when niri, hyprland, or umbriel is in compositor/extraCompositors, else none (Plasma-only).
             Caelestia and ii cannot share a host with niri.
           '';
         };
@@ -256,22 +263,10 @@ in
                 command = mkOption {
                   type = types.nonEmptyStr;
                   default =
-                    let
-                      shell = desktopArgs.config.sessionShell;
+                    (sessionCommands {
+                      sessionShell = desktopArgs.config.sessionShell;
                       noctaliaCommand = desktopArgs.config.noctalia.command;
-                    in
-                    if shell == "noctalia" then
-                      "${noctaliaCommand} msg session lock"
-                    else if shell == "dms" then
-                      "dms ipc call lock lock"
-                    else if shell == "caelestia" then
-                      "caelestia shell lock lock"
-                    else if shell == "inir" then
-                      "inir lock activate"
-                    else if shell == "ii" then
-                      "ii ipc call lock activate"
-                    else
-                      "loginctl lock-session";
+                    }).lockCommand;
                   description = "Lock command. Default follows desktop.sessionShell.";
                 };
                 idleSeconds = mkOption {

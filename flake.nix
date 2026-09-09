@@ -45,6 +45,11 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
     import-tree.url = "github:vic/import-tree";
 
+    rose-pine-starship = {
+      url = "github:rose-pine/starship/ce244cb048e19ef6207936c3087141c8a796bca5";
+      flake = false;
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -77,6 +82,11 @@
     # Use niri-flake only for its KDL/Home Manager configuration API. The
     # compositor package comes from host nixpkgs to keep Mesa/ABI alignment.
     niri.url = "github:sodiboo/niri-flake";
+
+    umbriel = {
+      url = "github:noctalia-dev/umbriel";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Do not follow nixpkgs: hyprland.cachix.org only serves packages built
     # against upstream's pin. Consume inputs.hyprland.packages (see

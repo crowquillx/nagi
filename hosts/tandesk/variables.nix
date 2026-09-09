@@ -65,6 +65,8 @@
   };
 
   desktop = {
+    compositor = "umbriel";
+    extraCompositors = [ ];
     browser = {
       brave.passwordStore = "gnome-libsecret";
       mullvadBrowser.enable = true;
@@ -151,6 +153,7 @@
       };
       notifications.enable = true;
     };
+    startup.backend = "systemd";
     startup.apps = [
       "spotify"
       "nagi-hushmic-tray"

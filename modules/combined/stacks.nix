@@ -26,6 +26,7 @@ let
   nixosDesktop = [
     ../nixos/desktop/niri.nix
     ../nixos/desktop/hyprland.nix
+    ../nixos/desktop/umbriel.nix
     ../nixos/desktop/kde.nix
     ../nixos/desktop/cursor.nix
     ../nixos/desktop/sddm.nix
@@ -118,6 +119,7 @@ let
     ../home/desktop/session-runtime.nix
     ../home/desktop/session-shell/default.nix
     ../home/desktop/pointer-cursor.nix
+    ../home/desktop/umbriel.nix
     ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix

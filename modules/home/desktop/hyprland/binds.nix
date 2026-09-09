@@ -115,7 +115,9 @@ let
   };
   cmdBind =
     key: command: opts:
-    lib.optionalString (command != null) "  hl.bind(${key}, hl.dsp.exec_cmd(${quote command}), ${opts})\n";
+    lib.optionalString (
+      command != null
+    ) "  hl.bind(${key}, hl.dsp.exec_cmd(${quote command}), ${opts})\n";
 in
 ''
   local mainMod = "SUPER"
@@ -167,14 +169,14 @@ in
   }${
     if noctaliaPanelBinds && actions.windowSwitcher.mode == "command" then
       ''
-  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
-  hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
-''
+        hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
+        hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote (noctaliaPanelCmd actions.windowSwitcher.command)}), { description = "Window switcher" })
+      ''
     else
       lib.optionalString (actions.windowSwitcher.mode == "command") ''
-  hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
-  hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
-''
+        hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
+        hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(${quote actions.windowSwitcher.command}), { description = "Window switcher" })
+      ''
   }
   hl.bind(mainMod .. " + SHIFT + slash", hl.dsp.exec_cmd("ghostty -e sh -lc 'hyprctl binds | less'"), { description = "Show keybinds" })
 
@@ -184,7 +186,8 @@ in
   hl.bind(mainMod .. " + SHIFT + S", moveActiveWindowToScratchpad, { description = "Move window to scratchpad", dont_inhibit = true })
   ${
     if noctaliaPanelBinds then
-      cmdBind "mainMod .. \" + V\"" (noctaliaPanelCmd actions.clipboard) "{ description = \"Clipboard manager\" }"
+      cmdBind "mainMod .. \" + V\"" (noctaliaPanelCmd actions.clipboard)
+        "{ description = \"Clipboard manager\" }"
     else
       cmdBind "mainMod .. \" + V\"" actions.clipboard "{ description = \"Clipboard manager\" }"
   }${cmdBind "mainMod .. \" + M\"" actions.taskManager "{ description = \"Task manager\" }"}
@@ -211,9 +214,19 @@ in
   hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"), { description = "File manager" })
   hl.bind(mainMod .. " + Z", hl.dsp.exec_cmd("zen-beta"), { description = "Zen Browser (Beta)" })
   hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("mullvad-browser"), { description = "Mullvad Browser" })
-  ${cmdBind "mainMod .. \" + O\"" handyToggleCommand "{ description = \"Toggle Handy transcription\", dont_inhibit = true }"}
+  ${cmdBind "mainMod .. \" + O\"" handyToggleCommand
+    "{ description = \"Toggle Handy transcription\", dont_inhibit = true }"
+  }
   hl.bind("mouse:276", ${chatMuteAction}, { description = ${quote chatMuteDescription} })
-  ${cmdBind "mainMod .. \" + B\"" actions.controlCenter "{ description = \"Control center\" }"}${cmdBind "mainMod .. \" + N\"" actions.notifications "{ description = \"Notifications\" }"}${cmdBind "mainMod .. \" + comma\"" actions.settings "{ description = \"Settings\" }"}${cmdBind "mainMod .. \" + Y\"" actions.wallpaper "{ description = \"Wallpaper\" }"}${cmdBind "\"XF86AudioRaiseVolume\"" actions.volumeUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioLowerVolume\"" actions.volumeDown "{ locked = true, repeating = true }"}${cmdBind "\"XF86AudioMute\"" actions.volumeMute "{ locked = true }"}${cmdBind "\"XF86MonBrightnessUp\"" actions.brightnessUp "{ locked = true, repeating = true }"}${cmdBind "\"XF86MonBrightnessDown\"" actions.brightnessDown "{ locked = true, repeating = true }"}
+  ${cmdBind "mainMod .. \" + B\"" actions.controlCenter "{ description = \"Control center\" }"}${
+    cmdBind "mainMod .. \" + N\"" actions.notifications "{ description = \"Notifications\" }"
+  }${cmdBind "mainMod .. \" + comma\"" actions.settings "{ description = \"Settings\" }"}${
+    cmdBind "mainMod .. \" + Y\"" actions.wallpaper "{ description = \"Wallpaper\" }"
+  }${cmdBind "\"XF86AudioRaiseVolume\"" actions.volumeUp "{ locked = true, repeating = true }"}${
+    cmdBind "\"XF86AudioLowerVolume\"" actions.volumeDown "{ locked = true, repeating = true }"
+  }${cmdBind "\"XF86AudioMute\"" actions.volumeMute "{ locked = true }"}${
+    cmdBind "\"XF86MonBrightnessUp\"" actions.brightnessUp "{ locked = true, repeating = true }"
+  }${cmdBind "\"XF86MonBrightnessDown\"" actions.brightnessDown "{ locked = true, repeating = true }"}
 
   hl.bind(mainMod .. " + Q", hl.dsp.window.close())
   hl.bind(mainMod .. " + F", toggleColumnWidth, { description = "Toggle column between 50% and 100%" })

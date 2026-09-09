@@ -24,8 +24,8 @@ and operational behavior that the option definitions alone do not show.
 ## Key switches
 
 - `host.stateVersion = { nixos = "25.05"; home = "25.05"; }` (host-specific migration baselines; copy existing values and do not casually upgrade them)
-- `desktop.compositor = "hyprland" | "plasma" | "niri"` (default session selected by SDDM; default is `hyprland`. Niri uses the stable package from host `nixpkgs`.)
-- `desktop.extraCompositors = [ "hyprland" "plasma" "niri" ... ]` (optional additional installed sessions)
+- `desktop.compositor = "hyprland" | "plasma" | "niri" | "umbriel"` (default session selected by SDDM; default is `hyprland`. Niri uses the stable package from host `nixpkgs`; Umbriel is installed from the Umbriel flake.)
+- `desktop.extraCompositors = [ "hyprland" "plasma" "niri" "umbriel" ... ]` (optional additional installed sessions)
 - `desktop.displayManager = "auto" | "sddm"`
 - `desktop.sddm.wayland.enable = true | false`
 - `desktop.sddm.background = <path> | null` (SDDM astronaut theme background image; uses the embedded theme default when `null`)
@@ -38,7 +38,9 @@ and operational behavior that the option definitions alone do not show.
 - `desktop.hyprland.configBuilder` (primary; default Lua builder at `modules/home/desktop/hyprland/default.nix`; set `null` for the upstream Home Manager settings path)
 - `desktop.hyprland.outputs = { "<output-name>" = { scale, position, mode, transform, variableRefreshRate, workspaceBase, bitDepth, colorManagement, sdrBrightness, sdrSaturation, sdrMaxLuminance, focusAtStartup }; ... }`
 - `desktop.hyprland.settings = { ... }` (applied only when `configBuilder = null`)
-- `desktop.sessionShell = "noctalia" | "dms" | "caelestia" | "inir" | "ii" | "none"` (one active session shell. Default is noctalia when niri or hyprland is in compositor/extraCompositors, else none on Plasma-only hosts. Caelestia and ii cannot share a host with niri.)
+- `desktop.sessionShell = "noctalia" | "dms" | "caelestia" | "inir" | "ii" | "none"` (one active session shell. Default is noctalia when niri, hyprland, or umbriel is in compositor/extraCompositors, else none on Plasma-only hosts. Umbriel currently permits only noctalia. Caelestia and ii cannot share a host with niri.)
+- Umbriel currently imports the upstream Home Manager module with `programs.umbriel.enable = true` and leaves its `settings` unset. During testing, the mutable startup configuration is owned at `~/.config/umbriel/config.toml`; declarative Umbriel settings will be added after testing.
+- `hosts/tandesk/variables.nix` selects Umbriel as its only compositor with `desktop.compositor = "umbriel"` and `desktop.extraCompositors = [ ]`.
 - `desktop.noctalia = { enable, command, settings, assistantPanel.secrets }` (`enable` is derived from `sessionShell == "noctalia"`)
 - `desktop.hushmic.deviceId = "<pipewire-node.name>" | null` (host-scoped; enables `nagi-hushmic-tray`)
 - `desktop.hdrGame = { enable, monitor = { uuid, model, serial, fallbackConnector }, notifications.enable }` (enables the `hdr-game` wrapper)
@@ -49,17 +51,17 @@ and operational behavior that the option definitions alone do not show.
 - `storage.mounts = [ { device, mountPoint, fsType ? "auto", options ? [ ] } ... ]`
 - `boot.secureBoot = { enable, includeMicrosoftKeys, autoEnroll, pkiBundle }` (Lanzaboote-based secure boot)
 - `desktop.shellStartupCommand = "<command>"`
-- `desktop.startup.backend = "systemd" | "niri" | "hyprland"`
+- `desktop.startup.backend = "systemd" | "niri" | "hyprland"` (tandesk uses `systemd` for application startup. Its mutable Umbriel config starts Noctalia only, to avoid duplicate application startup.)
 - `desktop.startup.apps = [ "<cmd>" ... ]`
 - `desktop.session.killProcessesOnLogout = true | false` (ends unmanaged session processes on logout; also terminates `tmux`, `screen`, `nohup`, and similar jobs from that session)
 - `desktop.session.polkit.enable = true | false` (starts mate-polkit only when `sessionShell = "none"`. Full shells provide their own agent. The niri-flake agent stays off.)
 - `desktop.session.keyring.enable = true | false` (unlocks gnome-keyring at login. On Plasma, `ksecretd` owns `org.freedesktop.secrets`; run `nagi-migrate-secrets-to-kwallet` once so Electron/libsecret clients such as T3 Code and Brave keep using credentials created under Hyprland/Niri. Plasma also unlocks KWallet from the SDDM login password via PAM; the wallet password must match the login password, or be empty.)
-- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }` (`command` defaults from `sessionShell`. Idle lock is `swayidle` only when `sessionShell = "none"` on Niri/Hyprland. Full shells own idle themselves. Plasma-only hosts use PowerDevil and the screen locker, which honor video idle inhibitors; `swayidle` does not.)
+- `desktop.session.lock = { enable, command, idleSeconds, beforeSleep, onLidClose }` (`command` defaults from `sessionShell`. Idle lock is `swayidle` only when `sessionShell = "none"` on Niri or Hyprland. Full shells own idle themselves. Plasma-only hosts use PowerDevil and the screen locker, which honor video idle inhibitors; `swayidle` does not.)
 - `users.git = { name, email }`
 - `users.flakeDirectory = "<absolute-path>" | null` (defaults to `/home/<primary>/nagi` when `null`)
 - `users.extraPackages = [ "pkgName" "python3Packages.pip" ... ]`
 - `desktop.enable = true | false`
-- `features.stylix = { enable, variant }` (On pure Plasma hosts Stylix stays on for anything Plasma does not theme — Ghostty, Kitty, browsers, CLI tools, and so on. Targets Plasma already owns (`gtk`, `qt`, `kde`, `gnome`, `fontconfig`) are disabled so Klassy/Breeze/Plasma fonts keep the desktop chrome. `variant` still selects Rose Pine Moon/Main/Dawn for SDDM and the Plasma color scheme. Mixed hosts keep those desktop targets for the Niri/Hyprland session; see `modules/theme/stylix-enabled.nix`.)
+- `features.stylix = { enable, variant }` (On pure Plasma hosts Stylix stays on for anything Plasma does not theme — Ghostty, Kitty, browsers, CLI tools, and so on. Targets Plasma already owns (`gtk`, `qt`, `kde`, `gnome`, `fontconfig`) are disabled so Klassy/Breeze/Plasma fonts keep the desktop chrome. `variant` still selects Rose Pine Moon/Main/Dawn for SDDM and the Plasma color scheme. Mixed hosts keep those desktop targets for the Niri, Hyprland, or Umbriel session; see `modules/theme/stylix-enabled.nix`.)
 - `features.shell = { fish.enable, zsh.enable, starship.enable }`
 - `features.nh = { enable, clean.enable, clean.extraArgs }`
 - `features.swap = { zram.enable, zram.memoryPercent, disk.enable, disk.path, disk.sizeMiB, swappiness }`
@@ -72,10 +74,10 @@ and operational behavior that the option definitions alone do not show.
 - `features.videoEditing.kdenlive.enable = true | false`
 - `features.videoEditing.davinciResolve = { enable, edition = "free" | "studio" }`
 - `features.blender.enable = true | false`
-- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri or Hyprland is installed, `Breeze` on Plasma-only hosts so kde-gtk-config can export Plasma colors. `Breeze-Dark` is a static palette and is not used. Icon theme is unchanged.)
+- `features.theme.gtk = { enable, iconTheme.name, iconTheme.package }` (Widget theme is `adw-gtk3` when Niri, Hyprland, or Umbriel is installed, `Breeze` on Plasma-only hosts so kde-gtk-config can export Plasma colors. `Breeze-Dark` is a static palette and is not used. Icon theme is unchanged.)
 - `features.theme.qt.enable = true | false`
 - `features.zoxide.enable = true | false`
-- `features.bluetooth.enable = true | false` (enables BlueZ. Niri/Hyprland get Blueman; Plasma uses bluedevil and does not autostart Blueman)
+- `features.bluetooth.enable = true | false` (enables BlueZ. Niri, Hyprland, and Umbriel get Blueman; Plasma uses bluedevil and does not autostart Blueman)
 - `features.portals.enable = true | false`
 - `features.codingTools.enable = true | false`
 - `features.codingTools.editors.enable = true | false`
@@ -370,21 +372,24 @@ desktop = {
 ```
 
 When multiple sessions are installed, portal routing remains session-specific.
-Niri uses the GNOME portal, Hyprland uses XDG Desktop Portal Hyprland, and
-Plasma uses the KDE portal. Niri, Hyprland, and mixed Plasma hosts retain GTK
-fallbacks. Plasma-only hosts do not install `xdg-desktop-portal-gtk`: that
+Niri uses the GNOME portal, Hyprland uses XDG Desktop Portal Hyprland, Umbriel
+uses its own portal backend, and Plasma uses the KDE portal. Niri, Hyprland,
+Umbriel, and mixed Plasma hosts retain GTK fallbacks. Plasma-only hosts do not
+install `xdg-desktop-portal-gtk`: that
 backend SIGSEGVs at login when kde-gtk-config rewrites `gtk.css` (nixpkgs
 [issue 523091](https://github.com/NixOS/nixpkgs/issues/523091)). Do not set
 `XDG_CURRENT_DESKTOP` or `XDG_SESSION_DESKTOP` globally; SDDM sets the correct
 desktop identity for the selected session.
-When Niri and Plasma are both installed, Qt theming is session-scoped. The
+When Niri, Hyprland, or Umbriel and Plasma are both installed, Qt theming is
+session-scoped. The
 login environment uses Plasma's native KDE integration with Breeze, while the
-Niri config overrides its child processes to use Stylix's qtct/Kvantum theme.
+Wayland compositor configs override their child processes to use Stylix's
+qtct/Kvantum theme.
 Noctalia's `kcolorscheme` template additionally supplies KDE colors to KDE and
 Kirigami applications opened under Niri. Plasma-only configurations use native
-KDE integration, and Niri-only configurations use qtct/Kvantum directly.
-GTK widget theming is user-global: Niri or Hyprland hosts (including mixed
-Plasma) keep `adw-gtk3`, while Plasma-only hosts use the `Breeze` GTK theme
+KDE integration, and Wayland-only configurations use qtct/Kvantum directly.
+GTK widget theming is user-global: Niri, Hyprland, or Umbriel hosts (including
+mixed Plasma) keep `adw-gtk3`, while Plasma-only hosts use the `Breeze` GTK theme
 (not `Breeze-Dark`) so kde-gtk-config can write `colors.css` from the active
 Plasma color scheme. Home Manager does not pin `gtk-3.0/gtk.css` or
 `gtk-4.0/gtk.css` on those hosts; a store symlink would be replaced at login
@@ -395,7 +400,7 @@ On Plasma-only hosts Stylix remains enabled (`autoEnable`) so anything
 Plasma does not theme keeps the Rose Pine palette, but
 `stylix.targets.{gtk,qt,kde,gnome,fontconfig}` are off so they do not fight
 Klassy, Breeze, Plasma fonts, or write GNOME dconf. Mixed hosts leave those
-desktop targets on for Niri/Hyprland.
+desktop targets on for Niri, Hyprland, or Umbriel.
 Plasma sessions (default compositor or `extraCompositors`) also install
 `pkgs.klassy`, Better Blur DX (`pkgs.kwin-effects-better-blur-dx`), and a
 Rose Pine color scheme generated from `features.stylix.variant`. The scheme is
@@ -443,7 +448,15 @@ Hyprland and Niri call the same verbs (Niri keeps overview on Mod+Space/Tab).
 Each full shell starts from the compositor spawn hook, not systemd.
 `desktop.shellStartupCommand` stays unused.
 
-- `noctalia`: current default on Niri/Hyprland hosts. Nested `desktop.noctalia.*`
+Umbriel currently allows only Noctalia. Home Manager installs Umbriel without
+settings, so `~/.config/umbriel/config.toml` stays writable during testing.
+The local tandesk test config starts Noctalia with separate config and state
+copies under `~/.config/umbriel/shell-config/noctalia/` and
+`~/.config/umbriel/shell-state/noctalia/`. These copies use the native workspace
+widget and do not depend on the Hyprland-specific workspace plugin.
+These test files are local files, and this flake does not create or update them.
+
+- `noctalia`: current default on Niri, Hyprland, and Umbriel hosts. Nested `desktop.noctalia.*`
   knobs still apply.
 - `dms`: DankMaterialShell. Home Manager module is injected only when selected.
   Niri sets `background-color "transparent"` in the generated layout and seeds

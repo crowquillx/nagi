@@ -25,6 +25,7 @@ let
     builtins.elem c [
       "niri"
       "hyprland"
+      "umbriel"
     ]
   ) compositors;
 in

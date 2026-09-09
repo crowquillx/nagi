@@ -28,6 +28,10 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
   - defines `perSystem.packages` for wrapped/custom packages
   - includes wrapped + upstream package outputs (`nagi-noctalia`, `nagi-zen`, `nagi-helium`)
 
+- `modules/flake/checks.nix`
+  - defines host builds and standalone Home Manager checks for each platform
+  - defines lint and behavior checks with focused source sets
+
 ## 3) Shared NixOS + Home stack wiring
 
 `modules/combined/stacks.nix` is the single source for repo-owned shared module composition:
@@ -45,6 +49,7 @@ External upstream flake modules and host-conditional upstream modules stay in `m
 ├── flake.nix
 ├── modules
 │   ├── flake
+│   │   ├── checks.nix
 │   │   ├── hosts.nix
 │   │   └── packages.nix
 │   ├── combined

@@ -20,6 +20,8 @@ let
       "plasma"
     else if compositor == "hyprland" then
       "hyprland-uwsm"
+    else if compositor == "umbriel" then
+      "umbriel"
     else
       "niri";
 

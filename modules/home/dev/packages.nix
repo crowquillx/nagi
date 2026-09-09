@@ -215,148 +215,130 @@ let
   cursorCliPkg = lib.attrByPath [ "cursor-cli" ] null pkgs;
   zedEditorPkg = lib.attrByPath [ "zed-editor" ] null pkgs;
   nilPkg = lib.attrByPath [ "nil" ] null pkgs;
+  mkPackageRule = enable: package: { inherit enable package; };
+  mkRequiredPackageRule =
+    enable: package: message:
+    (mkPackageRule enable package) // { inherit message; };
+  mkValidationRule =
+    enable: package: message:
+    (mkRequiredPackageRule enable package message) // { install = false; };
+  packageRules = [
+    (mkPackageRule codingToolsEnabled pkgs.nodejs)
+    (mkRequiredPackageRule orcaEnabled orcaPkg
+      "features.codingTools.orca.enable is true, but package 'orca' (the orca-ide executable) could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule paseoEnabled paseoPkg
+      "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule geminiEnabled geminiCliPkg
+      "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback."
+    )
+    (mkRequiredPackageRule claudeEnabled claudeCodePkg
+      "features.codingTools.aiCli.claude.enable is true, but package 'claude-code' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule cliProxyApiEnabled cliProxyApiPkg
+      "features.codingTools.aiCli.cliProxyApi.enable is true, but package 'cli-proxy-api' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule opencode2Enabled opencode2Pkg
+      "features.codingTools.aiCli.opencode2.enable is true, but package 'opencode2' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule grokEnabled grokPkg
+      "features.codingTools.aiCli.grok.enable is true, but package 'grok' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule piEnabled piPkg
+      "features.codingTools.aiCli.pi.enable is true, but package 'pi' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule ohMyPiEnabled ohMyPiPkg
+      "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule ohMyPiEnabled bunPkg
+      "features.codingTools.aiCli.ohMyPi.enable is true, but nixpkgs package 'bun' could not be resolved."
+    )
+    (mkRequiredPackageRule herdrEnabled herdrPkg
+      "features.codingTools.aiCli.herdr.enable is true, but package 'herdr' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule primeAgentEnabled primeAgentPkg
+      "features.codingTools.aiCli.primeAgent.enable is true, but package 'prime-agent' could not be resolved from llm-agents.nix."
+    )
+    (mkPackageRule aiCliEnabled uvPkg)
+    (mkRequiredPackageRule aiCliEnabled bubblewrapPkg
+      "features.codingTools.aiCli.enable is true, but nixpkgs package 'bubblewrap' could not be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled statixPkg
+      "features.codingTools.nixTools.enable is true, but nixpkgs package 'statix' could not be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled deadnixPkg
+      "features.codingTools.nixTools.enable is true, but nixpkgs package 'deadnix' could not be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled alejandraPkg
+      "features.codingTools.nixTools.enable is true, but nixpkgs package 'alejandra' could not be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled nixfmtPkg
+      "features.codingTools.nixTools.enable is true, but no nixfmt package could be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled nixLspPkg
+      "features.codingTools.nixTools.enable is true, but no Nix language server (nixd or nil) could be resolved."
+    )
+    (mkRequiredPackageRule t3codeEnabled t3codePkg
+      "features.codingTools.editors.t3code.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
+    )
+    (mkRequiredPackageRule t3codeEnabled t3DesktopPkg
+      "features.codingTools.editors.t3code.enable is true, but package 't3code-nightly' could not be resolved from t3code-nightly-nix."
+    )
+    (mkPackageRule (t3codeEnabled && t3DesktopPkg != null) t3OscryptAlias)
+    (mkValidationRule t3ServiceEnabled t3codePkg
+      "features.codingTools.editors.t3code.service.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
+    )
+    (mkValidationRule nixToolsEnabled ghPkg
+      "features.codingTools.nixTools.enable is true, but nixpkgs package 'gh' could not be resolved."
+    )
+    (mkRequiredPackageRule nixToolsEnabled graphiteCliPkg
+      "features.codingTools.nixTools.enable is true, but nixpkgs package 'graphite-cli' could not be resolved."
+    )
+    (mkRequiredPackageRule aiCliEnabled skillsPkg
+      "features.codingTools.aiCli.enable is true, but package 'skills' could not be resolved from llm-agents.nix or nixpkgs."
+    )
+    (mkRequiredPackageRule cursorEnabled cursorPkg
+      "features.codingTools.editors.enable is true, but nixpkgs package 'code-cursor' could not be resolved."
+    )
+    (mkRequiredPackageRule cursorEnabled cursorCliPkg
+      "features.codingTools.editors.enable is true, but nixpkgs package 'cursor-cli' could not be resolved."
+    )
+    (mkPackageRule zedEnabled zedEditorPkg)
+    (mkPackageRule nixToolsEnabled nilPkg)
+  ];
+  packageAssertions = lib.filter (assertion: assertion != null) (
+    map (
+      {
+        enable,
+        package,
+        message ? null,
+        ...
+      }:
+      if message == null then
+        null
+      else
+        {
+          assertion = !(enable && package == null);
+          inherit message;
+        }
+    ) packageRules
+  );
+  resolvedPackages = lib.concatMap (
+    {
+      enable,
+      package,
+      install ? true,
+      ...
+    }:
+    lib.optionals (install && enable && package != null) [ package ]
+  ) packageRules;
 in
 {
-  assertions = [
-    {
-      assertion = !(orcaEnabled && orcaPkg == null);
-      message = "features.codingTools.orca.enable is true, but package 'orca' (the orca-ide executable) could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(paseoEnabled && paseoPkg == null);
-      message = "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(geminiEnabled && geminiCliPkg == null);
-      message = "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback.";
-    }
-    {
-      assertion = !(claudeEnabled && claudeCodePkg == null);
-      message = "features.codingTools.aiCli.claude.enable is true, but package 'claude-code' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(cliProxyApiEnabled && cliProxyApiPkg == null);
-      message = "features.codingTools.aiCli.cliProxyApi.enable is true, but package 'cli-proxy-api' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(opencode2Enabled && opencode2Pkg == null);
-      message = "features.codingTools.aiCli.opencode2.enable is true, but package 'opencode2' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(grokEnabled && grokPkg == null);
-      message = "features.codingTools.aiCli.grok.enable is true, but package 'grok' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(piEnabled && piPkg == null);
-      message = "features.codingTools.aiCli.pi.enable is true, but package 'pi' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(ohMyPiEnabled && ohMyPiPkg == null);
-      message = "features.codingTools.aiCli.ohMyPi.enable is true, but package 'omp' (Oh My Pi) could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(herdrEnabled && herdrPkg == null);
-      message = "features.codingTools.aiCli.herdr.enable is true, but package 'herdr' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(primeAgentEnabled && primeAgentPkg == null);
-      message = "features.codingTools.aiCli.primeAgent.enable is true, but package 'prime-agent' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(ohMyPiEnabled && bunPkg == null);
-      message = "features.codingTools.aiCli.ohMyPi.enable is true, but nixpkgs package 'bun' could not be resolved.";
-    }
-    {
-      assertion = !(aiCliEnabled && bubblewrapPkg == null);
-      message = "features.codingTools.aiCli.enable is true, but nixpkgs package 'bubblewrap' could not be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && statixPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'statix' could not be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && deadnixPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'deadnix' could not be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && alejandraPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'alejandra' could not be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && nixfmtPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but no nixfmt package could be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && nixLspPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but no Nix language server (nixd or nil) could be resolved.";
-    }
-    {
-      assertion = !(t3codeEnabled && t3codePkg == null);
-      message = "features.codingTools.editors.t3code.enable is true, but package 't3code' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(t3codeEnabled && t3DesktopPkg == null);
-      message = "features.codingTools.editors.t3code.enable is true, but package 't3code-nightly' could not be resolved from t3code-nightly-nix.";
-    }
-    {
-      assertion = !(t3ServiceEnabled && t3codePkg == null);
-      message = "features.codingTools.editors.t3code.service.enable is true, but package 't3code' could not be resolved from llm-agents.nix.";
-    }
-    {
-      assertion = !(nixToolsEnabled && ghPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'gh' could not be resolved.";
-    }
-    {
-      assertion = !(nixToolsEnabled && graphiteCliPkg == null);
-      message = "features.codingTools.nixTools.enable is true, but nixpkgs package 'graphite-cli' could not be resolved.";
-    }
-    {
-      assertion = !(aiCliEnabled && skillsPkg == null);
-      message = "features.codingTools.aiCli.enable is true, but package 'skills' could not be resolved from llm-agents.nix or nixpkgs.";
-    }
-    {
-      assertion = !(cursorEnabled && cursorPkg == null);
-      message = "features.codingTools.editors.enable is true, but nixpkgs package 'code-cursor' could not be resolved.";
-    }
-    {
-      assertion = !(cursorEnabled && cursorCliPkg == null);
-      message = "features.codingTools.editors.enable is true, but nixpkgs package 'cursor-cli' could not be resolved.";
-    }
-  ];
+  assertions = packageAssertions;
 
-  home.packages =
-    lib.optionals codingToolsEnabled [ pkgs.nodejs ]
-    ++ lib.optionals (orcaEnabled && orcaPkg != null) [ orcaPkg ]
-    ++ lib.optionals (paseoEnabled && paseoPkg != null) [ paseoPkg ]
-    ++ lib.optionals (geminiEnabled && geminiCliPkg != null) [ geminiCliPkg ]
-    ++ lib.optionals (claudeEnabled && claudeCodePkg != null) [ claudeCodePkg ]
-    ++ lib.optionals (cliProxyApiEnabled && cliProxyApiPkg != null) [ cliProxyApiPkg ]
-    ++ lib.optionals (opencode2Enabled && opencode2Pkg != null) [ opencode2Pkg ]
-    ++ lib.optionals (grokEnabled && grokPkg != null) [ grokPkg ]
-    ++ lib.optionals (piEnabled && piPkg != null) [ piPkg ]
-    ++ lib.optionals (ohMyPiEnabled && ohMyPiPkg != null) [ ohMyPiPkg ]
-    ++ lib.optionals (ohMyPiEnabled && bunPkg != null) [ bunPkg ]
-    ++ lib.optionals (herdrEnabled && herdrPkg != null) [ herdrPkg ]
-    ++ lib.optionals (primeAgentEnabled && primeAgentPkg != null) [ primeAgentPkg ]
-    ++ lib.optionals (aiCliEnabled && uvPkg != null) [ uvPkg ]
-    ++ lib.optionals (aiCliEnabled && bubblewrapPkg != null) [ bubblewrapPkg ]
-    ++ lib.optionals (nixToolsEnabled && statixPkg != null) [ statixPkg ]
-    ++ lib.optionals (nixToolsEnabled && deadnixPkg != null) [ deadnixPkg ]
-    ++ lib.optionals (nixToolsEnabled && alejandraPkg != null) [ alejandraPkg ]
-    ++ lib.optionals (nixToolsEnabled && nixfmtPkg != null) [ nixfmtPkg ]
-    ++ lib.optionals (nixToolsEnabled && nixLspPkg != null) [ nixLspPkg ]
-    ++ lib.optionals (t3codeEnabled && t3codePkg != null) [ t3codePkg ]
-    ++ lib.optionals (t3codeEnabled && t3DesktopPkg != null) [
-      t3DesktopPkg
-      t3OscryptAlias
-    ]
-    # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
-    ++ lib.optionals (nixToolsEnabled && graphiteCliPkg != null) [ graphiteCliPkg ]
-    ++ lib.optionals (aiCliEnabled && skillsPkg != null) [ skillsPkg ]
-    ++ lib.optionals (cursorEnabled && cursorPkg != null) [ cursorPkg ]
-    ++ lib.optionals (cursorEnabled && cursorCliPkg != null) [ cursorCliPkg ]
-    ++ lib.optionals (zedEnabled && zedEditorPkg != null) [ zedEditorPkg ]
-    ++ lib.optionals (nixToolsEnabled && nilPkg != null) [ nilPkg ];
+  # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
+  home.packages = resolvedPackages;
 
   xdg.desktopEntries = lib.optionalAttrs (t3codeEnabled && t3DesktopPkg != null) {
     t3code = {

@@ -2,6 +2,7 @@
   lib,
   pkgs,
   config,
+  inputs,
   ...
 }:
 let
@@ -10,10 +11,13 @@ let
   inherit (v.desktop) compositor extraCompositors;
   hasNiri = builtins.elem "niri" ([ compositor ] ++ extraCompositors);
   hasHyprland = builtins.elem "hyprland" ([ compositor ] ++ extraCompositors);
+  hasUmbriel = builtins.elem "umbriel" ([ compositor ] ++ extraCompositors);
   hasPlasma = builtins.elem "plasma" ([ compositor ] ++ extraCompositors);
-  plasmaOnly = hasPlasma && !hasNiri && !hasHyprland;
+  plasmaOnly = hasPlasma && !hasNiri && !hasHyprland && !hasUmbriel;
   kdePortal = pkgs.kdePackages.xdg-desktop-portal-kde;
   gtkPortal = pkgs.xdg-desktop-portal-gtk;
+  umbrielPortal =
+    inputs.umbriel.inputs.xdg-desktop-portal-umbriel.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {
   config = lib.mkIf enabled {
@@ -23,13 +27,14 @@ in
       # Hyprland NixOS module supplies xdg-desktop-portal-hyprland itself.
       # Plasma-only hosts drop the GTK portal: xdg-desktop-portal-gtk 1.15.3
       # SIGSEGVs at login when kde-gtk-config rewrites gtk.css
-      # (nixpkgs #523091). Mixed and niri/hyprland hosts keep GTK fallbacks.
+      # (nixpkgs #523091). Mixed and Wayland compositor hosts keep GTK fallbacks.
       extraPortals =
         if plasmaOnly then
           lib.mkForce [ kdePortal ]
         else
           lib.optionals hasNiri [ pkgs.xdg-desktop-portal-gnome ]
           ++ lib.optionals hasPlasma [ kdePortal ]
+          ++ lib.optionals hasUmbriel [ umbrielPortal ]
           ++ [ gtkPortal ];
       config = {
         common.default = if plasmaOnly then [ "kde" ] else [ "gtk" ];
@@ -58,14 +63,25 @@ in
           "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
         };
       }
+      // lib.optionalAttrs hasUmbriel {
+        umbriel = {
+          default = [
+            "umbriel"
+            "gtk"
+          ];
+          "org.freedesktop.impl.portal.Access" = [ "gtk" ];
+          "org.freedesktop.impl.portal.FileChooser" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Notification" = [ "gtk" ];
+          "org.freedesktop.impl.portal.Secret" = [ "gnome-keyring" ];
+        };
+      }
       // lib.optionalAttrs hasPlasma {
         # Shadowing kde-portals.conf: match xdg-desktop-portal-kde's file so
         # Secret/Notification stay on KWallet/plasmanotify. Omit gtk on
         # Plasma-only so the GTK backend is never D-Bus activated at login.
         kde = {
           default = [ "kde" ] ++ lib.optionals (!plasmaOnly) [ "gtk" ];
-          "org.freedesktop.impl.portal.Settings" =
-            [ "kde" ] ++ lib.optionals (!plasmaOnly) [ "gtk" ];
+          "org.freedesktop.impl.portal.Settings" = [ "kde" ] ++ lib.optionals (!plasmaOnly) [ "gtk" ];
           "org.freedesktop.impl.portal.Secret" = [ "kwallet" ];
           "org.freedesktop.impl.portal.Notification" = [ "plasmanotify" ];
         };

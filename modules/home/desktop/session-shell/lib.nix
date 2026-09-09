@@ -7,13 +7,23 @@ let
   compositors = [ compositor ] ++ extraCompositors;
   hasNiri = builtins.elem "niri" compositors;
   hasHyprland = builtins.elem "hyprland" compositors;
+  hasUmbriel = builtins.elem "umbriel" compositors;
   hasPlasma = builtins.elem "plasma" compositors;
-  hasWaylandCompositor = hasNiri || hasHyprland;
+  hasWaylandCompositor = hasNiri || hasHyprland || hasUmbriel;
   sessionShell = get [ "desktop" "sessionShell" ] (
     if hasWaylandCompositor then "noctalia" else "none"
   );
   noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
   noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (sessionShell == "noctalia");
+  sessionCommands = import ../../../../lib/session-shell-commands.nix {
+    inherit sessionShell noctaliaCommand;
+  };
+  inherit (sessionCommands)
+    startupCommand
+    startupArgs
+    lockCommand
+    restart
+    ;
   qtThemeEnabled =
     get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
   nvidia = get [ "graphics" "profile" ] "auto" == "nvidia";
@@ -58,55 +68,6 @@ let
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
   }
   // lib.optionalAttrs nvidia { NVD_BACKEND = "direct"; };
-  startupCommand =
-    if sessionShell == "noctalia" then
-      noctaliaCommand
-    else if sessionShell == "dms" then
-      "dms run"
-    else if sessionShell == "caelestia" then
-      "caelestia shell -d"
-    else if sessionShell == "inir" then
-      "inir run"
-    else if sessionShell == "ii" then
-      "ii"
-    else
-      null;
-  startupArgs =
-    if sessionShell == "noctalia" then
-      [ noctaliaCommand ]
-    else if sessionShell == "dms" then
-      [
-        "dms"
-        "run"
-      ]
-    else if sessionShell == "caelestia" then
-      [
-        "caelestia"
-        "shell"
-        "-d"
-      ]
-    else if sessionShell == "inir" then
-      [
-        "inir"
-        "run"
-      ]
-    else if sessionShell == "ii" then
-      [ "ii" ]
-    else
-      null;
-  lockCommand =
-    if sessionShell == "noctalia" then
-      "${noctaliaCommand} msg session lock"
-    else if sessionShell == "dms" then
-      "dms ipc call lock lock"
-    else if sessionShell == "caelestia" then
-      "caelestia shell lock lock"
-    else if sessionShell == "inir" then
-      "inir lock activate"
-    else if sessionShell == "ii" then
-      "ii ipc call lock activate"
-    else
-      "loginctl lock-session";
 in
 {
   inherit
@@ -116,6 +77,7 @@ in
     compositors
     hasNiri
     hasHyprland
+    hasUmbriel
     hasPlasma
     hasWaylandCompositor
     sessionShell
@@ -131,6 +93,7 @@ in
     startupCommand
     startupArgs
     lockCommand
+    restart
     ;
   dmsEnable = sessionShell == "dms";
   caelestiaEnable = sessionShell == "caelestia";
@@ -138,6 +101,6 @@ in
   iiEnable = sessionShell == "ii";
   noneEnable = sessionShell == "none";
   shellOwnsIdle = desktopEnabled && fullShell && hasWaylandCompositor;
-  plasmaOwnsIdle = hasPlasma && !hasNiri && !hasHyprland;
+  plasmaOwnsIdle = hasPlasma && !hasNiri && !hasHyprland && !hasUmbriel;
   matePolkitEnable = sessionShell == "none";
 }

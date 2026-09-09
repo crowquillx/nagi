@@ -6,7 +6,7 @@
 }:
 let
   shell = import ./lib.nix { inherit lib vars; };
-  inherit (shell) sessionShell noctaliaCommand;
+  inherit (shell) sessionShell noctaliaCommand lockCommand;
 
   noctalia = message: "${noctaliaCommand} msg ${message}";
   dms = target: fn: "dms ipc call ${target} ${fn}";
@@ -67,196 +67,118 @@ let
 
   noneClipboard = "${clipboardFuzzel}/bin/nagi-clipboard-fuzzel";
 
+  baseActions = {
+    launcher = "fuzzel";
+    clipboard = noneClipboard;
+    controlCenter = null;
+    lock = lockCommand;
+    inherit
+      volumeUp
+      volumeDown
+      volumeMute
+      brightnessUp
+      brightnessDown
+      ;
+    taskManager = taskManagerHtop;
+    workspaceRename = renameHelper;
+    notifications = null;
+    settings = null;
+    wallpaper = null;
+    windowSwitcher = {
+      mode = "omit";
+      command = null;
+    };
+  };
+
+  shellActions = {
+    none = baseActions;
+    noctalia = baseActions // {
+      launcher = noctalia "panel-toggle launcher";
+      clipboard = noctalia "panel-toggle clipboard";
+      controlCenter = noctalia "panel-toggle control-center";
+      volumeUp = noctalia "volume-up";
+      volumeDown = noctalia "volume-down";
+      volumeMute = noctalia "volume-mute";
+      brightnessUp = noctalia "brightness-up";
+      brightnessDown = noctalia "brightness-down";
+      notifications = noctalia "panel-toggle control-center notifications";
+      settings = noctalia "settings-toggle";
+      wallpaper = noctalia "panel-toggle wallpaper";
+      windowSwitcher = {
+        mode = "command";
+        command = noctalia "window-switcher";
+      };
+    };
+    dms = baseActions // {
+      launcher = dms "spotlight" "toggle";
+      clipboard = dms "clipboard" "toggle";
+      controlCenter = dms "control-center" "toggle";
+      volumeUp = dms "audio" "increment";
+      volumeDown = dms "audio" "decrement";
+      volumeMute = dms "audio" "mute";
+      brightnessUp = "${dms "brightness" "increment"} 5 \"\"";
+      brightnessDown = "${dms "brightness" "decrement"} 5 \"\"";
+      taskManager = dms "processlist" "focusOrToggle";
+      workspaceRename = dms "workspace-rename" "open";
+      notifications = dms "notifications" "toggle";
+      settings = dms "settings" "focusOrToggle";
+      wallpaper = dms "dankdash" "wallpaper";
+      windowSwitcher = {
+        mode = "command";
+        command = dms "hypr" "toggleOverview";
+      };
+    };
+    caelestia = baseActions // {
+      launcher = caelestia "drawers toggle launcher";
+      clipboard = null;
+      controlCenter = caelestia "drawers toggle sidebar";
+      taskManager = null;
+      workspaceRename = null;
+      settings = caelestia "nexus open";
+    };
+    inir = baseActions // {
+      launcher = inir "overview" "toggle";
+      clipboard = inir "clipboard" "toggle";
+      controlCenter = inir "controlPanel" "toggle";
+      volumeUp = inir "audio" "volumeUp";
+      volumeDown = inir "audio" "volumeDown";
+      volumeMute = inir "audio" "mute";
+      brightnessUp = inir "brightness" "increment";
+      brightnessDown = inir "brightness" "decrement";
+      settings = "inir settings";
+      wallpaper = inir "wallpaperSelector" "toggle";
+      windowSwitcher = {
+        mode = "command";
+        command = inir "altSwitcher" "toggle";
+      };
+    };
+    ii = baseActions // {
+      launcher = ii "search" "toggle";
+      clipboard = ii "search" "clipboardToggle";
+      controlCenter = ii "sidebarRight" "toggle";
+      brightnessUp = ii "brightness" "increment";
+      brightnessDown = ii "brightness" "decrement";
+      settings = "ii-settings";
+      windowSwitcher = {
+        mode = "command";
+        command = ii "search" "toggle";
+      };
+    };
+  };
+
+  selected =
+    if builtins.isString sessionShell && builtins.hasAttr sessionShell shellActions then
+      shellActions.${sessionShell}
+    else
+      baseActions;
+
   windowSwitcher =
     if compositor == "niri" then
       {
         mode = "overview";
         command = null;
       }
-    else if sessionShell == "noctalia" then
-      {
-        mode = "command";
-        command = noctalia "window-switcher";
-      }
-    else if sessionShell == "dms" then
-      {
-        mode = "command";
-        command = dms "hypr" "toggleOverview";
-      }
-    else if sessionShell == "inir" then
-      {
-        mode = "command";
-        command = inir "altSwitcher" "toggle";
-      }
-    else if sessionShell == "ii" then
-      {
-        mode = "command";
-        command = ii "search" "toggle";
-      }
     else
-      {
-        mode = "omit";
-        command = null;
-      };
+      selected.windowSwitcher;
 in
-{
-  inherit windowSwitcher;
-
-  launcher =
-    if sessionShell == "noctalia" then
-      noctalia "panel-toggle launcher"
-    else if sessionShell == "dms" then
-      dms "spotlight" "toggle"
-    else if sessionShell == "caelestia" then
-      caelestia "drawers toggle launcher"
-    else if sessionShell == "inir" then
-      inir "overview" "toggle"
-    else if sessionShell == "ii" then
-      ii "search" "toggle"
-    else
-      "fuzzel";
-
-  clipboard =
-    if sessionShell == "noctalia" then
-      noctalia "panel-toggle clipboard"
-    else if sessionShell == "dms" then
-      dms "clipboard" "toggle"
-    else if sessionShell == "caelestia" then
-      null
-    else if sessionShell == "inir" then
-      inir "clipboard" "toggle"
-    else if sessionShell == "ii" then
-      ii "search" "clipboardToggle"
-    else
-      noneClipboard;
-
-  controlCenter =
-    if sessionShell == "noctalia" then
-      noctalia "panel-toggle control-center"
-    else if sessionShell == "dms" then
-      dms "control-center" "toggle"
-    else if sessionShell == "caelestia" then
-      caelestia "drawers toggle sidebar"
-    else if sessionShell == "inir" then
-      inir "controlPanel" "toggle"
-    else if sessionShell == "ii" then
-      ii "sidebarRight" "toggle"
-    else
-      null;
-
-  lock =
-    if sessionShell == "noctalia" then
-      noctalia "session lock"
-    else if sessionShell == "dms" then
-      dms "lock" "lock"
-    else if sessionShell == "caelestia" then
-      caelestia "lock lock"
-    else if sessionShell == "inir" then
-      inir "lock" "activate"
-    else if sessionShell == "ii" then
-      ii "lock" "activate"
-    else
-      "loginctl lock-session";
-
-  volumeUp =
-    if sessionShell == "noctalia" then
-      noctalia "volume-up"
-    else if sessionShell == "dms" then
-      dms "audio" "increment"
-    else if sessionShell == "inir" then
-      inir "audio" "volumeUp"
-    else
-      volumeUp;
-
-  volumeDown =
-    if sessionShell == "noctalia" then
-      noctalia "volume-down"
-    else if sessionShell == "dms" then
-      dms "audio" "decrement"
-    else if sessionShell == "inir" then
-      inir "audio" "volumeDown"
-    else
-      volumeDown;
-
-  volumeMute =
-    if sessionShell == "noctalia" then
-      noctalia "volume-mute"
-    else if sessionShell == "dms" then
-      dms "audio" "mute"
-    else if sessionShell == "inir" then
-      inir "audio" "mute"
-    else
-      volumeMute;
-
-  brightnessUp =
-    if sessionShell == "noctalia" then
-      noctalia "brightness-up"
-    else if sessionShell == "dms" then
-      "${dms "brightness" "increment"} 5 \"\""
-    else if sessionShell == "inir" then
-      inir "brightness" "increment"
-    else if sessionShell == "ii" then
-      ii "brightness" "increment"
-    else
-      brightnessUp;
-
-  brightnessDown =
-    if sessionShell == "noctalia" then
-      noctalia "brightness-down"
-    else if sessionShell == "dms" then
-      "${dms "brightness" "decrement"} 5 \"\""
-    else if sessionShell == "inir" then
-      inir "brightness" "decrement"
-    else if sessionShell == "ii" then
-      ii "brightness" "decrement"
-    else
-      brightnessDown;
-
-  taskManager =
-    if sessionShell == "dms" then
-      dms "processlist" "focusOrToggle"
-    else if sessionShell == "caelestia" then
-      null
-    else
-      taskManagerHtop;
-
-  workspaceRename =
-    if sessionShell == "dms" then
-      dms "workspace-rename" "open"
-    else if sessionShell == "caelestia" then
-      null
-    else
-      renameHelper;
-
-  notifications =
-    if sessionShell == "noctalia" then
-      noctalia "panel-toggle control-center notifications"
-    else if sessionShell == "dms" then
-      dms "notifications" "toggle"
-    else
-      null;
-
-  settings =
-    if sessionShell == "noctalia" then
-      noctalia "settings-toggle"
-    else if sessionShell == "dms" then
-      dms "settings" "focusOrToggle"
-    else if sessionShell == "caelestia" then
-      caelestia "nexus open"
-    else if sessionShell == "inir" then
-      "inir settings"
-    else if sessionShell == "ii" then
-      "ii-settings"
-    else
-      null;
-
-  wallpaper =
-    if sessionShell == "noctalia" then
-      noctalia "panel-toggle wallpaper"
-    else if sessionShell == "dms" then
-      dms "dankdash" "wallpaper"
-    else if sessionShell == "inir" then
-      inir "wallpaperSelector" "toggle"
-    else
-      null;
-}
+selected // { inherit windowSwitcher; }

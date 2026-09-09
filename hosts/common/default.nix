@@ -14,6 +14,9 @@ let
   primaryUser = v.users.primary;
   hasNiri =
     v.desktop.enable && builtins.elem "niri" ([ v.desktop.compositor ] ++ v.desktop.extraCompositors);
+  hasUmbriel =
+    v.desktop.enable
+    && builtins.elem "umbriel" ([ v.desktop.compositor ] ++ v.desktop.extraCompositors);
   hmBackupCommand = pkgs.writeShellScript "home-manager-backup" ''
     set -eu
 
@@ -52,6 +55,7 @@ in
     users.${primaryUser} = {
       imports = homeModulesFor {
         niri = hasNiri;
+        umbriel = hasUmbriel;
         sessionShell = v.desktop.sessionShell;
       };
       home.username = lib.mkForce primaryUser;

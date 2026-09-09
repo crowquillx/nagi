@@ -11,6 +11,7 @@ let
     builtins.elem c [
       "niri"
       "hyprland"
+      "umbriel"
     ]
   ) compositors;
   # Plasma ships bluedevil. Blueman is the tray for niri/hyprland. Starting

@@ -26,6 +26,10 @@ in
             message = "desktop.sessionShell = \"ii\" is illegal when niri is in desktop.compositor or desktop.extraCompositors.";
           }
           {
+            assertion = !shell.hasUmbriel || shell.sessionShell == "noctalia";
+            message = "desktop.sessionShell must be \"noctalia\" when umbriel is in desktop.compositor or desktop.extraCompositors.";
+          }
+          {
             assertion = shell.noctaliaEnable == (shell.sessionShell == "noctalia");
             message = "desktop.noctalia.enable is derived from desktop.sessionShell == \"noctalia\" and must not be set independently.";
           }

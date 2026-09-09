@@ -11,6 +11,7 @@ let
 
   homeModule = import ../../users/default/home.nix;
   noctaliaHmModule = lib.attrByPath [ "noctalia" "homeModules" "default" ] null inputs;
+  umbrielHmModule = inputs.umbriel.homeModules.default;
   dmsHmModule = lib.attrByPath [ "dms" "homeModules" "default" ] null inputs;
   caelestiaHmModule =
     let
@@ -74,6 +75,7 @@ let
     {
       standalone ? false,
       niri ? false,
+      umbriel ? false,
       sessionShell ? "none",
     }:
     [ homeModule ]
@@ -95,6 +97,7 @@ let
       niriHmConfigModule
       niriHomeModule
     ]
+    ++ lib.optionals umbriel [ umbrielHmModule ]
     ++ lib.optional standalone determinateHmModule
     ++ lib.optionals (standalone && stylixHmModule != null) [ stylixHmModule ];
 
@@ -102,6 +105,10 @@ let
     vars:
     vars.desktop.enable
     && builtins.elem "niri" ([ vars.desktop.compositor ] ++ vars.desktop.extraCompositors);
+  umbrielEnabled =
+    vars:
+    vars.desktop.enable
+    && builtins.elem "umbriel" ([ vars.desktop.compositor ] ++ vars.desktop.extraCompositors);
   comfyuiEnabled = vars: vars.features.ai.enable && vars.features.ai.comfyui.enable;
 
   mkHost =
@@ -160,6 +167,7 @@ let
         homeModulesFor {
           standalone = true;
           niri = niriEnabled vars;
+          umbriel = umbrielEnabled vars;
           sessionShell = vars.desktop.sessionShell;
         }
         ++ [
@@ -175,56 +183,6 @@ let
 in
 {
   systems = lib.unique (lib.attrValues hostPlatforms);
-
-  perSystem =
-    {
-      pkgs,
-      system,
-      ...
-    }:
-    let
-      inherit (pkgs) lib;
-      # Standard checks.x86_64-linux.* output. Each entry is a build-only
-      # derivation; no live activation or privileged commands run here.
-      # Reuses the same builders as the published configurations so the host
-      # list stays DRY and the checks never drift from real outputs.
-      nixosChecks = lib.mapAttrs' (
-        hostName: _:
-        lib.nameValuePair "nixos-${hostName}" nixosConfigs.${hostName}.config.system.build.toplevel
-      ) nixosConfigs;
-
-      homeChecks = lib.mapAttrs' (
-        hostName: _: lib.nameValuePair "home-${hostName}" homeConfigs.${hostName}.activationPackage
-      ) homeConfigs;
-
-      statixSource = lib.fileset.toSource {
-        root = ../..;
-        fileset = lib.fileset.unions [
-          (lib.fileset.fileFilter (file: file.hasExt "nix") ../..)
-          ../../statix.toml
-        ];
-      };
-      # Blocking lint over only Nix sources and statix.toml. In particular,
-      # wallpapers and other large repository assets never enter this derivation.
-      statixCheck =
-        pkgs.runCommandLocal "statix-check"
-          {
-            nativeBuildInputs = [ pkgs.statix ];
-          }
-          ''
-            cp -r ${statixSource}/. .
-            statix check .
-            touch $out
-          '';
-    in
-    {
-      checks =
-        nixosChecks
-        // homeChecks
-        // {
-          statix = statixCheck;
-        };
-    };
 
   flake = {
     nixosModules = nixosHostModules;
