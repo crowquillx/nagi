@@ -1,6 +1,7 @@
 {
   lib,
   vars ? { },
+  inputs,
   ...
 }:
 let
@@ -9,15 +10,46 @@ let
   desktopEnabled = get [ "desktop" "enable" ] true;
   shell = import ./session-shell/lib.nix { inherit lib vars; };
   inherit (shell) noctaliaEnable hasWaylandCompositor;
-  kdeThemeEnable = get [ "features" "theme" "qt" "enable" ] true;
   noctaliaSettings = get [ "desktop" "noctalia" "settings" ] { };
+  noctaliaAssets = "${inputs.noctalia}/assets/templates";
 
-  # Required shell defaults win over host settings for the same leaves.
+  # These templates only write separate generated files. The main application
+  # configs remain owned by Home Manager and include or select those files.
+  userTemplates = {
+    gtk3 = {
+      input_path = "${noctaliaAssets}/gtk/gtk3.css";
+      output_path = "$XDG_CONFIG_HOME/gtk-3.0/noctalia.css";
+    };
+    gtk4 = {
+      input_path = "${noctaliaAssets}/gtk/gtk4.css";
+      output_path = "$XDG_CONFIG_HOME/gtk-4.0/noctalia.css";
+    };
+    qt = {
+      input_path = "${noctaliaAssets}/qt/qtct.conf";
+      output_path = [
+        "$XDG_CONFIG_HOME/qt5ct/colors/noctalia.conf"
+        "$XDG_CONFIG_HOME/qt6ct/colors/noctalia.conf"
+      ];
+    };
+    ghostty = {
+      input_path = "${noctaliaAssets}/ghostty/ghostty";
+      output_path = "$XDG_CONFIG_HOME/ghostty/themes/Rose Pine";
+    };
+    kitty = {
+      input_path = "${noctaliaAssets}/kitty/kitty.conf";
+      output_path = "$XDG_CONFIG_HOME/kitty/themes/noctalia.conf";
+    };
+  };
+
   requiredSettings = {
     shell.polkit_agent = true;
     theme.templates = {
       enable_builtin_templates = true;
-      builtin_ids = lib.optionals kdeThemeEnable [ "kcolorscheme" ];
+      builtin_ids = [
+        "kcolorscheme"
+        "umbriel"
+      ];
+      user = userTemplates;
     };
   };
 in

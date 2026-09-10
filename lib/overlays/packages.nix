@@ -7,24 +7,8 @@ let
     };
   };
 
-  # hyprland.cachix.org only serves packages built against upstream's pinned
-  # nixpkgs. Upstream's overlays callPackage against the consumer tree and
-  # always miss, so re-export the flake packages instead.
-  hyprlandPackages =
-    final: _prev:
-    let
-      packages = inputs.hyprland.packages.${final.stdenv.hostPlatform.system};
-    in
-    {
-      inherit (packages) hyprland xdg-desktop-portal-hyprland;
-    };
-
   hushmic = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
-  };
-  kwinEffectsBetterBlurDx = final: _prev: {
-    kwin-effects-better-blur-dx =
-      inputs.kwin-effects-better-blur-dx.packages.${final.stdenv.hostPlatform.system}.default;
   };
   vortex = final: _prev: {
     vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
@@ -54,8 +38,6 @@ in
     computerUseLinux
     determinateNix
     hushmic
-    hyprlandPackages
-    kwinEffectsBetterBlurDx
     mo2Lint
     nixGaming
     vortex

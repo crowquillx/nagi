@@ -54,10 +54,9 @@ Read [docs/DENDRITIC.md](/home/tan/nagi/docs/DENDRITIC.md) before changing flake
 
 ### Desktop/session specifics
 - `tandesk`, `default`, and `tanlappy` may differ in graphics, session, and hardware assumptions.
-- Niri support is intentional and should be preserved.
-- Session chrome is `desktop.sessionShell` (`noctalia` | `dms` | `caelestia` | `inir` | `ii` | `none`). Do not reuse `features.shell`. Caelestia and ii cannot share a host with niri.
-- SDDM, portals, keyring, session services, and compositor-specific behavior should be treated as runtime-sensitive changes and validated carefully.
-- Do not assume KDE- or GNOME-style defaults fit a Niri session; check the existing module design first.
+- Umbriel is the only supported compositor and Noctalia is the only supported session shell.
+- Noctalia Greeter through greetd is the only display manager. Keep its declarative `greeter.toml` separate from mutable sync state.
+- Portals, keyring, session services, and compositor-specific behavior are runtime-sensitive changes. Validate them carefully.
 
 ### Security and secrets
 - Never commit plaintext secrets.

@@ -45,23 +45,5 @@ class OrphanScannerTests(unittest.TestCase):
             self.assertIn("modules/home/commented/shared.nix", relative)
             self.assertIn("modules/home/duplicate/shared.nix", relative)
 
-    def test_dormant_niri_roots_keep_their_dependencies_reachable(self) -> None:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            repo = Path(temp_dir)
-            self.write(repo, "modules/combined/stacks.nix", "[ ]")
-            self.write(
-                repo,
-                "modules/home/desktop/niri-user.nix",
-                "{...}: { imports = [ ./niri ]; }",
-            )
-            self.write(repo, "modules/home/desktop/niri/default.nix")
-            self.write(repo, "modules/nixos/desktop/niri.nix")
-
-            orphans, dormant = scanner.scan(repo)
-
-            self.assertEqual(orphans, [])
-            self.assertEqual(len(dormant), 2)
-
-
 if __name__ == "__main__":
     unittest.main()

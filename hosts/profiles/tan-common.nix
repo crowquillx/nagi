@@ -27,13 +27,7 @@
 
   desktop = {
     enable = true;
-    compositor = "hyprland";
-    extraCompositors = [ ];
-    displayManager = "auto";
-    sddm = {
-      wayland.enable = false;
-      background = ../../wallpapers/1.png;
-    };
+    compositor = "umbriel";
     browser = {
       default = "zen";
       zen.enable = true;
@@ -55,14 +49,9 @@
       };
     };
     shellStartupCommand = null;
-    startup.backend = "hyprland";
   };
 
   features = {
-    stylix = {
-      enable = true;
-      variant = "main";
-    };
     shell = {
       fish.enable = false;
       zsh.enable = true;
@@ -98,7 +87,6 @@
     };
     chat = {
       client = "discord";
-      startup.enable = true;
       discord.equicord.enable = true;
     };
     codingTools = {
@@ -192,6 +180,7 @@
       edition = "free";
     };
     theme = {
+      variant = "main";
       gtk = {
         enable = true;
         iconTheme = {

@@ -258,7 +258,7 @@ auto_statix() {
 
 # Follow exact Nix path references from module entrypoints. This avoids
 # basename collisions, comments, and unrooted groups of modules fooling the
-# orphan check. The scanner explicitly roots intentionally dormant Niri code.
+# orphan check from real module entrypoints.
 scan_orphan_modules() {
   local flake_dir="$1"
   python3 "$flake_dir/scripts/check-orphan-modules.py" "$flake_dir"

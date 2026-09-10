@@ -37,18 +37,12 @@
 
   desktop = {
     enable = true;
-    compositor = "hyprland";
-    extraCompositors = [ ];
-    displayManager = "auto";
+    compositor = "umbriel";
     browser = {
       default = "mullvadBrowser";
       zen.enable = false;
       helium.enable = false;
       mullvadBrowser.enable = true;
-    };
-    hyprland = {
-      outputs = { };
-      settings = { };
     };
     sessionShell = "noctalia";
     noctalia = {
@@ -70,10 +64,6 @@
   };
 
   features = {
-    stylix = {
-      enable = true;
-      variant = "moon";
-    };
 
     shell = {
       fish.enable = true;

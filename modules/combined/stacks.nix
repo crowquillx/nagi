@@ -14,24 +14,16 @@ let
     ../nixos/services/mounts.nix
   ];
 
-  nixosTheme = [
-    ../nixos/theme/stylix.nix
-  ];
-
   nixosHardware = [
     ../nixos/hardware/graphics.nix
     ../nixos/hardware/swap.nix
   ];
 
   nixosDesktop = [
-    ../nixos/desktop/niri.nix
-    ../nixos/desktop/hyprland.nix
     ../nixos/desktop/umbriel.nix
-    ../nixos/desktop/kde.nix
+    ../nixos/desktop/noctalia-greeter.nix
     ../nixos/desktop/cursor.nix
-    ../nixos/desktop/sddm.nix
     ../nixos/desktop/session-lifecycle.nix
-    ../nixos/desktop/session-shell-pam.nix
   ];
 
   nixosShells = [
@@ -105,7 +97,6 @@ let
   homeTheme = [
     ../home/theme/gtk.nix
     ../home/theme/qt.nix
-    ../home/theme/stylix.nix
   ];
 
   homeShell = [
@@ -117,30 +108,24 @@ let
 
   homeDesktop = [
     ../home/desktop/session-runtime.nix
-    ../home/desktop/session-shell/default.nix
     ../home/desktop/pointer-cursor.nix
     ../home/desktop/umbriel.nix
-    ../home/desktop/hyprland-user.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
-    ../home/desktop/noctalia-hyprland-workspaces.nix
     ../home/desktop/hushmic-tray.nix
     ../home/desktop/handy.nix
-    ../home/desktop/hdr-game.nix
   ];
 
   homeSecurity = [
     ../home/security/ssh-key.nix
     ../home/security/sops-age-key.nix
     ../home/security/gpg-agent.nix
-    ../home/security/keyring.nix
   ];
 in
 {
   inherit
     nixosBase
     nixosMounts
-    nixosTheme
     nixosHardware
     nixosDesktop
     nixosShells
@@ -160,7 +145,6 @@ in
   nixosModules =
     nixosBase
     ++ nixosMounts
-    ++ nixosTheme
     ++ nixosHardware
     ++ nixosDesktop
     ++ nixosShells

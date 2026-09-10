@@ -7,12 +7,7 @@ from collections import deque
 from pathlib import Path
 
 MODULE_TREES = ("modules/nixos", "modules/home")
-INTENTIONALLY_DORMANT = {
-    "modules/nixos/desktop/niri.nix":
-        "kept for future Niri re-enablement",
-    "modules/home/desktop/niri-user.nix":
-        "kept for future Niri re-enablement",
-}
+INTENTIONALLY_DORMANT = {}
 PATH_RE = re.compile(
     r"(?<![A-Za-z0-9_./+-])"
     r"(?P<path>(?:\./|\.\./)+(?:[A-Za-z0-9._+-]+/)*[A-Za-z0-9._+-]+)"

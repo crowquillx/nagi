@@ -1,5 +1,5 @@
 {
-  description = "Minimal multi-host NixOS + Home Manager setup with Hyprland, Niri, Plasma, session shells, and sops-nix";
+  description = "Minimal multi-host NixOS + Home Manager setup with Umbriel, Noctalia, and sops-nix";
 
   # This literal is the source of truth for both --accept-flake-config and the
   # installed Nix daemon settings. Nix rejects imported/thunked nixConfig
@@ -17,7 +17,6 @@
       "https://nix-gaming.cachix.org"
       "https://hushmic-nix.cachix.org"
       "https://kevinpita.cachix.org"
-      "https://hyprland.cachix.org"
     ];
     extra-trusted-public-keys = [
       "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="
@@ -31,7 +30,6 @@
       "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="
       "hushmic-nix.cachix.org-1:29j1XWTAAnb869spxlZ937ITJI9MCU1Wre+z7+1HJUM="
       "kevinpita.cachix.org-1:Cu9UtCDSfDq3/WDnI7N1N/LzAh90SPS+1R+nWao/hz0="
-      "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
   };
 
@@ -62,58 +60,23 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    stylix = {
-      url = "github:danth/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-    };
-
     lanzaboote = {
       url = "github:nix-community/lanzaboote";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    # KWin plugin; follows host nixpkgs so it links against this KWin.
-    kwin-effects-better-blur-dx = {
-      url = "github:xarblu/kwin-effects-better-blur-dx";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Use niri-flake only for its KDL/Home Manager configuration API. The
-    # compositor package comes from host nixpkgs to keep Mesa/ABI alignment.
-    niri.url = "github:sodiboo/niri-flake";
 
     umbriel = {
       url = "github:noctalia-dev/umbriel";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Do not follow nixpkgs: hyprland.cachix.org only serves packages built
-    # against upstream's pin. Consume inputs.hyprland.packages (see
-    # lib/overlays/packages.nix); upstream's overlays rebuild against the
-    # consumer tree and always miss the cache.
-    hyprland = {
-      url = "github:hyprwm/Hyprland";
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     noctalia = {
       url = "github:noctalia-dev/noctalia/cachix";
-    };
-
-    # Do not follow nixpkgs: the flake builds dms-shell against the consumer pkgs.
-    dms.url = "github:AvengeMedia/DankMaterialShell";
-
-    caelestia-shell = {
-      url = "github:caelestia-dots/shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    # Do not follow nixpkgs: the Home Manager module builds against consumer pkgs.
-    inir.url = "github:snowarch/iNiR";
-
-    illogical-impulse = {
-      url = "github:end-4/dots-hyprland";
-      flake = false;
     };
 
     zen-browser = {

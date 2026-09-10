@@ -24,19 +24,14 @@
   };
 
   desktop = {
-    compositor = "niri";
+    compositor = "umbriel";
     browser = {
       mullvadBrowser.enable = false;
     };
     session = {
-      # Noctalia owns the authentication agent in Niri sessions.
+      # Noctalia owns the authentication agent in the Umbriel session.
       polkit.enable = false;
     };
-    startup.apps = [
-      "spotify"
-      "handy --start-hidden"
-    ];
-    startup.backend = "niri";
   };
 
   features = {

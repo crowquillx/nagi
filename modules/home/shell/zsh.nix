@@ -15,16 +15,8 @@ let
   rosePineStarshipSettings = builtins.fromTOML (
     builtins.readFile "${inputs.rose-pine-starship}/rose-pine.toml"
   );
-  # Stylix would overwrite the upstream preset; skip it when Stylix is active.
-  # When Stylix is inactive its HM module may not be imported, so this
-  # definition must be omitted entirely (see modules/theme/stylix-enabled.nix).
-  stylixActive = (import ../../theme/stylix-enabled.nix { inherit lib vars; }).enable;
 in
 {
-  # The stylix key must be structurally absent when Stylix is inactive:
-  # option paths are rejected even under `mkIf false`, and without Stylix
-  # its HM module may not be imported at all. optionalAttrs forces
-  # stylixActive while constructing this module's config.
   config =
     if !zshEnabled then
       { }
@@ -79,9 +71,5 @@ in
             settings = rosePineStarshipSettings;
           };
         };
-      }
-      // lib.optionalAttrs stylixActive {
-        # Stylix would overwrite the upstream preset; skip it when active.
-        stylix.targets.starship.enable = false;
       };
 }

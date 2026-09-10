@@ -31,12 +31,12 @@
     primary = "tan";
     extraPackages = [
       "spotify"
-      "kde-rounded-corners"
       "mpv"
       "pywalfox-native"
       "sops"
       "age"
       "gnupg"
+      "gpu-screen-recorder"
       "yubikey-manager"
       "pinentry-qt"
       "qbittorrent"
@@ -66,99 +66,16 @@
 
   desktop = {
     compositor = "umbriel";
-    extraCompositors = [ ];
     browser = {
       brave.passwordStore = "gnome-libsecret";
       mullvadBrowser.enable = true;
     };
 
-    hyprland = {
-      outputs = {
-        "DP-3" = {
-          mode = {
-            width = 2560;
-            height = 1440;
-            refresh = 180.002;
-          };
-          scale = 1;
-          workspaceBase = 0;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 2560;
-            y = 1080;
-          };
-          variableRefreshRate = "on-demand";
-          bitDepth = 10;
-          colorManagement = "srgb";
-          sdrBrightness = 1.0;
-          sdrSaturation = 1.0;
-          sdrMaxLuminance = 250;
-          focusAtStartup = true;
-        };
-        "DP-2" = {
-          mode = {
-            width = 2560;
-            height = 1440;
-            refresh = 164.999;
-          };
-          scale = 1;
-          workspaceBase = 100;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 0;
-            y = 1080;
-          };
-        };
-        "DP-1" = {
-          mode = {
-            width = 1920;
-            height = 1080;
-            refresh = 144.001;
-          };
-          scale = 1;
-          workspaceBase = 200;
-          transform = {
-            rotation = 0;
-            flipped = false;
-          };
-          position = {
-            x = 2560;
-            y = 0;
-          };
-        };
-      };
-    };
     session = {
       killProcessesOnLogout = true;
       polkit.enable = false;
     };
     hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo";
-    # HDR wrapper kept for the Plasma setup; disabled under Hyprland, which
-    # handles HDR natively via the 10-bit DP-3 output above.
-    hdrGame = {
-      enable = false;
-      monitor = {
-        # AOC Q27G3XMN Mini-LED; UUID is the stable KScreen identity,
-        # model+serial verify against live EDID, DP-3 is last resort only.
-        uuid = "f113902c-3db2-4cde-bb99-8045f09f995b";
-        model = "Q27G3XMN";
-        serial = "1APR3JA002499";
-        fallbackConnector = "DP-3";
-      };
-      notifications.enable = true;
-    };
-    startup.backend = "systemd";
-    startup.apps = [
-      "spotify"
-      "nagi-hushmic-tray"
-      "handy --start-hidden"
-    ];
   };
 
   features = {

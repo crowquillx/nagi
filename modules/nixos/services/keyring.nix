@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  options,
   ...
 }:
 let
@@ -14,13 +13,9 @@ in
   config = lib.mkIf (desktopEnabled && sessionEnabled && keyringEnable) {
     services.gnome.gnome-keyring.enable = true;
 
-    security.pam.services = lib.mkMerge [
-      (lib.mkIf (options.security.pam.services ? login) {
-        login.enableGnomeKeyring = true;
-      })
-      (lib.mkIf (options.security.pam.services ? sddm) {
-        sddm.enableGnomeKeyring = true;
-      })
-    ];
+    security.pam.services = {
+      login.enableGnomeKeyring = true;
+      greetd.enableGnomeKeyring = true;
+    };
   };
 }

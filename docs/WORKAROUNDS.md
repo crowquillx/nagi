@@ -5,68 +5,63 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Active workarounds
 
-### Plasma-only hosts omit xdg-desktop-portal-gtk
+### Noctalia generated color files
 
-- Introduced: 2026-08-25
-- Scope: Plasma-only hosts (`desktop.compositor = "plasma"` and no Niri/Hyprland extra session)
-- Reason: `xdg-desktop-portal-gtk` 1.15.3 SIGSEGVs in `g_file_monitor_source_dispatch` a second after Plasma login, when kde-gtk-config replaces `~/.config/gtk-3.0/gtk.css`. DrKonqi reports it as a service crash. The KDE portal covers file choosers, settings, screenshots, and secrets.
-- Mixed Niri/Hyprland+Plasma hosts still install the GTK portal (needed for those sessions) and delay it on KDE until `gtk.css` is a regular file.
-- Remove when: nixpkgs ships a GTK portal/GLib that survives kde-gtk-config's rewrite
-- Track: [nixpkgs issue #523091](https://github.com/NixOS/nixpkgs/issues/523091)
+Noctalia owns runtime colors, but its built-in GTK, Qt, Ghostty, Kitty, and
+Starship templates can rewrite Home Manager's primary configuration files.
+The repository therefore enables only the `kcolorscheme` and `umbriel`
+built-ins. It installs Noctalia user templates without hooks and points them
+at generated files under `~/.config`. GTK CSS imports, Qt color-scheme
+selection, Ghostty's `theme`, and Kitty's `include` remain declarative in Home
+Manager. The Noctalia launcher normalizes `NOCTALIA_CONFIG_HOME` to the XDG
+configuration directory so Umbriel's legacy private shell path cannot bypass
+these settings. It leaves `NOCTALIA_STATE_HOME` unchanged so Umbriel's mutable
+shell state and plugins remain in place. Starship continues to use the static
+Rose Pine preset.
 
+### Noctalia Greeter version compatibility
+
+The greeter package comes from its pinned upstream flake and builds against the
+repository's nixpkgs input. Its declarative module owns `greeter.toml`, while
+`sync.toml` remains mutable. Passwordless appearance
+sync and automatic shell sync are intentionally disabled until the pinned
+upstream version provides the required authenticated sync interface. The
+greeter still exposes the Umbriel session and uses the existing explicit
+cursor package.
 
 ### patool test skips
 
-- Introduced: 2026-07-17
-- Scope: gaming hosts only, because Bottles consumes `python314Packages.patool`
-- Reason: MIME detection changes make `.tar.*` fixtures look like their compression format, and several list helpers do not exist for that resulting format
-- Remove when: the pinned nixpkgs `python314Packages.patool` builds without the local disabled-test list
-- Track: [patool issue #194](https://github.com/wummel/patool/issues/194) and [nixpkgs issue #540025](https://github.com/NixOS/nixpkgs/issues/540025)
+- Scope: gaming hosts using `python314Packages.patool` through Bottles.
+- Reason: the pinned package's MIME detection changes leave several upstream
+  list helpers unavailable for the resulting archive format.
+- Remove when the pinned package builds without the local disabled-test list.
+- Track: [patool issue #194](https://github.com/wummel/patool/issues/194) and
+  [nixpkgs issue #540025](https://github.com/NixOS/nixpkgs/issues/540025).
 
-### Cheat Engine archive and capability-wrapper shim
+### Cheat Engine archive and capability wrapper
 
-- Introduced: 2026-07-17
-- Scope: hosts with `features.gaming.cheatengine.enable`
-- Reason: the live 7.71 download is mutable and can differ from the flake hash/layout; the NixOS capability wrapper also strips `LD_LIBRARY_PATH`, so the ELF needs a final `DT_RPATH`
-- Remove when: `cheatengine-flake` packages the current archive and its executable still finds runtime libraries through `/run/wrappers/bin/cheatengine-bin`
-- Track: [cheatengine-flake issue #1](https://github.com/Hy4ri/cheatengine-flake/issues/1), [archive-layout PR #3](https://github.com/Hy4ri/cheatengine-flake/pull/3), and subsequent upstream package changes
+- Scope: hosts with `features.gaming.cheatengine.enable`.
+- Reason: the live archive layout is mutable and the NixOS capability wrapper
+  strips `LD_LIBRARY_PATH`; the ELF therefore receives a final `DT_RPATH`.
+- Remove when the upstream flake packages the current archive and runtime
+  libraries resolve through `/run/wrappers/bin/cheatengine-bin`.
 
 ### llm-agents overlay fallback
 
-- Introduced: 2026-07-17
-- Scope: all hosts, preserving the `pkgs.llm-agents` namespace
-- Reason: older revisions exposed packages without `overlays.default`; direct package reuse retains the upstream nixpkgs pin and binary-cache compatibility
-- Remove when: all revisions this repository intends to support expose `overlays.default`
-- Track: [llm-agents.nix overlay documentation](https://github.com/numtide/llm-agents.nix#using-overlay)
-
-### Compositor switch secret migration between gnome-keyring and KWallet
-
-- Introduced: 2026-08-25 (forward direction), 2026-08-26 (reverse)
-- Scope: desktop hosts switching `desktop.compositor` between `hyprland`/`niri` and `plasma`
-- Reason: Chromium-family apps (Brave, T3 Code, ChatGPT) encrypt local data with an OSCrypt key read from `org.freedesktop.secrets`. Hyprland/Niri sessions answer that name with gnome-keyring; Plasma sessions with ksecretd/KWallet. Either provider cannot see keys written by the other, so switching leaves apps unable to decrypt credentials, connections, or history until the Secret Service items are copied across.
-- `nagi-migrate-secrets-to-kwallet` and `nagi-migrate-secrets-to-gnome` are installed for every session (`modules/home/security/keyring.nix`) so the tool is present in whichever session you are leaving. Close affected apps first, run the tool matching your destination, then reopen them.
-- Remove when: a single Secret Service provider covers all compositor sessions
+Older `llm-agents.nix` revisions expose packages without `overlays.default`.
+The compatibility overlay preserves the `pkgs.llm-agents` namespace while
+retaining the upstream package and cache pin. Remove it when all supported
+revisions expose the standard overlay.
 
 ## Intentional independent input pins
 
-- T3 Code uses `pkgs.llm-agents.t3code` for the optional CLI/headless service and the independently pinned `t3code-nightly-nix` AppImage for the desktop. The nightly flake updates every six hours and retains its own nixpkgs pin so `crowquillx-t3code-nightly.cachix.org` store paths match. The local desktop wrapper injects the same provider packages, including the `SHELL=/bin/sh` Grok launcher, without rebuilding the cached AppImage. `t3 serve` remains opt-in; the desktop app embeds its own matching nightly server, and a second unit would share `~/.t3` and start a second tunnel.
-- The llm-agents desktop encrypts `~/.t3` with OSCrypt application `T3 Code (Alpha)`; the nightly AppImage looks up `t3code`. The desktop wrapper runs `nagi-t3code-alias-oscrypt` to copy the productName key onto `application=t3code` before launch. Remove when T3 uses one OSCrypt application name across both packages.
-- Hyprland does not follow the root nixpkgs input. Its package, portal, and Hyprland libraries come from the upstream overlay together so their ABI and `hyprland.cachix.org` cache remain aligned.
-- nix-gaming does not follow the root nixpkgs input. Packages are reused from its flake output to retain `nix-gaming.cachix.org` compatibility.
-- llm-agents keeps its own nixpkgs pin. Upstream explicitly documents that this costs a second evaluation but preserves the tested package set and cache hits.
-- Other independent transitive nixpkgs nodes were left unchanged after the input-graph audit; no `follows` was added without package/cache proof.
+- T3 Code uses `pkgs.llm-agents.t3code` for the optional CLI and the separately
+  pinned `t3code-nightly-nix` AppImage for the desktop. The wrapper preserves
+  the shared provider packages and OSCrypt alias.
+- `nix-gaming` and `llm-agents` retain their upstream nixpkgs pins for tested
+  package sets and cache compatibility.
+- Other independent transitive nixpkgs nodes remain unchanged unless the
+  package/cache audit proves that a `follows` edge is safe.
 
-## Removed after verification
-
-The `mcp-nixos` `test_read_text_file` skip was removed in this cleanup.
-Upstream fixed the content assertion and closed [issue #198](https://github.com/utensils/mcp-nixos/issues/198); the pinned nixpkgs now provides 3.0.0, whose unmodified package was verified to build.
-
-## Niri package/configuration split
-
-Niri hosts use `pkgs.niri` from the root nixpkgs input, while
-`sodiboo/niri-flake` supplies only `homeModules.config` and its KDL library.
-This retains the repository's structured configuration without evaluating the
-incompatible package overlay affected by
-[sodiboo/niri-flake issue #1851](https://github.com/sodiboo/niri-flake/issues/1851).
-Reconsider the split when the upstream package overlay builds against the
-repository's nixpkgs pin without the removed `libdisplay-info_0_2`.
+The `mcp-nixos` `test_read_text_file` skip was removed after the pinned 3.0.0
+package fixed the assertion.

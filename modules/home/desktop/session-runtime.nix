@@ -9,13 +9,8 @@ let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "niri";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  compositors = [ compositor ] ++ extraCompositors;
-  hasNiri = builtins.elem "niri" compositors;
-  hasHyprland = builtins.elem "hyprland" compositors;
   shell = import ./session-shell/lib.nix { inherit lib vars; };
-  inherit (shell) shellOwnsIdle plasmaOwnsIdle matePolkitEnable;
+  inherit (shell) shellOwnsIdle matePolkitEnable;
   sessionEnabled = get [ "desktop" "session" "enable" ] desktopEnabled;
   waylandTarget = config.wayland.systemd.target;
 
@@ -25,53 +20,8 @@ let
   idleSeconds = get [ "desktop" "session" "lock" "idleSeconds" ] 600;
   lockBeforeSleep = get [ "desktop" "session" "lock" "beforeSleep" ] true;
   startupCommand = get [ "desktop" "shellStartupCommand" ] null;
-  startup = import ./startup.nix { inherit lib vars; };
-  inherit (startup)
-    startupBackend
-    startupApps
-    chatClient
-    equicordEnabled
-    effectiveStartupApps
-    ;
   effectiveShellStartupCommand = startupCommand;
   shellStartupEnable = effectiveShellStartupCommand != null;
-  appStartupEnable = effectiveStartupApps != [ ];
-  appStartupSystemdEnable = appStartupEnable && startupBackend == "systemd";
-  startupAppSessionCondition = pkgs.writeShellScript "nagi-startup-app-not-umbriel" ''
-    case ":''${XDG_CURRENT_DESKTOP:-}:" in
-      *:umbriel:*|*:Umbriel:*)
-        exit 1
-        ;;
-    esac
-
-    case ":''${XDG_SESSION_DESKTOP:-}:" in
-      *:umbriel:*|*:Umbriel:*)
-        exit 1
-        ;;
-    esac
-  '';
-
-  mkStartupService = index: command: {
-    name = "nagi-startup-app-${toString index}";
-    value = {
-      Unit = {
-        Description = "Tanos Startup App ${toString index}";
-        PartOf = [ waylandTarget ];
-        After = [ waylandTarget ];
-      };
-      Service = {
-        ExecCondition = startupAppSessionCondition;
-        ExecStart = "${pkgs.bash}/bin/bash -lc ${lib.escapeShellArg command}";
-        Restart = "on-failure";
-        RestartSec = 2;
-      };
-      Install = {
-        WantedBy = [ waylandTarget ];
-      };
-    };
-  };
-
-  startupAppServices = builtins.listToAttrs (lib.imap0 mkStartupService effectiveStartupApps);
 
   lockScript = pkgs.writeShellScript "nagi-lock-session" ''
     exec ${lockCommand}
@@ -106,30 +56,6 @@ in
             || (lib.isString effectiveShellStartupCommand && effectiveShellStartupCommand != "");
           message = "desktop.shellStartupCommand must be a non-empty string when provided.";
         }
-        {
-          assertion = builtins.all (cmd: lib.isString cmd && cmd != "") startupApps;
-          message = "desktop.startup.apps must be a list of non-empty command strings.";
-        }
-        {
-          assertion = builtins.elem startupBackend [
-            "systemd"
-            "niri"
-            "hyprland"
-          ];
-          message = "desktop.startup.backend must be one of: systemd, niri, hyprland.";
-        }
-        {
-          assertion = !equicordEnabled || chatClient == "discord";
-          message = "features.chat.discord.equicord.enable requires features.chat.client = \"discord\"; Equicord cannot be used with Equibop.";
-        }
-        {
-          assertion = !(appStartupEnable && startupBackend == "niri") || hasNiri;
-          message = "desktop.startup.backend = \"niri\" requires Niri in desktop.compositor or desktop.extraCompositors.";
-        }
-        {
-          assertion = !(appStartupEnable && startupBackend == "hyprland") || hasHyprland;
-          message = "desktop.startup.backend = \"hyprland\" requires Hyprland in desktop.compositor or desktop.extraCompositors.";
-        }
       ];
     }
     (lib.mkIf (desktopEnabled && sessionEnabled) {
@@ -151,7 +77,7 @@ in
             };
           };
         })
-        (lib.mkIf (lockEnable && !shellOwnsIdle && !plasmaOwnsIdle) {
+        (lib.mkIf (lockEnable && !shellOwnsIdle) {
           nagi-idle-lock = {
             Unit = {
               Description = "Tanos Idle Lock Service";
@@ -185,7 +111,6 @@ in
             };
           };
         })
-        (lib.mkIf appStartupSystemdEnable startupAppServices)
       ];
     })
   ];

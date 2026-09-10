@@ -43,20 +43,6 @@ in
       };
       default = { };
     };
-    stylix = mkOption {
-      type = strictSubmodule {
-        enable = enableOption "Enable Stylix." true;
-        variant = mkOption {
-          type = types.enum [
-            "moon"
-            "main"
-            "dawn"
-          ];
-          default = "moon";
-        };
-      };
-      default = { };
-    };
     nixMaintenance = mkOption {
       type = strictSubmodule {
         gc = mkOption {
@@ -97,39 +83,27 @@ in
       default = { };
     };
     chat = mkOption {
-      type = types.submodule (chatArgs: {
-        options = {
-          client = mkOption {
-            type = types.enum [
-              "none"
-              "discord"
-              "equibop"
-            ];
-            default = "none";
-            description = "Chat client to install.";
-          };
-          startup = mkOption {
-            type = types.submodule {
-              options.enable = mkOption {
-                type = types.bool;
-                default = chatArgs.config.client != "none";
-                description = "Autostart the selected chat client.";
-              };
-            };
-            default = { };
-          };
-          discord = mkOption {
-            type = strictSubmodule {
-              forceXwayland = enableOption "Force Discord under Xwayland." true;
-              equicord = mkOption {
-                type = packageToggle "Equicord" false;
-                default = { };
-              };
-            };
-            default = { };
-          };
+      type = strictSubmodule {
+        client = mkOption {
+          type = types.enum [
+            "none"
+            "discord"
+            "equibop"
+          ];
+          default = "none";
+          description = "Chat client to install.";
         };
-      });
+        discord = mkOption {
+          type = strictSubmodule {
+            forceXwayland = enableOption "Force Discord under Xwayland." true;
+            equicord = mkOption {
+              type = packageToggle "Equicord" false;
+              default = { };
+            };
+          };
+          default = { };
+        };
+      };
       default = { };
     };
     mullvad = mkOption {
@@ -217,6 +191,15 @@ in
     };
     theme = mkOption {
       type = strictSubmodule {
+        variant = mkOption {
+          type = types.enum [
+            "moon"
+            "main"
+            "dawn"
+          ];
+          default = "moon";
+          description = "Default application color preference; moon and main are dark, dawn is light.";
+        };
         gtk = mkOption {
           type = strictSubmodule {
             enable = enableOption "Enable GTK theming." true;

@@ -1,6 +1,5 @@
-# Desktop-wide cursor theme. Niri and Hyprland used to install this only
-# for their own sessions, so Plasma (and XWayland apps such as Steam) kept
-# the theme name in kcminputrc/dconf without the package or XCURSOR_* env.
+# Desktop-wide cursor theme, kept in Home Manager so every application sees
+# the same explicit cursor configuration.
 {
   lib,
   pkgs,

@@ -1,5 +1,5 @@
-# System cursor theme so Plasma, XWayland, and other session apps can
-# resolve the same theme Home Manager installs for GTK/X11.
+# System cursor theme so the greeter, XWayland, and session apps can resolve
+# the same theme Home Manager installs for GTK/X11.
 {
   lib,
   pkgs,

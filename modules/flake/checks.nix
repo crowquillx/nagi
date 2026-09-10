@@ -25,7 +25,6 @@
           ../../scripts/repo-sync
           ../../scripts/repo-sync-codebox
           ../../scripts/tcli
-          ../../secrets/scripts/debug-niri-eval.sh
           ../../secrets/scripts/validate-host.sh
         ];
       };
@@ -55,6 +54,9 @@
             statix check .
             touch $out
           '';
+      ghosttyHosts = lib.filterAttrs (
+        name: _: self.homeConfigurations.${name}.config.programs.ghostty.enable
+      ) hosts;
     in
     {
       checks = {
@@ -165,6 +167,26 @@
       ) hosts
       // lib.mapAttrs' (
         name: _: lib.nameValuePair "home-${name}" self.homeConfigurations.${name}.activationPackage
-      ) hosts;
+      ) hosts
+      // lib.mapAttrs' (
+        name: _:
+        let
+          home = self.homeConfigurations.${name};
+        in
+        lib.nameValuePair "ghostty-config-${name}" (
+          pkgs.runCommandLocal "ghostty-config-${name}-check"
+            {
+              nativeBuildInputs = [ home.config.programs.ghostty.package ];
+            }
+            ''
+              export HOME="$TMPDIR/home"
+              export XDG_CONFIG_HOME="$HOME/.config"
+              mkdir -p "$XDG_CONFIG_HOME"
+              ghostty +validate-config \
+                --config-file=${home.activationPackage}/home-files/.config/ghostty/config
+              touch "$out"
+            ''
+        )
+      ) ghosttyHosts;
     };
 }

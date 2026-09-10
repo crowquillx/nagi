@@ -9,8 +9,7 @@
 let
   v = config.nagi.variables;
   desktopEnabled = v.desktop.enable;
-  inherit (v.desktop) compositor extraCompositors;
-  hasUmbriel = builtins.elem "umbriel" ([ compositor ] ++ extraCompositors);
+  hasUmbriel = v.desktop.compositor == "umbriel";
   umbrielPackage = inputs.umbriel.packages.${pkgs.stdenv.hostPlatform.system}.default;
 in
 {

@@ -2,17 +2,10 @@
 let
   get = path: default: lib.attrByPath path default vars;
   desktopEnabled = get [ "desktop" "enable" ] true;
-  compositor = get [ "desktop" "compositor" ] "hyprland";
-  extraCompositors = get [ "desktop" "extraCompositors" ] [ ];
-  compositors = [ compositor ] ++ extraCompositors;
-  hasNiri = builtins.elem "niri" compositors;
-  hasHyprland = builtins.elem "hyprland" compositors;
-  hasUmbriel = builtins.elem "umbriel" compositors;
-  hasPlasma = builtins.elem "plasma" compositors;
-  hasWaylandCompositor = hasNiri || hasHyprland || hasUmbriel;
-  sessionShell = get [ "desktop" "sessionShell" ] (
-    if hasWaylandCompositor then "noctalia" else "none"
-  );
+  compositor = get [ "desktop" "compositor" ] "umbriel";
+  hasUmbriel = compositor == "umbriel";
+  hasWaylandCompositor = hasUmbriel;
+  sessionShell = get [ "desktop" "sessionShell" ] "noctalia";
   noctaliaCommand = get [ "desktop" "noctalia" "command" ] "nagi-noctalia-shell";
   noctaliaEnable = get [ "desktop" "noctalia" "enable" ] (sessionShell == "noctalia");
   sessionCommands = import ../../../../lib/session-shell-commands.nix {
@@ -24,39 +17,12 @@ let
     lockCommand
     restart
     ;
-  qtThemeEnabled =
-    get [ "features" "stylix" "enable" ] true && get [ "features" "theme" "qt" "enable" ] true;
+  qtThemeEnabled = get [ "features" "theme" "qt" "enable" ] true;
   nvidia = get [ "graphics" "profile" ] "auto" == "nvidia";
   primaryUser = get [ "users" "primary" ] "nagi";
   homeDirectory = "/home/${primaryUser}";
-  fullShell = builtins.elem sessionShell [
-    "noctalia"
-    "dms"
-    "caelestia"
-    "inir"
-    "ii"
-  ];
-  qt6ctEnv = {
-    QT_QPA_PLATFORMTHEME = "qt6ct";
-    QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
-    QT_AUTO_SCREEN_SCALE_FACTOR = "1";
-  };
   toolkitEnv =
-    if sessionShell == "dms" then
-      {
-        QT_QPA_PLATFORMTHEME = "gtk3";
-        QT_QPA_PLATFORMTHEME_QT6 = "gtk3";
-        QT_QPA_PLATFORM = "wayland";
-      }
-    else if
-      builtins.elem sessionShell [
-        "caelestia"
-        "inir"
-        "ii"
-      ]
-    then
-      qt6ctEnv
-    else if sessionShell == "noctalia" && qtThemeEnabled then
+    if sessionShell == "noctalia" && qtThemeEnabled then
       {
         QT_QPA_PLATFORMTHEME = "qt5ct";
         QT_STYLE_OVERRIDE = "kvantum";
@@ -73,12 +39,7 @@ in
   inherit
     desktopEnabled
     compositor
-    extraCompositors
-    compositors
-    hasNiri
-    hasHyprland
     hasUmbriel
-    hasPlasma
     hasWaylandCompositor
     sessionShell
     noctaliaCommand
@@ -87,7 +48,6 @@ in
     nvidia
     primaryUser
     homeDirectory
-    fullShell
     toolkitEnv
     sharedEnv
     startupCommand
@@ -95,12 +55,6 @@ in
     lockCommand
     restart
     ;
-  dmsEnable = sessionShell == "dms";
-  caelestiaEnable = sessionShell == "caelestia";
-  inirEnable = sessionShell == "inir";
-  iiEnable = sessionShell == "ii";
-  noneEnable = sessionShell == "none";
-  shellOwnsIdle = desktopEnabled && fullShell && hasWaylandCompositor;
-  plasmaOwnsIdle = hasPlasma && !hasNiri && !hasHyprland && !hasUmbriel;
-  matePolkitEnable = sessionShell == "none";
+  shellOwnsIdle = desktopEnabled && sessionShell == "noctalia" && hasUmbriel;
+  matePolkitEnable = false;
 }

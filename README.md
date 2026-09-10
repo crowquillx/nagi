@@ -1,12 +1,12 @@
 # 凪 nagi
 
-Multi-host NixOS flake with integrated Home Manager. Sessions: Hyprland, Niri, or Plasma behind SDDM. Desktop chrome is `desktop.sessionShell` (`noctalia`, `dms`, `caelestia`, `inir`, `ii`, or `none`). Theming via Stylix, secrets via `sops-nix`, rebuilds via `tcli`/`nh`. Targets `nixpkgs-unstable` and Determinate Nix.
+Multi-host NixOS flake with integrated Home Manager. Every registered host uses Umbriel with Noctalia Greeter and Noctalia shell. Noctalia owns runtime colors; Nix owns packages, fonts, cursors, icons, environment, and stable application settings. Secrets use `sops-nix`; rebuilds use `tcli`/`nh`. Targets `nixpkgs-unstable` and Determinate Nix.
 
 ## Hosts
 
 - `default`: generic VM-safe reference profile for new installs
 - `tandesk`: physical desktop profile
-- `tanlappy`: Niri laptop profile with power/lid/battery defaults
+- `tanlappy`: laptop profile with power/lid/battery defaults
 
 The flake profile name and installed machine hostname are separate. For example, `default` can build a machine whose hostname is `alice-pc`.
 
@@ -177,5 +177,5 @@ hours, validates the newest nightly AppImage, and publishes it to Cachix.
 - `hardware-configuration.nix` placeholders are overwritten by bootstrap when needed.
 - The shared host data model is `config.nagi.variables`.
 - This setup targets `nixpkgs-unstable` and uses Determinate Nix as its only Nix distribution.
-- Niri uses the compositor from host `nixpkgs` for Mesa/ABI alignment while `sodiboo/niri-flake` supplies only the KDL/Home Manager configuration API.
-- Hyprland uses the native scrolling layout and Home Manager Lua config; per-host monitor, HDR, and monitor-local workspace ranges live under `desktop.hyprland.outputs`.
+- Umbriel is installed as the only compositor session and its mutable `~/.config/umbriel/config.toml` is intentionally left unmanaged.
+- Noctalia user templates generate GTK, Qt, Ghostty, and Kitty color files without mutating their declarative primary configurations.

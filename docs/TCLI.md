@@ -46,7 +46,7 @@ This keeps Home Manager on the NixOS-integrated path. `tcli` performs the flake 
 Runs three pre-build validation checks:
 
 1. **statix check** — Nix lint on the flake directory.
-2. **Orphan module scan** — follows exact relative Nix paths from real module entrypoints. It is path-aware, ignores comments/strings, handles directory imports and duplicate basenames, and explicitly roots the intentionally dormant Niri modules.
+2. **Orphan module scan** — follows exact relative Nix paths from real module entrypoints. It is path-aware, ignores comments/strings, and handles directory imports and duplicate basenames.
 3. **nix flake check --no-build** — eval-only flake validation.
 
 Exits non-zero if any check fails. Safe to run before any build or switch.

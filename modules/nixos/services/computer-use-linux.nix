@@ -6,10 +6,6 @@
 let
   v = config.nagi.variables;
   enabled = v.features.mcp.computerUseLinux.enable;
-  inherit (v.desktop) compositor extraCompositors;
-  compositors = [ compositor ] ++ extraCompositors;
-  hasHyprland = builtins.elem "hyprland" compositors;
-  hasPlasma = builtins.elem "plasma" compositors;
 in
 {
   config = lib.mkIf enabled {
@@ -19,12 +15,6 @@ in
         message = "features.mcp.computerUseLinux.enable requires desktop.enable = true.";
       }
     ];
-
-    warnings = lib.optional (!hasHyprland && !hasPlasma) ''
-      features.mcp.computerUseLinux.enable is on, but this host has no Hyprland or
-      Plasma session. computer-use-linux can still use AT-SPI, screenshots, and
-      ydotool, but window listing and focus will not work.
-    '';
 
     programs.dconf.enable = true;
     services.gnome.at-spi2-core.enable = true;

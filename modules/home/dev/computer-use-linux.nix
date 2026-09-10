@@ -9,28 +9,10 @@ let
   get = path: default: lib.attrByPath path default vars;
   enabled = get [ "features" "mcp" "computerUseLinux" "enable" ] false;
   packageNames = get [ "users" "extraPackages" ] [ ];
-  compositors = [
-    (get [ "desktop" "compositor" ] "hyprland")
-  ]
-  ++ get [ "desktop" "extraCompositors" ] [ ];
-  hasHyprland = builtins.elem "hyprland" compositors;
   pkg = lib.attrByPath [ "computer-use-linux" ] null pkgs;
   ydotoolPkg = lib.attrByPath [ "ydotool" ] null pkgs;
   waylandTarget = config.wayland.systemd.target;
-  wrappedPkg =
-    if pkg == null || !hasHyprland then
-      pkg
-    else
-      pkgs.symlinkJoin {
-        name = "${pkg.name}-hyprland";
-        paths = [ pkg ];
-        nativeBuildInputs = [ pkgs.makeWrapper ];
-        postBuild = ''
-          wrapProgram "$out/bin/computer-use-linux" \
-            --prefix PATH : ${lib.escapeShellArg (lib.makeBinPath [ pkgs.hyprland ])}
-        '';
-        inherit (pkg) meta;
-      };
+  wrappedPkg = pkg;
 in
 {
   config = lib.mkMerge [

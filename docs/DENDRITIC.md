@@ -23,7 +23,7 @@ This closely follows the video pattern (`mkFlake ... (import-tree ./modules)`).
   - publishes `flake.nixosModules.<host>` and `flake.homeModules.default`
   - builds the real `nixosConfigurations` and `homeConfigurations`
   - publishes serializable `nagiHostMetadata` for tooling and CI
-  - injects DMS, Caelestia, and iNiR Home Manager modules only when `desktop.sessionShell` selects them. `ii` injects a nagi-owned Quickshell wrap, not an upstream rice module.
+  - injects the Noctalia Greeter NixOS module and Noctalia Home Manager module; Noctalia is the only supported session shell.
 - `modules/flake/packages.nix`
   - defines `perSystem.packages` for wrapped/custom packages
   - includes wrapped + upstream package outputs (`nagi-noctalia`, `nagi-zen`, `nagi-helium`)
@@ -66,7 +66,7 @@ External upstream flake modules and host-conditional upstream modules stay in `m
 2. Select profile (`default`, `tandesk`, `tanlappy`).
 3. Run bootstrap:
    - `sudo ./install/bootstrap.sh <profile> --user <user> --hostname <hostname> --flake-dir <absolute-path>`
-4. Reboot and log in via SDDM.
+4. Reboot and log in via Noctalia Greeter.
 
 ## Updates and day-to-day operations
 
@@ -105,5 +105,5 @@ Fallback:
 
 ## Notes
 
-- Plasma and Niri remain supported. The upstream Niri Home Manager configuration module is injected only for hosts that select Niri.
+- Umbriel is the only compositor. Noctalia Greeter provides the greetd session entry and Noctalia owns runtime color synchronization.
 - If lockfile updates are required for new inputs, run `nix flake lock --update-input <name>` in a Nix-enabled environment.

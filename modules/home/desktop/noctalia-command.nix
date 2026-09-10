@@ -30,6 +30,8 @@ let
   noctaliaCommandWrapper = pkgs.writeShellScriptBin "nagi-noctalia-shell" ''
     set -eu
 
+    export NOCTALIA_CONFIG_HOME="''${XDG_CONFIG_HOME:-$HOME/.config}"
+
     ${exportSecret "NOCTALIA_AP_GOOGLE_API_KEY" googleApiKeyPath}
     ${exportSecret "NOCTALIA_AP_OPENAI_COMPATIBLE_API_KEY" openaiCompatibleApiKeyPath}
     ${exportSecret "NOCTALIA_AP_DEEPL_API_KEY" deeplApiKeyPath}

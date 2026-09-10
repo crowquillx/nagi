@@ -9,8 +9,6 @@ let
     [
       packages.determinateNix
       packages.hushmic
-      packages.hyprlandPackages
-      packages.kwinEffectsBetterBlurDx
       packages.vortex
       packages.nixGaming
       packages.mo2Lint
