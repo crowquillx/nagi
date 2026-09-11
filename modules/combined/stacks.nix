@@ -23,7 +23,6 @@ let
     ../nixos/desktop/umbriel.nix
     ../nixos/desktop/noctalia-greeter.nix
     ../nixos/desktop/cursor.nix
-    ../nixos/desktop/session-lifecycle.nix
   ];
 
   nixosShells = [
@@ -103,7 +102,6 @@ let
     ../home/shell/zsh.nix
     ../home/shell/zoxide.nix
     ../home/shell/kotomi.nix
-    ../home/shell/ssh-tmux.nix
   ];
 
   homeDesktop = [

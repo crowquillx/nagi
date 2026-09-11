@@ -1,63 +1,38 @@
 {
   lib,
-  stdenv,
-  fetchurl,
-  autoPatchelfHook,
+  rustPlatform,
+  fetchFromGitHub,
   makeWrapper,
   ydotool,
   wtype,
 }:
 let
-  inherit (stdenv.hostPlatform) system;
-  hashes = {
-    x86_64-linux = {
-      main = "sha256-0h55gzb1xrae98hTKIZjmVD+JIVeLbsgXMPzRSiUAg4=";
-      cosmic = "sha256-wet2Dul9UNwVfWcRlWzYT5dwHJmIVbI8HvG9d2GaFFg=";
-    };
-    aarch64-linux = {
-      main = "sha256-UScY62T5HNjvyWEHJ/ZfQOyTIYv+dRprtg/jYmaOIqY=";
-      cosmic = "sha256-IlALWHrGUKw8yMTd2MdcD9ov0B9Or/0cpIKA3btiCvo=";
-    };
+  version = "0.5.0-unstable-2026-09-10";
+  rev = "88ecd2fd87b578df26fc78bf1f7ec0819a316855";
+  src = fetchFromGitHub {
+    owner = "crowquillx";
+    repo = "computer-use-linux";
+    inherit rev;
+    hash = "sha256-SpjZarJAIRJEtJIY/Cu+ohCWz/K54jmqat7st/CxoBk=";
   };
-  rustTarget =
-    {
-      x86_64-linux = "x86_64-unknown-linux-gnu";
-      aarch64-linux = "aarch64-unknown-linux-gnu";
-    }
-    .${system} or (throw "computer-use-linux: unsupported system ${system}");
-  srcHashes = hashes.${system} or (throw "computer-use-linux: unsupported system ${system}");
 in
-stdenv.mkDerivation (finalAttrs: {
+rustPlatform.buildRustPackage {
   pname = "computer-use-linux";
-  version = "0.5.0";
+  inherit version src;
 
-  src = fetchurl {
-    url = "https://github.com/agent-sh/computer-use-linux/releases/download/v${finalAttrs.version}/computer-use-linux-${rustTarget}";
-    hash = srcHashes.main;
-  };
+  cargoLock.lockFile = "${src}/Cargo.lock";
 
-  cosmic = fetchurl {
-    url = "https://github.com/agent-sh/computer-use-linux/releases/download/v${finalAttrs.version}/computer-use-linux-cosmic-${rustTarget}";
-    hash = srcHashes.cosmic;
-  };
+  # The test suite spawns a private D-Bus session and probes /tmp ownership, so
+  # it cannot run inside the build sandbox. Upstream CI runs it on a live session.
+  doCheck = false;
 
-  dontUnpack = true;
+  nativeBuildInputs = [ makeWrapper ];
 
-  nativeBuildInputs = [
-    autoPatchelfHook
-    makeWrapper
-  ];
-
-  buildInputs = [
-    stdenv.cc.cc
-  ];
-
-  installPhase = ''
-    runHook preInstall
-    mkdir -p "$out/libexec" "$out/bin"
-    install -Dm755 "$src" "$out/libexec/computer-use-linux"
-    install -Dm755 ${finalAttrs.cosmic} "$out/libexec/computer-use-linux-cosmic"
-    makeWrapper "$out/libexec/computer-use-linux" "$out/bin/computer-use-linux" \
+  postInstall = ''
+    mkdir -p $out/libexec
+    mv $out/bin/computer-use-linux $out/libexec/computer-use-linux
+    mv $out/bin/computer-use-linux-cosmic $out/libexec/computer-use-linux-cosmic
+    makeWrapper $out/libexec/computer-use-linux $out/bin/computer-use-linux \
       --prefix PATH : ${
         lib.makeBinPath [
           ydotool
@@ -66,19 +41,18 @@ stdenv.mkDerivation (finalAttrs: {
       } \
       --set COMPUTER_USE_LINUX_COSMIC_HELPER "$out/libexec/computer-use-linux-cosmic"
     ln -s "$out/libexec/computer-use-linux-cosmic" "$out/bin/computer-use-linux-cosmic"
-    runHook postInstall
   '';
 
   meta = {
     description = "Linux desktop control MCP server (AT-SPI, compositor window targeting, portals, ydotool)";
     homepage = "https://github.com/agent-sh/computer-use-linux";
-    changelog = "https://github.com/agent-sh/computer-use-linux/releases/tag/v${finalAttrs.version}";
+    changelog = "https://github.com/agent-sh/computer-use-linux/releases";
     license = lib.licenses.mit;
     platforms = [
       "x86_64-linux"
       "aarch64-linux"
     ];
     mainProgram = "computer-use-linux";
-    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+    sourceProvenance = [ lib.sourceTypes.fromSource ];
   };
-})
+}

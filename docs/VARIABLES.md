@@ -87,6 +87,10 @@ Other theme options are explicit and declarative:
   `users.git` control the primary account and package inventory.
 - `features.audio`, `features.bluetooth`, `features.portals`, `features.nh`,
   `features.swap`, and `features.nixMaintenance` control system services.
+- `features.ssh` controls OpenSSH (port, auth policy, authorized keys) and its
+  optional mosh companion at `features.ssh.mosh`; mosh requires
+  `features.ssh.enable` and opens its UDP port range when
+  `features.ssh.mosh.openFirewall` is true.
 - `features.chat`, `features.localsend`, `features.mullvad`,
   `features.flatpak`, `features.gaming`, `features.virtualisation`, and
   `features.codingTools` enable optional applications and services.

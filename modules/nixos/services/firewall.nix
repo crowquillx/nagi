@@ -20,6 +20,7 @@
   # │ Host   │ Port │ Proto                    │ Owner (variable)                                                 │
   # ├────────┼──────┼──────────────────────────┼──────────────────────────────────────────────────────────────────┤
   # │ all    │ 22   │ tcp                      │ features.ssh.openFirewall (services.openssh.openFirewall)        │
+  # │ all    │ 60000-61000│ udp               │ features.ssh.mosh.openFirewall (programs.mosh.openFirewall)      │
   # │ all    │ 41641│ udp                      │ features.tailscale.enable (services.tailscale.openFirewall)      │
   # │ tandesk│ 27015│ tcp + udp                │ features.gaming.steam.dedicatedServer.openFirewall               │
   # │ tandesk│ 27036│ tcp + udp                │ features.gaming.steam.remotePlay.openFirewall + transfers        │
@@ -35,6 +36,8 @@
   # - Steam port openings only take effect on hosts where features.gaming.enable = true
   #   (currently tandesk only). On default/tanlappy, gaming is disabled, so the
   #   features.gaming.steam.*.openFirewall toggles are inert regardless of value.
+  # - mosh opens UDP 60000-61000 only when features.ssh.mosh.enable = true
+  #   (currently tandesk and tanlappy through hosts/profiles/tan-common.nix).
   # - mullvad-vpn, ollama, open-webui, and comfyui bind to 127.0.0.1 and open
   #   no firewall ports.
   # - ICMP echo (allowPing) is left at the NixOS default (true) for diagnostics;

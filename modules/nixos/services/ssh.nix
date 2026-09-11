@@ -11,13 +11,13 @@ let
   repoSync = v.features.codingTools.repoSync;
   inherit (ssh)
     authorizedKeys
+    mosh
     openFirewall
     passwordAuthentication
     permitRootLogin
     port
     ;
   enabled = ssh.enable;
-  autoTmuxEnabled = ssh.autoTmux.enable;
 in
 {
   config = lib.mkMerge [
@@ -35,8 +35,8 @@ in
           message = "features.ssh.passwordAuthentication = false requires a non-empty features.ssh.authorizedKeys, otherwise the user is locked out of SSH.";
         }
         {
-          assertion = !autoTmuxEnabled || enabled;
-          message = "features.ssh.autoTmux.enable requires features.ssh.enable.";
+          assertion = !mosh.enable || enabled;
+          message = "features.ssh.mosh.enable requires features.ssh.enable.";
         }
       ];
     }
@@ -56,9 +56,12 @@ in
         };
       };
 
-      users.users.${primaryUser} = {
-        linger = lib.mkIf autoTmuxEnabled true;
-        openssh.authorizedKeys.keys = authorizedKeys;
+      users.users.${primaryUser}.openssh.authorizedKeys.keys = authorizedKeys;
+    })
+    (lib.mkIf mosh.enable {
+      programs.mosh = {
+        enable = true;
+        inherit (mosh) openFirewall;
       };
     })
     (lib.mkIf (repoSync.enable && repoSync.remotePublicKey != null) {

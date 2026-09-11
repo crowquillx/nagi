@@ -23,11 +23,12 @@ Rose Pine preset.
 
 The greeter package comes from its pinned upstream flake and builds against the
 repository's nixpkgs input. Its declarative module owns `greeter.toml`, while
-`sync.toml` remains mutable. Passwordless appearance
-sync and automatic shell sync are intentionally disabled until the pinned
-upstream version provides the required authenticated sync interface. The
-greeter still exposes the Umbriel session and uses the existing explicit
-cursor package.
+`sync.toml` remains mutable. The pinned greeter (1.5.0+) and Noctalia (5.1.0+)
+provide the constrained `--sync` interface, so the primary user gets
+passwordless appearance sync via `passwordless-sync-users`; anything outside
+that narrow action still requires administrator authentication. Automatic shell
+sync remains off. The greeter still exposes the Umbriel session and uses the
+existing explicit cursor package.
 
 ### patool test skips
 

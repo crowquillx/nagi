@@ -76,7 +76,6 @@ in
               default = desktopArgs.config.enable;
               description = "Enable desktop session helpers.";
             };
-            killProcessesOnLogout = enableOption "Terminate the session process scope on logout." false;
             polkit = mkOption {
               type = packageToggle "desktop polkit agent" true;
               default = { };

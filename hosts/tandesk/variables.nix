@@ -72,20 +72,12 @@
     };
 
     session = {
-      killProcessesOnLogout = true;
       polkit.enable = false;
     };
     hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo";
   };
 
   features = {
-    ssh = {
-      autoTmux = {
-        enable = true;
-        sessionName = "ssh";
-      };
-    };
-
     swap = {
       zram = {
         enable = true;

@@ -40,13 +40,10 @@ in
           type = types.listOf types.nonEmptyStr;
           default = [ ];
         };
-        autoTmux = mkOption {
+        mosh = mkOption {
           type = strictSubmodule {
-            enable = enableOption "Automatically attach interactive SSH logins to a persistent tmux session." false;
-            sessionName = mkOption {
-              type = types.strMatching "[A-Za-z0-9][A-Za-z0-9_-]*";
-              default = "ssh";
-            };
+            enable = enableOption "Enable mosh as a resilient SSH companion. Requires features.ssh.enable." false;
+            openFirewall = enableOption "Open the mosh UDP port range." true;
           };
           default = { };
         };

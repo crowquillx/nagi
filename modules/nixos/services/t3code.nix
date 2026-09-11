@@ -16,8 +16,7 @@ in
 {
   config = lib.mkIf t3ServiceEnabled {
     # The Home Manager unit is a user service. Linger keeps the user manager
-    # (and t3 serve) up across logout and at boot, which KillUserProcesses
-    # would otherwise tear down.
+    # (and t3 serve) up across logout and at boot.
     users.users.${primaryUser}.linger = true;
   };
 }
