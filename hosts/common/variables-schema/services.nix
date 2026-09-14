@@ -83,6 +83,12 @@ in
       };
       default = { };
     };
+    nixLd = mkOption {
+      type = strictSubmodule {
+        enable = enableOption "Enable nix-ld for dynamically linked executables (uv-managed Python, etc.)." true;
+      };
+      default = { };
+    };
     audio = mkOption {
       type = strictSubmodule {
         enable = enableOption "Enable PipeWire audio." true;

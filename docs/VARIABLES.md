@@ -63,6 +63,8 @@ features.theme = {
 Home Manager declares the GTK theme and icon theme, imports Noctalia's
 generated `noctalia.css` for GTK 3/4, selects the generated `noctalia` Qt
 color scheme, and selects the generated Noctalia themes for Ghostty and Kitty.
+When Flatpak is enabled, the same GTK config directories and the `adw-gtk3`
+theme runtimes are exposed to sandboxes so GTK Flatpaks can load those colors.
 Noctalia is the runtime color owner. Its safe built-in templates are limited
 to `kcolorscheme` and `umbriel`; user templates for GTK, Qt, Ghostty, and
 Kitty have no mutating hooks. Starship keeps the repository's static Rose Pine
@@ -86,7 +88,7 @@ Other theme options are explicit and declarative:
 - `users.primary`, `users.flakeDirectory`, `users.extraPackages`, and
   `users.git` control the primary account and package inventory.
 - `features.audio`, `features.bluetooth`, `features.portals`, `features.nh`,
-  `features.swap`, and `features.nixMaintenance` control system services.
+  `features.nixLd`, `features.swap`, and `features.nixMaintenance` control system services.
 - `features.ssh` controls OpenSSH (port, auth policy, authorized keys) and its
   optional mosh companion at `features.ssh.mosh`; mosh requires
   `features.ssh.enable` and opens its UDP port range when

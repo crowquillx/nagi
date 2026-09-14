@@ -33,6 +33,7 @@ let
   nixosServices = [
     ../nixos/services/audio.nix
     ../nixos/services/core.nix
+    ../nixos/services/nix-ld.nix
     ../nixos/services/bluetooth.nix
     ../nixos/services/networking.nix
     ../nixos/services/ssh.nix

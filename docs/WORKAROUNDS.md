@@ -19,6 +19,15 @@ these settings. It leaves `NOCTALIA_STATE_HOME` unchanged so Umbriel's mutable
 shell state and plugins remain in place. Starship continues to use the static
 Rose Pine preset.
 
+Home Manager's GTK module writes `gtk.css` and `settings.ini` as Nix store
+symlinks. Flatpak can bind-mount `xdg-config/gtk-{3,4}.0` but cannot follow
+those targets, so activation copies them to regular files. GTK 4 is not given
+an `adw-gtk3` theme directory; that would inject a `file:///nix/store` CSS
+import that sandboxes cannot read and that blocks Noctalia's GTK 4 colors.
+`features.flatpak.enable` installs the `adw-gtk3` GTK 3 theme runtimes and
+grants those config directories plus `xdg-data/color-schemes` to every
+Flatpak.
+
 ### Noctalia Greeter version compatibility
 
 The greeter package comes from its pinned upstream flake and builds against the

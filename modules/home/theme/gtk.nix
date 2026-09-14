@@ -1,6 +1,7 @@
 {
   lib,
   pkgs,
+  config,
   vars ? { },
   ...
 }:
@@ -26,6 +27,13 @@ let
     in
     if preferred != null then preferred else fallback;
   noctaliaImport = ''@import url("noctalia.css");'';
+  gtkConfigHome = config.xdg.configHome;
+  materializeGtkPath = path: ''
+    if [ -L ${lib.escapeShellArg path} ]; then
+      run install -m 644 -T ${lib.escapeShellArg path} ${lib.escapeShellArg "${path}.materialized"}
+      run mv -f ${lib.escapeShellArg "${path}.materialized"} ${lib.escapeShellArg path}
+    fi
+  '';
 in
 {
   config = lib.mkIf (desktopEnabled && enabled) {
@@ -55,15 +63,32 @@ in
         extraConfig.gtk-application-prefer-dark-theme = preferDark;
         extraCss = noctaliaImport;
       };
+      # stateVersion < 26.05 still defaults gtk4.theme to gtk.theme, which
+      # injects a file:///nix/store adw-gtk3 import Flatpak cannot read and
+      # which blocks Noctalia's GTK 4 colors. Null keeps only the user CSS.
       gtk4 = {
-        theme = {
-          name = gtkThemeName;
-          package = gtkThemePkg;
-        };
+        theme = null;
         extraConfig.gtk-application-prefer-dark-theme = preferDark;
         extraCss = noctaliaImport;
       };
     };
+
+    xdg.configFile = {
+      "gtk-3.0/gtk.css".force = true;
+      "gtk-3.0/settings.ini".force = true;
+      "gtk-4.0/gtk.css".force = true;
+      "gtk-4.0/settings.ini".force = true;
+    };
+
+    # Home Manager writes gtk.css and settings.ini as store symlinks. Flatpak
+    # bind-mounts the directory but cannot follow those targets, so copy them
+    # into regular files after link generation.
+    home.activation.materializeGtkThemeForFlatpak = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+      ${materializeGtkPath "${gtkConfigHome}/gtk-3.0/gtk.css"}
+      ${materializeGtkPath "${gtkConfigHome}/gtk-3.0/settings.ini"}
+      ${materializeGtkPath "${gtkConfigHome}/gtk-4.0/gtk.css"}
+      ${materializeGtkPath "${gtkConfigHome}/gtk-4.0/settings.ini"}
+    '';
 
     dconf = {
       enable = true;

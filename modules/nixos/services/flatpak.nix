@@ -8,6 +8,11 @@ let
   v = config.nagi.variables;
   enabled = v.features.flatpak.enable;
   packageRefs = v.features.flatpak.packages;
+  gtkTheming = v.features.theme.gtk.enable;
+  gtkThemeRuntimes = [
+    "org.gtk.Gtk3theme.adw-gtk3"
+    "org.gtk.Gtk3theme.adw-gtk3-dark"
+  ];
   isNonEmptyString = value: lib.isString value && value != "";
   isBundleRef =
     ref:
@@ -49,8 +54,15 @@ in
     (lib.mkIf enabled {
       services.flatpak = {
         enable = true;
-        packages = map normalizePackageRef packageRefs;
+        packages = (lib.optionals gtkTheming gtkThemeRuntimes) ++ map normalizePackageRef packageRefs;
         uninstallUnmanaged = true;
+        overrides = lib.mkIf gtkTheming {
+          global.Context.filesystems = [
+            "xdg-config/gtk-3.0:ro"
+            "xdg-config/gtk-4.0:ro"
+            "xdg-data/color-schemes:ro"
+          ];
+        };
       };
     })
   ];
