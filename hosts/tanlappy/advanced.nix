@@ -1,4 +1,30 @@
 {
+  desktop.umbriel.settings = {
+    general.autostart = [
+      "nagi-noctalia-shell"
+      "spotify"
+      "handy --start-hidden"
+      "sleep 5 && discord"
+    ];
+
+    output.eDP-1.min_workspaces = 2;
+
+    window_rule = [
+      {
+        match.app_id = "^(discord|com[.]discordapp[.]Discord|equibop|electron)$";
+        default_workspace = 2;
+        default_focused = false;
+        focus_on_activate = false;
+      }
+      {
+        match.app_id = "^spotify$";
+        default_workspace = 2;
+        default_focused = false;
+        focus_on_activate = false;
+      }
+    ];
+  };
+
   features = {
     mullvad = {
       package = "cli";

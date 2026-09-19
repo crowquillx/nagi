@@ -1,4 +1,103 @@
 {
+  desktop.umbriel.settings = {
+    general.autostart = [
+      "nagi-noctalia-shell"
+      "spotify"
+      "nagi-hushmic-tray"
+      "handy --start-hidden"
+      "sleep 5 && discord"
+    ];
+
+    environment.NVD_BACKEND = "direct";
+
+    output = {
+      DP-1 = {
+        enabled = true;
+        mode = "1920x1080@144.001";
+        position = [
+          2560
+          0
+        ];
+        scale = 1;
+      };
+      DP-2 = {
+        enabled = true;
+        mode = "2560x1440@164.999";
+        position = [
+          0
+          1080
+        ];
+        scale = 1;
+      };
+      DP-3 = {
+        enabled = true;
+        mode = "2560x1440@180.002";
+        position = [
+          2560
+          1080
+        ];
+        scale = 1;
+        vrr = "fullscreen";
+        hdr = "auto";
+        sdr_white = 250;
+      };
+    };
+
+    keybinds = {
+      "Mod+Ctrl+Left" = "output-focus-left";
+      "Mod+Ctrl+Right" = "output-focus-right";
+      "Mod+Ctrl+H" = "output-focus-left";
+      "Mod+Ctrl+J" = "output-focus-down";
+      "Mod+Ctrl+K" = "output-focus-up";
+      "Mod+Ctrl+L" = "output-focus-right";
+      "Mod+Shift+Ctrl+Left" = "column-move-to-output-left";
+      "Mod+Shift+Ctrl+Down" = "column-move-to-output-down";
+      "Mod+Shift+Ctrl+Up" = "column-move-to-output-up";
+      "Mod+Shift+Ctrl+Right" = "column-move-to-output-right";
+      "Mod+Shift+Ctrl+H" = "column-move-to-output-left";
+      "Mod+Shift+Ctrl+J" = "column-move-to-output-down";
+      "Mod+Shift+Ctrl+K" = "column-move-to-output-up";
+      "Mod+Shift+Ctrl+L" = "column-move-to-output-right";
+    };
+
+    window_rule = [
+      {
+        match.app_id = "^awakened-poe-trade$";
+        default_output = "DP-3";
+        default_floating = true;
+        blur = false;
+      }
+      {
+        match.app_id = "^(steam_app_238960|steam_app_2694490)$";
+        default_output = "DP-3";
+        default_fullscreen = true;
+        hdr = "auto";
+      }
+      {
+        match.app_id = "^(steam_proton|.*[.]exe)$";
+        default_output = "DP-3";
+        default_fullscreen = true;
+        blur = false;
+      }
+      {
+        match.app_id = "^(discord|com[.]discordapp[.]Discord|equibop)$";
+        default_output = "DP-1";
+        default_maximize = true;
+      }
+      {
+        match.app_id = "^electron$";
+        match.title = "^.*[Dd][Ii][Ss][Cc][Oo][Rr][Dd].*$";
+        default_output = "DP-1";
+        default_maximize = true;
+      }
+      {
+        match.app_id = "^spotify$";
+        default_output = "DP-2";
+        default_maximize = true;
+      }
+    ];
+  };
+
   features = {
     chat.discord.forceXwayland = false;
 

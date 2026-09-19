@@ -16,6 +16,7 @@
       "qbittorrent"
       "handy"
       "wtype"
+      "remmina"
     ];
   };
 

@@ -1,4 +1,9 @@
 {
+  desktop.umbriel.settings = {
+    general.autostart = [ "nagi-noctalia-shell" ];
+    output = { };
+  };
+
   features = {
     localsend = {
       package.enable = false;

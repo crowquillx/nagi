@@ -25,10 +25,12 @@ desktop = {
 `umbriel` is the only compositor and `noctalia` is the only session shell.
 Noctalia Greeter supplies the greetd login session and starts Umbriel. The
 greeter owns `/var/lib/noctalia-greeter/greeter.toml`; its mutable sync state
-is not managed by Nix. `programs.umbriel.settings = null` deliberately leaves
-`~/.config/umbriel/config.toml` writable for Umbriel. Noctalia reads its
-Home Manager baseline from the standard XDG configuration directory.
-Session applications belong in that file's native `[general].autostart` list.
+is not managed by Nix. Home Manager owns `~/.config/umbriel/config.toml` from
+the shared settings in `modules/home/desktop/umbriel-settings.nix` and the
+host overrides in `desktop.umbriel.settings`. Keep output names, modes,
+positions, HDR, VRR, app-to-output rules, and other display-coupled settings
+in `hosts/<host>/advanced.nix`. Host-specific session applications belong in
+the same override's `general.autostart` list.
 
 The session options are:
 

@@ -18,6 +18,16 @@ in
           type = types.enum [ "umbriel" ];
           default = "umbriel";
         };
+        umbriel = mkOption {
+          type = strictSubmodule {
+            settings = mkOption {
+              type = types.attrsOf types.anything;
+              default = { };
+              description = "Host-specific programs.umbriel.settings overrides. Keep output identities and display-coupled rules here.";
+            };
+          };
+          default = { };
+        };
         browser = mkOption {
           type = strictSubmodule {
             default = mkOption {

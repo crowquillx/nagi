@@ -49,6 +49,7 @@
       "wtype"
       "vortex"
       "ntfs3g"
+      "remmina"
     ];
   };
 
