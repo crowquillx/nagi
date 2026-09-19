@@ -84,6 +84,17 @@
               touch "$out"
             '';
 
+        discord-mute-toggle =
+          pkgs.runCommandLocal "discord-mute-toggle-tests"
+            {
+              nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.evdev ])) ];
+            }
+            ''
+              NAGI_DISCORD_MUTE_TOGGLE=${../../modules/home/desktop/discord-mute-toggle.py} \
+                python ${../../tests/test_discord_mute_toggle.py}
+              touch "$out"
+            '';
+
         orphan-modules =
           pkgs.runCommandLocal "orphan-module-check"
             {

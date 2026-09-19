@@ -85,6 +85,27 @@ Other theme options are explicit and declarative:
 
 ## Common feature groups
 
+`features.chat.discord.mouseMute` reserves one mouse button for Discord's native
+mute toggle. It is disabled by default. For example:
+
+```nix
+features.chat.discord.mouseMute = {
+  enable = true;
+  device = "/dev/input/by-id/usb-Razer_Razer_Viper_V3_Pro-event-mouse";
+  button = 276;
+};
+```
+
+`device` must identify the mouse's event device. `button` is a Linux evdev mouse
+button code; `276` is the forward button and is the default. The helper starts
+through Umbriel's native `general.autostart` list. Each press toggles Discord's
+own mute control through its tray menu. The helper blocks that button from other
+applications and forwards mouse movement, scrolling, and the other buttons.
+Starting or stopping the helper does not change Discord's mute state. It waits
+for the mouse at login and reconnects when the mouse is unplugged and reattached.
+NixOS enables `uinput` and grants the primary user access. The feature requires
+`features.chat.client = "discord"` and an enabled Umbriel desktop.
+
 - `graphics.profile`, `graphics.enable32Bit`, `graphics.nvidia`, and
   `graphics.extraPackages` control hardware graphics.
 - `users.primary`, `users.flakeDirectory`, `users.extraPackages`, and

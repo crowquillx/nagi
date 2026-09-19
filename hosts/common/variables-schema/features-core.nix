@@ -100,6 +100,22 @@ in
               type = packageToggle "Equicord" false;
               default = { };
             };
+            mouseMute = mkOption {
+              type = strictSubmodule {
+                enable = enableOption "Use a mouse button only for Discord's native mute toggle." false;
+                device = mkOption {
+                  type = types.nullOr (types.strMatching "^/dev/input/.+");
+                  default = null;
+                  description = "Mouse event device; use a stable /dev/input/by-id path.";
+                };
+                button = mkOption {
+                  type = types.ints.between 272 287;
+                  default = 276;
+                  description = "Linux evdev mouse button code; 276 is the forward button.";
+                };
+              };
+              default = { };
+            };
           };
           default = { };
         };

@@ -53,6 +53,7 @@ let
     ../nixos/services/tailscale.nix
     ../nixos/services/localsend.nix
     ../nixos/services/razer.nix
+    ../nixos/services/discord-mute-toggle.nix
   ];
 
   nixosSecurity = [
@@ -109,6 +110,7 @@ let
     ../home/desktop/session-runtime.nix
     ../home/desktop/pointer-cursor.nix
     ../home/desktop/umbriel.nix
+    ../home/desktop/discord-mute-toggle.nix
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
     ../home/desktop/hushmic-tray.nix

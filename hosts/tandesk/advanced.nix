@@ -99,7 +99,13 @@
   };
 
   features = {
-    chat.discord.forceXwayland = false;
+    chat.discord = {
+      forceXwayland = false;
+      mouseMute = {
+        enable = true;
+        device = "/dev/input/by-id/usb-Razer_Razer_Viper_V3_Pro-event-mouse";
+      };
+    };
 
     mullvad = {
       package = "gui";
