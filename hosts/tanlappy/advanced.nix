@@ -3,7 +3,6 @@
     general.autostart = [
       "nagi-noctalia-shell"
       "spotify"
-      "handy --start-hidden"
       "sleep 5 && discord"
     ];
 

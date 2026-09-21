@@ -14,7 +14,6 @@
       "pywalfox-native"
       "sops"
       "qbittorrent"
-      "handy"
       "wtype"
       "remmina"
     ];

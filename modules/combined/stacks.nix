@@ -114,7 +114,6 @@ let
     ../home/desktop/noctalia-command.nix
     ../home/desktop/noctalia-shell.nix
     ../home/desktop/hushmic-tray.nix
-    ../home/desktop/handy.nix
   ];
 
   homeSecurity = [

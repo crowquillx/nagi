@@ -214,10 +214,6 @@
     "Mod+M" = "spawn:ghostty -e htop";
     "Mod+Minus" = "window-modify-primary-extent:-0.1";
     "Mod+N" = "spawn:nagi-noctalia-shell msg panel-toggle control-center notifications";
-    "Mod+O" = {
-      action = "spawn:nagi-handy-toggle-transcription";
-      repeat = false;
-    };
     "Mod+Page_Down" = "workspace-next";
     "Mod+Page_Up" = "workspace-previous";
     "Mod+Q" = "window-close";

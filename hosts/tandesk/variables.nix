@@ -45,7 +45,6 @@
       "mkvtoolnix"
       "osu-lazer-bin"
       "hushmic"
-      "handy"
       "wtype"
       "vortex"
       "ntfs3g"

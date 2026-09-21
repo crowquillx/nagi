@@ -4,7 +4,6 @@
       "nagi-noctalia-shell"
       "spotify"
       "nagi-hushmic-tray"
-      "handy --start-hidden"
       "sleep 5 && discord"
     ];
 
