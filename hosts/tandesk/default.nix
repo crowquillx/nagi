@@ -1,17 +1,32 @@
-{ ... }: {
+{ lib, ... }: {
   imports = [
     ../common/default.nix
     ../profiles/pango.nix
     ./hardware-configuration.nix
   ];
 
-  # Use an enrolled FIDO2 token first, then fall back to the existing LUKS
-  # passphrase when no suitable token appears.
-  boot.initrd.luks.devices."luks-840bc2c4-3551-4cd7-b379-e0e70db6b623".crypttabExtraOpts = [
-    "fido2-device=auto"
-    "token-timeout=5s"
-  ];
-  boot.supportedFilesystems."ntfs-3g" = true;
+  boot = {
+    initrd = {
+      systemd.enable = true;
+      # Keep FIDO2 and passphrase recovery available after TPM enrollment.
+      luks.devices."luks-840bc2c4-3551-4cd7-b379-e0e70db6b623".crypttabExtraOpts = [
+        "tpm2-device=auto"
+        "fido2-device=auto"
+        "token-timeout=5s"
+      ];
+    };
+    lanzaboote.measuredBoot = {
+      enable = true;
+      pcrs = [ 0 4 7 ];
+      # This firmware omits the EFI Application action event. Requiring it
+      # makes pcrlock drop PCR 4 even though its recorded measurements match.
+      upstreamStaticMeasurements = lib.mkForce [
+        "500-separator.pcrlock.d/300-0x00000000.pcrlock"
+        "400-secureboot-separator.pcrlock.d/300-0x00000000.pcrlock"
+      ];
+    };
+    supportedFilesystems."ntfs-3g" = true;
+  };
 
   services = {
     logind.settings = {
