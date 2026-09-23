@@ -26,8 +26,8 @@
 
   features = {
     mullvad = {
-      package = "cli";
-      service.enable = false;
+      package = "gui";
+      service.enable = true;
     };
 
     codingTools.aiCli.gemini.enable = false;
