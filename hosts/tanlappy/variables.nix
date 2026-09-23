@@ -26,7 +26,7 @@
   desktop = {
     compositor = "umbriel";
     browser = {
-      mullvadBrowser.enable = false;
+      mullvadBrowser.enable = true;
     };
     session = {
       # Noctalia owns the authentication agent in the Umbriel session.
