@@ -23,6 +23,7 @@ let
   cheatengineGroup = "cheatengine";
   lutrisPkg = pkgs.lutris or null;
   heroicPkg = pkgs.heroic or null;
+  hydraLauncherPkg = pkgs.hydralauncher or null;
   protonPlusPkg = pkgs.protonplus or pkgs."protonup-qt" or null;
   winePkg =
     if pkgs ? wineWow64Packages && pkgs.wineWow64Packages ? wayland then
@@ -102,6 +103,10 @@ in
           message = "features.gaming.enable is true, but nixpkgs package 'heroic' could not be resolved.";
         }
         {
+          assertion = !enabled || hydraLauncherPkg != null;
+          message = "features.gaming.enable is true, but nixpkgs package 'hydralauncher' could not be resolved.";
+        }
+        {
           assertion = !enabled || protonPlusPkg != null;
           message = "features.gaming.enable is true, but neither 'protonplus' nor fallback 'protonup-qt' could be resolved.";
         }
@@ -176,6 +181,7 @@ in
       environment.systemPackages = [
         lutrisPkg
         heroicPkg
+        hydraLauncherPkg
         protonPlusPkg
         winePkg
         winetricksPkg
