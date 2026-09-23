@@ -65,5 +65,11 @@ in
         };
       };
     })
+    (lib.mkIf (enabled && v.features.networking.networkmanager.enable) {
+      systemd.services.flatpak-managed-install = {
+        wants = [ "NetworkManager-wait-online.service" ];
+        after = [ "NetworkManager-wait-online.service" ];
+      };
+    })
   ];
 }
