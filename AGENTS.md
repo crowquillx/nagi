@@ -3,7 +3,7 @@
 ## Purpose
 This repository is a multi-host NixOS flake with Home Manager integration. It is organized around a small `flake.nix`, `flake-parts`, `import-tree`, and a dendritic or parts-wrapped layout where flake logic, shared stacks, host wiring, and user wiring stay separated.
 
-Agents should preserve that structure. Do not collapse this repo back into a monolithic `flake.nix` or ad hoc host imports unless explicitly asked. As much as possible should be done with nix, do not look for lazy workarounds! 
+Agents should preserve that structure. Do not collapse this repo back into a monolithic `flake.nix` or ad hoc host imports unless explicitly asked. Solve problems declaratively in Nix rather than with imperative workarounds.
 
 ## Architecture
 
@@ -39,12 +39,8 @@ Read [docs/DENDRITIC.md](/home/tan/nagi/docs/DENDRITIC.md) before changing flake
 - Keep NixOS and Home Manager responsibilities separated. System services belong in `modules/nixos`; user session behavior belongs in `modules/home`.
 
 ### Prefer declarative modules over shell-heavy activation
-- Do not reinvent the wheel when a working upstream implementation already exists.
-- Prefer established NixOS modules, Home Manager modules, and maintained external flakes over custom reimplementations.
-- Before writing custom glue, check whether the behavior already exists in `nixpkgs`, Home Manager, or a well-maintained flake used by the community.
-- Good example: use a maintained declarative Flatpak module such as `nix-flatpak` rather than custom activation scripts for package lifecycle management.
-- Avoid custom boot-time shell in `system.activationScripts` when an existing NixOS or Home Manager module can model the state directly.
-- Prefer upstream module options and well-maintained flake inputs over hand-rolled lifecycle scripts.
+- Before writing custom glue, check whether `nixpkgs`, Home Manager, or a well-maintained community flake already models the behavior, and use it. Example: `nix-flatpak` instead of custom activation scripts for Flatpak lifecycle.
+- Avoid custom shell in `system.activationScripts` when a module can model the state directly.
 - Be especially conservative with anything that runs during activation or boot. A broken activation snippet can prevent the machine from booting cleanly.
 
 ### Host variable model
@@ -88,8 +84,8 @@ Fallback commands:
 - `home-manager switch --flake .#<host>`
 
 ### Validation expectations
-- Validation is build- and eval-based; there is no dedicated unit-test suite.
-- At minimum, build affected hosts.
+- Validation is build- and eval-based. `nix flake check` also runs the Python tests in `tests/` and the orphan-module check (see `modules/flake/checks.nix`).
+- At minimum, build affected hosts; run `nix flake check` when touching code those checks cover.
 - For runtime-sensitive changes, note that runtime verification may be needed, but do not perform `switch` or other live activation steps unless the user explicitly requests it in the current turn.
 - For portal, compositor, display manager, audio, boot, and graphics changes, prefer host-specific validation over assuming a successful eval is sufficient.
 
@@ -108,6 +104,8 @@ Fallback commands:
 - [docs/NEW_HOST.md](/home/tan/nagi/docs/NEW_HOST.md): adding a host.
 - [docs/SOPS.md](/home/tan/nagi/docs/SOPS.md): secrets workflow.
 - [docs/SECURE_BOOT.md](/home/tan/nagi/docs/SECURE_BOOT.md): secure boot setup.
+- [docs/REPO_SYNC.md](/home/tan/nagi/docs/REPO_SYNC.md): branch sync and work checkpointing through `codebox`.
+- [docs/WORKAROUNDS.md](/home/tan/nagi/docs/WORKAROUNDS.md): where compatibility overlays and package exposure live.
 
 ## Useful reminders for agents
 - This repo may have unrelated local changes; do not revert them unless asked.

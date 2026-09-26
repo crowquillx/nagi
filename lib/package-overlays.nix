@@ -14,12 +14,18 @@ let
       packages.mo2Lint
       packages.computerUseLinux
     ]
-    ++ lib.optional vars.features.gaming.steam.millennium.enable inputs.millennium.overlays.default
+    ++ lib.optionals vars.features.gaming.steam.millennium.enable [
+      inputs.millennium.overlays.default
+      compatibility.millennium
+    ]
     ++ lib.optionals vars.features.gaming.cheatengine.enable [
       inputs.cheatengine-flake.overlays.default
       compatibility.cheatengine
     ]
-    ++ lib.optional vars.features.gaming.enable compatibility.patool
+    ++ lib.optionals vars.features.gaming.enable [
+      compatibility.hydraLauncher
+      compatibility.patool
+    ]
     ++ [ compatibility.llmAgents ];
 in
 {

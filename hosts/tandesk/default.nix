@@ -1,4 +1,11 @@
-{ lib, ... }: {
+{ lib, pkgs, ... }:
+let
+  wallpaperHook = pkgs.writeScriptBin "noctalia-gamemode-wallpaper" ''
+    #!${pkgs.python3}/bin/python3
+    ${builtins.readFile ../../scripts/noctalia-gamemode-wallpaper.py}
+  '';
+in
+{
   imports = [
     ../common/default.nix
     ../profiles/pango.nix
@@ -15,6 +22,8 @@
         "token-timeout=5s"
       ];
     };
+    # systemd-pcrlock caps measured boot at 4 generations on the ESP.
+    lanzaboote.configurationLimit = 4;
     lanzaboote.measuredBoot = {
       enable = true;
       pcrs = [ 0 4 7 ];
@@ -49,6 +58,20 @@
 
   programs.ssh.knownHosts.tanlappy.publicKey =
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB8xhsg67hSFq4ouV7yWw04UOyYo/fVIHuHL+d1ABvwq";
+
+  programs.gamemode.settings.custom = {
+    start = "${wallpaperHook}/bin/noctalia-gamemode-wallpaper pause";
+    end = "${wallpaperHook}/bin/noctalia-gamemode-wallpaper resume";
+  };
+
+  systemd.user.services.noctalia-gamemode-wallpaper-recover = {
+    description = "Restore Noctalia wallpaper rotation after an interrupted game";
+    wantedBy = [ "default.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${wallpaperHook}/bin/noctalia-gamemode-wallpaper recover";
+    };
+  };
 
   systemd.targets = {
     sleep.enable = false;

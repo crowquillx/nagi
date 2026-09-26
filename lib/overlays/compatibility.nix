@@ -1,6 +1,53 @@
 # Local compatibility patches. Each workaround documents its removal condition.
 { lib, inputs }:
 let
+  # Hydra's bundled UMU launcher needs Python to start Proton. Remove when
+  # nixpkgs includes Python in Hydra's AppImage environment.
+  hydraLauncher = final: prev: {
+    hydralauncher = prev.hydralauncher.override {
+      appimageTools = final.appimageTools // {
+        wrapType2 =
+          args:
+          final.appimageTools.wrapType2 (
+            args
+            // {
+              extraPkgs = pkgs: (args.extraPkgs or (_: [ ])) pkgs ++ [ pkgs.python3 ];
+            }
+          );
+      };
+    };
+  };
+
+  # Introduced 2026-09-26.
+  # Upstream's bun-deps FOD hash is stale: `bun install` now yields a different
+  # output for the pinned source regardless of nixpkgs. bunDeps is let-bound,
+  # so patch its hash through the stdenv passed to upstream's millennium.nix.
+  # Remove when upstream packages/nix/millennium.nix ships the new hash.
+  millennium =
+    final: prev:
+    let
+      bunDepsHash = "sha256-iPdEl5GH0cXjn1EUdYutqxdMwdRXms+eXCEIwZ3xeLY=";
+      stdenv = prev.stdenv // {
+        mkDerivation =
+          args:
+          prev.stdenv.mkDerivation (
+            args
+            // lib.optionalAttrs ((args.name or "") == "millennium-typescript-bun-deps") {
+              outputHash = bunDepsHash;
+            }
+          );
+      };
+      millenniumPkg = final.callPackage "${inputs.millennium}/millennium.nix" {
+        inherit stdenv;
+        inherit (inputs.millennium.inputs) millennium-src;
+      };
+    in
+    {
+      millennium-steam = final.callPackage "${inputs.millennium}/steam.nix" {
+        millennium = millenniumPkg;
+      };
+    };
+
   # Introduced 2026-07-17.
   # Recent nixos-unstable libmagic reports a different MIME type for the test
   # fixture, and helper-dependent archive tests cannot find their fixtures.
@@ -115,5 +162,11 @@ let
       };
 in
 {
-  inherit cheatengine llmAgents patool;
+  inherit
+    cheatengine
+    hydraLauncher
+    llmAgents
+    millennium
+    patool
+    ;
 }
