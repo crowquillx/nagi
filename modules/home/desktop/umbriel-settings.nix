@@ -73,8 +73,6 @@
     border = {
       focused = "#EBBCBAFF";
       outer = "#191724FF";
-      scratchpad_focused = "#F6C177FF";
-      scratchpad_unfocused = "#6E6A86FF";
       unfocused = "#191724FF";
     };
     error = "#EB6F92FF";
@@ -328,6 +326,13 @@
       blur_optimized = false;
     }
     {
+      border_color_focused = "#F6C177FF";
+      border_color_unfocused = "#6E6A86FF";
+      match = {
+        is_scratchpad = true;
+      };
+    }
+    {
       default_floating = true;
       default_floating_size_px = {
         height = 920;
@@ -376,6 +381,11 @@
     }
     {
       default_floating = true;
+      # Match Thunar's saved window size so File Roller opens alongside it.
+      default_floating_size_px = {
+        height = 666;
+        width = 951;
+      };
       match = {
         app_id = "^(thunar|org[.]gnome[.]FileRoller)$";
       };
