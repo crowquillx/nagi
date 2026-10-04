@@ -10,7 +10,6 @@ let
   inherit (import ../../lib/package-overlays.nix { inherit lib inputs; }) sharedOverlays;
 
   homeModule = import ../../users/default/home.nix;
-  noctaliaHmModule = lib.attrByPath [ "noctalia" "homeModules" "default" ] null inputs;
   umbrielHmModule = inputs.umbriel.homeModules.default;
   greeterNixosModule = inputs.noctalia-greeter.nixosModules.default;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
@@ -40,14 +39,14 @@ let
 
   determinateHmModule = inputs.determinate.homeManagerModules.default;
 
-  sharedHomeModules = lib.optionals (noctaliaHmModule != null) [ noctaliaHmModule ];
+  # programs.noctalia comes from Home Manager's built-in module. The noctalia
+  # flake's homeModule duplicates it and its disabledModules path is stale.
   homeModulesFor =
     {
       standalone ? false,
       umbriel ? false,
     }:
     [ homeModule ]
-    ++ sharedHomeModules
     ++ lib.optionals umbriel [ umbrielHmModule ]
     ++ lib.optional standalone determinateHmModule;
 

@@ -19,7 +19,7 @@ in
       }
     ];
 
-    programs.noctalia-greeter = {
+    services.displayManager.noctalia-greeter = {
       enable = true;
       # Constrained appearance-only sync without an admin prompt, limited by
       # upstream to the exact packaged helper, root target, and active local
