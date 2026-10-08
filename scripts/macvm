@@ -1,0 +1,277 @@
+set -euo pipefail
+
+readonly VM_NAME=macbuild
+readonly SSH_ALIAS=macbuild
+readonly REFERENCE_URL=https://github.com/kholia/OSX-KVM.git
+readonly REFERENCE_DIR="$MACVM_DATA_DIR/OSX-KVM"
+readonly RECOVERY_DIR="$MACVM_DATA_DIR/recovery"
+readonly SYSTEM_DISK="$MACVM_DATA_DIR/macbuild-system.qcow2"
+readonly OPENCORE_DISK="$MACVM_DATA_DIR/OpenCore.qcow2"
+readonly RECOVERY_IMAGE="$MACVM_DATA_DIR/BaseSystem.img"
+
+fail() {
+  printf 'macvm: %s\n' "$*" >&2
+  exit 1
+}
+
+usage() {
+  cat <<'USAGE'
+macvm-prepare
+macvm-define
+macvm-start
+macvm-stop
+macvm-force-stop
+macvm-status
+macvm-storage
+macvm-console
+macvm-ssh [ssh arguments...]
+macvm-enroll-key
+macvm-guest-setup
+macvm-sync <local-project-directory>
+macvm-build <project-name> <xcodebuild arguments...>
+macvm-package-ipa <guest-app-path> [guest-ipa-path]
+macvm-fetch-ipa <guest-ipa-path> [local-directory]
+macvm-build-and-copy <project-name> <guest-app-path> [tanmedia-directory] -- <xcodebuild arguments...>
+USAGE
+}
+
+virsh_system() {
+  command virsh -c qemu:///system "$@"
+}
+
+shell_quote() {
+  python3 -c 'import shlex, sys; print(shlex.join(sys.argv[1:]))' "$@"
+}
+
+valid_project_name() {
+  [[ "$1" =~ ^[A-Za-z0-9._-]+$ && "$1" != . && "$1" != .. ]]
+}
+
+command_name="${0##*/}"
+if [[ "$command_name" == macvm ]]; then
+  [[ "$#" -gt 0 ]] || { usage; exit 2; }
+  command_name="macvm-$1"
+  shift
+fi
+command_name="${command_name#macvm-}"
+
+case "$command_name" in
+  prepare)
+    mkdir -p "$MACVM_DATA_DIR"
+
+    if [[ -d "$REFERENCE_DIR" ]]; then
+      current_commit="$(git -C "$REFERENCE_DIR" rev-parse HEAD 2>/dev/null || true)"
+      [[ "$current_commit" == "$MACVM_REFERENCE_COMMIT" ]] || fail "reference checkout exists at $REFERENCE_DIR but is not the pinned revision; inspect it before removing it"
+    else
+      reference_tmp="$(mktemp -d "$MACVM_DATA_DIR/.osx-kvm.XXXXXX")"
+      trap 'rm -rf "$reference_tmp"' EXIT
+      git init "$reference_tmp"
+      git -C "$reference_tmp" remote add origin "$REFERENCE_URL"
+      git -C "$reference_tmp" fetch --depth=1 --filter=blob:none origin "$MACVM_REFERENCE_COMMIT"
+      git -C "$reference_tmp" checkout --detach FETCH_HEAD
+      mv "$reference_tmp" "$REFERENCE_DIR"
+      trap - EXIT
+    fi
+
+    [[ -s "$REFERENCE_DIR/OpenCore/OpenCore.qcow2" ]] || fail "pinned OSX-KVM checkout has no OpenCore qcow2 disk"
+    if [[ ! -e "$OPENCORE_DISK" ]]; then
+      cp "$REFERENCE_DIR/OpenCore/OpenCore.qcow2" "$OPENCORE_DISK"
+    fi
+
+    if [[ ! -s "$RECOVERY_IMAGE" ]]; then
+      mkdir -p "$RECOVERY_DIR"
+      if [[ ! -s "$RECOVERY_DIR/BaseSystem.dmg" || ! -s "$RECOVERY_DIR/BaseSystem.chunklist" ]]; then
+        python3 "$REFERENCE_DIR/fetch-macOS-v2.py" -s tahoe -o "$RECOVERY_DIR" -n BaseSystem
+      fi
+      dmg2img "$RECOVERY_DIR/BaseSystem.dmg" "$RECOVERY_IMAGE"
+    fi
+
+    if [[ ! -e "$SYSTEM_DISK" ]]; then
+      qemu-img create -f qcow2 -o preallocation=off "$SYSTEM_DISK" "${MACVM_DISK_GIB}G"
+    fi
+
+    printf 'Prepared files in %s\n' "$MACVM_DATA_DIR"
+    printf 'The macOS system disk has a %s GiB virtual maximum and uses host storage as guest writes data.\n' "$MACVM_DISK_GIB"
+    qemu-img info "$SYSTEM_DISK"
+    du -h "$SYSTEM_DISK"
+    ;;
+  define)
+    [[ -r "$MACVM_DOMAIN_XML" ]] || fail "libvirt domain XML is not readable: $MACVM_DOMAIN_XML"
+    for required_file in "$OPENCORE_DISK" "$RECOVERY_IMAGE" "$SYSTEM_DISK"; do
+      [[ -s "$required_file" ]] || fail "missing $required_file; run macvm-prepare first"
+    done
+    virsh_system define "$MACVM_DOMAIN_XML"
+    ;;
+  start)
+    virsh_system dominfo "$VM_NAME" >/dev/null 2>&1 || fail "domain $VM_NAME is not defined; run macvm-define"
+    state="$(virsh_system domstate "$VM_NAME" 2>/dev/null | tr -d '\r')"
+    if [[ "$state" == running ]]; then
+      printf '%s is already running. SSH: ssh %s\n' "$VM_NAME" "$SSH_ALIAS"
+    else
+      virsh_system start "$VM_NAME"
+    fi
+    ;;
+  stop)
+    state="$(virsh_system domstate "$VM_NAME" 2>/dev/null | tr -d '\r')" || fail "domain $VM_NAME is not defined"
+    if [[ "$state" != running ]]; then
+      printf '%s is %s\n' "$VM_NAME" "$state"
+      exit 0
+    fi
+    virsh_system shutdown "$VM_NAME"
+    for _ in {1..60}; do
+      state="$(virsh_system domstate "$VM_NAME" 2>/dev/null | tr -d '\r')"
+      if [[ "$state" == 'shut off' ]]; then
+        printf '%s shut down cleanly\n' "$VM_NAME"
+        exit 0
+      fi
+      sleep 2
+    done
+    fail "$VM_NAME did not stop within 120 seconds; use macvm-force-stop only if needed"
+    ;;
+  force-stop)
+    virsh_system destroy "$VM_NAME"
+    ;;
+  status)
+    if ! state="$(virsh_system domstate "$VM_NAME" 2>/dev/null | tr -d '\r')"; then
+      printf '%s is not defined\n' "$VM_NAME"
+      exit 1
+    fi
+    printf 'VM: %s\nState: %s\nSSH: 127.0.0.1:%s via %s\nLAN hostname: macbuild.local (after guest hostname setup)\n' \
+      "$VM_NAME" "$state" "$MACVM_SSH_PORT" "$SSH_ALIAS"
+    if [[ "$state" == running ]] && ssh -o BatchMode=yes -o ConnectTimeout=2 "$SSH_ALIAS" true >/dev/null 2>&1; then
+      printf 'SSH reachability: ready\n'
+    elif [[ "$state" == running ]]; then
+      printf 'SSH reachability: not ready (guest Remote Login/key setup may be incomplete)\n'
+    fi
+    ;;
+  storage)
+    [[ -s "$SYSTEM_DISK" ]] || fail "missing system disk: $SYSTEM_DISK"
+    qemu-img info "$SYSTEM_DISK"
+    printf '\nHost space currently allocated:\n'
+    du -h "$SYSTEM_DISK"
+    ;;
+  console)
+    exec virt-viewer --connect qemu:///system --wait "$VM_NAME"
+    ;;
+  ssh)
+    exec ssh "$SSH_ALIAS" "$@"
+    ;;
+  enroll-key)
+    [[ -s "$MACVM_SSH_KEY.pub" ]] || fail "missing public key: $MACVM_SSH_KEY.pub"
+    printf 'Enable Remote Login in macOS first. This will ask for the guest account password once.\n'
+    exec ssh-copy-id -i "$MACVM_SSH_KEY.pub" "$SSH_ALIAS"
+    ;;
+  guest-setup)
+    guest_script="$(cat <<'GUEST_SCRIPT'
+set -eu
+if [[ ! -d /Applications/Xcode.app/Contents/Developer ]]; then
+  echo 'Install the official Xcode 26.6 application in /Applications first.' >&2
+  exit 1
+fi
+sudo /usr/bin/xcode-select --switch /Applications/Xcode.app/Contents/Developer
+sudo /usr/bin/xcodebuild -license
+sudo /usr/bin/xcodebuild -runFirstLaunch
+if ! command -v brew >/dev/null 2>&1; then
+  /bin/bash -c "$(/usr/bin/curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+brew install xcodegen
+git --version
+xcodebuild -version
+xcrun --sdk appletvos --show-sdk-version
+swift --version
+xcodegen --version
+GUEST_SCRIPT
+    )"
+    remote_command="$(shell_quote /bin/bash -lc "$guest_script")"
+    exec ssh -t "$SSH_ALIAS" "$remote_command"
+    ;;
+  sync)
+    [[ "$#" -eq 1 ]] || fail "usage: macvm-sync <local-project-directory>"
+    source_dir="$(realpath "$1")"
+    [[ -d "$source_dir" ]] || fail "not a directory: $1"
+    project="$(basename "$source_dir")"
+    valid_project_name "$project" || fail "project directory name must contain only letters, digits, dot, underscore, or hyphen"
+    # shellcheck disable=SC2029
+    ssh "$SSH_ALIAS" "mkdir -p \"\$HOME/Developer/$project\""
+    exec rsync -a --exclude=.git -e ssh "$source_dir/" "${SSH_ALIAS}:Developer/$project/"
+    ;;
+  build)
+    [[ "$#" -ge 2 ]] || fail "usage: macvm-build <project-name> <xcodebuild arguments...>"
+    project="$1"
+    shift
+    valid_project_name "$project" || fail "invalid project name: $project"
+    xcodebuild_args="$(shell_quote "$@")"
+    remote_command="cd \"\$HOME/Developer/$project\" && exec xcodebuild $xcodebuild_args"
+    exec ssh "$SSH_ALIAS" "$remote_command"
+    ;;
+  package-ipa)
+    [[ "$#" -ge 1 && "$#" -le 2 ]] || fail "usage: macvm-package-ipa <guest-app-path> [guest-ipa-path]"
+    app_path="$1"
+    app_name="$(basename "$app_path" .app)"
+    output_path="${2:-Developer/artifacts/${app_name}-tvOS-unsigned.ipa}"
+    remote_command="APP_PATH=$(shell_quote "$app_path") OUTPUT_PATH=$(shell_quote "$output_path") /bin/bash -s"
+    # shellcheck disable=SC2029
+    ssh "$SSH_ALIAS" "$remote_command" <<'GUEST_SCRIPT'
+set -euo pipefail
+case "$APP_PATH" in
+  \~/*) APP_PATH="$HOME/${APP_PATH#\~/}" ;;
+  /*) ;;
+  *) APP_PATH="$HOME/$APP_PATH" ;;
+esac
+case "$OUTPUT_PATH" in
+  \~/*) OUTPUT_PATH="$HOME/${OUTPUT_PATH#\~/}" ;;
+  /*) ;;
+  *) OUTPUT_PATH="$HOME/$OUTPUT_PATH" ;;
+esac
+[[ -d "$APP_PATH" && "$APP_PATH" == *.app ]] || { echo "not an .app directory: $APP_PATH" >&2; exit 1; }
+app_name="$(basename "$APP_PATH")"
+output_dir="$(dirname "$OUTPUT_PATH")"
+mkdir -p "$output_dir"
+temp_dir="$(mktemp -d)"
+trap 'rm -rf "$temp_dir"' EXIT
+mkdir "$temp_dir/Payload"
+/usr/bin/ditto "$APP_PATH" "$temp_dir/Payload/$app_name"
+/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$temp_dir/Payload" "$temp_dir/$(basename "$OUTPUT_PATH")"
+mv -f "$temp_dir/$(basename "$OUTPUT_PATH")" "$OUTPUT_PATH"
+printf 'Created unsigned IPA: %s\n' "$OUTPUT_PATH"
+GUEST_SCRIPT
+    ;;
+  fetch-ipa)
+    [[ "$#" -ge 1 && "$#" -le 2 ]] || fail "usage: macvm-fetch-ipa <guest-ipa-path> [local-directory]"
+    remote_path="$1"
+    [[ "$remote_path" != /* && "$remote_path" != *../* && "$remote_path" != ../* ]] || fail "use a path relative to the guest home without '..'"
+    destination="${2:-$PWD/artifacts}"
+    mkdir -p "$destination"
+    exec scp -p "${SSH_ALIAS}:$remote_path" "$destination/"
+    ;;
+  build-and-copy)
+    [[ "$#" -ge 4 ]] || fail "usage: macvm-build-and-copy <project-name> <guest-app-path> [tanmedia-directory] -- <xcodebuild arguments...>"
+    project="$1"
+    app_path="$2"
+    shift 2
+    tanmedia_dir=""
+    if [[ "${1:-}" != -- ]]; then
+      tanmedia_dir="$1"
+      shift
+    fi
+    [[ "${1:-}" == -- ]] || fail "use -- before xcodebuild arguments"
+    shift
+    [[ "$#" -gt 0 ]] || fail "provide xcodebuild arguments"
+    valid_project_name "$project" || fail "invalid project name: $project"
+    macvm-build "$project" "$@"
+    app_name="$(basename "$app_path" .app)"
+    remote_ipa="Developer/artifacts/${app_name}-tvOS-unsigned.ipa"
+    macvm-package-ipa "$app_path" "$remote_ipa"
+    artifact_dir="$PWD/artifacts"
+    mkdir -p "$artifact_dir"
+    macvm-fetch-ipa "$remote_ipa" "$artifact_dir"
+    if [[ -n "$tanmedia_dir" ]]; then
+      local_ipa="$artifact_dir/${app_name}-tvOS-unsigned.ipa"
+      scp -p "$local_ipa" "tanmedia:${tanmedia_dir%/}/"
+    fi
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

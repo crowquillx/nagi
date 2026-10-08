@@ -47,6 +47,7 @@ let
     ../nixos/services/nh.nix
     ../nixos/services/steam.nix
     ../nixos/services/virtualisation.nix
+    ../nixos/services/macos-builder.nix
     ../nixos/services/mullvad-vpn.nix
     ../nixos/services/ai.nix
     ../nixos/services/keyring.nix
@@ -83,6 +84,7 @@ let
     ../home/dev/computer-use-linux.nix
     ../home/dev/codex-desktop.nix
     ../home/dev/repo-sync.nix
+    ../home/dev/macos-builder.nix
   ];
 
   homeMedia = [

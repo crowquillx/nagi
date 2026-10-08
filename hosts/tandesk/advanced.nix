@@ -40,9 +40,36 @@
         hdr = "auto";
         sdr_white = 250;
       };
+      # LG C2 TV over HDMI 2.1: optional gaming display, disabled by default.
+      # Connector verified via /sys/class/drm/card1-HDMI-A-1 (only HDMI port;
+      # currently disconnected while the TV is off) and `umbriel outputs`.
+      # Runtime enable is temporary (`output-toggle`); reboot returns to disabled.
+      "HDMI-A-1" = {
+        enabled = false;
+        mode = "3840x2160@120";
+        position = [
+          5120
+          0
+        ];
+        scale = 1;
+        vrr = "fullscreen";
+        hdr = "auto";
+      };
     };
 
+    # Dedicated gaming workspace bound to the TV. While HDMI-A-1 is disabled,
+    # Umbriel parks GAME plus its windows on another enabled output and
+    # returns them when the TV is re-enabled; new game windows fall back to
+    # the preferred (normally DP-3) output in that state.
+    workspace = [
+      {
+        name = "GAME";
+        output = "HDMI-A-1";
+      }
+    ];
+
     keybinds = {
+      "Mod+G" = "output-toggle:HDMI-A-1";
       "Mod+Ctrl+Left" = "output-focus-left";
       "Mod+Ctrl+Right" = "output-focus-right";
       "Mod+Ctrl+H" = "output-focus-left";
@@ -68,15 +95,31 @@
       }
       {
         match.app_id = "^(steam_app_238960|steam_app_2694490)$";
-        default_output = "DP-3";
+        default_output = "HDMI-A-1";
+        default_workspace = "GAME";
+        default_fullscreen = true;
+        hdr = "auto";
+      }
+      {
+        match.app_id = "^steam_app_[0-9]+$";
+        default_output = "HDMI-A-1";
+        default_workspace = "GAME";
         default_fullscreen = true;
         hdr = "auto";
       }
       {
         match.app_id = "^(steam_proton|.*[.]exe)$";
-        default_output = "DP-3";
+        default_output = "HDMI-A-1";
+        default_workspace = "GAME";
         default_fullscreen = true;
         blur = false;
+      }
+      # VRR/HDR follow for any game content, including fallback to DP-3 while
+      # the TV is disabled.
+      {
+        match.content_type = "game";
+        vrr = "fullscreen";
+        hdr = "auto";
       }
       {
         match.app_id = "^(discord|com[.]discordapp[.]Discord|equibop)$";

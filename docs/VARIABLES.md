@@ -119,6 +119,9 @@ NixOS enables `uinput` and grants the primary user access. The feature requires
 - `features.chat`, `features.localsend`, `features.mullvad`,
   `features.flatpak`, `features.gaming`, `features.virtualisation`, and
   `features.codingTools` enable optional applications and services.
+- `features.virtualisation.macosBuilder` controls the local macOS build VM,
+  including its wired interface, resource limits, sparse disk maximum, and
+  loopback-only SSH forward.
 - `features.videoEditing`, `features.blender`, and `features.ai` control
   optional creative and AI packages.
 

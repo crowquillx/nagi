@@ -90,7 +90,7 @@
       };
       swappiness = 10;
     };
-
+    virtualisation.macosBuilder.enable = true;
   };
 
   security.sops = {

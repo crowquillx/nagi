@@ -1,6 +1,6 @@
 { lib, ... }:
 let
-  inherit (lib) mkOption;
+  inherit (lib) mkOption types;
   inherit (import ./helpers.nix { inherit lib; })
     enableOption
     packageToggle
@@ -70,6 +70,37 @@ in
             spiceUSBRedirection = mkOption {
               type = packageToggle "SPICE USB redirection" true;
               default = { };
+            };
+          };
+          default = { };
+        };
+        macosBuilder = mkOption {
+          type = strictSubmodule {
+            enable = enableOption "Enable the local macOS build VM tooling." false;
+            ethernetInterface = mkOption {
+              type = types.nonEmptyStr;
+              default = "enp5s0";
+              description = "Wired Ethernet interface attached to the macOS VM.";
+            };
+            vcpus = mkOption {
+              type = types.ints.positive;
+              default = 8;
+              description = "Virtual CPUs assigned to the macOS build VM.";
+            };
+            memoryMiB = mkOption {
+              type = types.ints.positive;
+              default = 16384;
+              description = "Memory assigned to the macOS build VM in MiB.";
+            };
+            diskGiB = mkOption {
+              type = types.ints.positive;
+              default = 256;
+              description = "Maximum sparse qcow2 system disk size in GiB.";
+            };
+            sshPort = mkOption {
+              type = types.port;
+              default = 2222;
+              description = "Loopback-only host port forwarded to guest SSH.";
             };
           };
           default = { };

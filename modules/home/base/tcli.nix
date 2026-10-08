@@ -18,8 +18,8 @@ let
     codebox = "ssh tan@codebox";
     tandesk = "ssh tan@tandesk";
     tanlappy = "ssh tan@tanlappy";
-    tanime = "ssh root@192.168.0.85";
-    tanmedia = "ssh tan@192.168.0.116";
+    tanime = "ssh root@tanime";
+    tanmedia = "ssh tan@tanmedia";
   };
   homeManagerPkg =
     let

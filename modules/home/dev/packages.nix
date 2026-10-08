@@ -98,7 +98,6 @@ let
     (lib.attrByPath [ "nixd" ] null pkgs)
     (lib.attrByPath [ "nil" ] null pkgs)
   ];
-  t3UpstreamPkg = llmAgent "t3code";
   t3NightlyPkg = lib.attrByPath [
     "t3code-nightly-nix"
     "packages"
@@ -115,10 +114,26 @@ let
     (lib.attrByPath [ "git" ] null pkgs)
   ];
   t3codePkg =
-    if t3UpstreamPkg == null then
+    if t3NightlyPkg == null then
       null
     else
-      t3UpstreamPkg.override { providerPackages = t3ProviderPackages; };
+      pkgs.buildFHSEnv (
+        pkgs.appimageTools.defaultFhsEnvArgs
+        // {
+          name = "t3";
+          inherit (t3NightlyPkg) version;
+          runScript = pkgs.writeShellScript "t3-nightly-cli" ''
+            export ELECTRON_RUN_AS_NODE=1
+            export PATH=${lib.escapeShellArg (lib.makeBinPath t3ProviderPackages)}:"$PATH"
+            exec ${t3NightlyPkg.contents}/t3code \
+              ${t3NightlyPkg.contents}/resources/app.asar/apps/server/dist/bin.mjs "$@"
+          '';
+          meta = t3NightlyPkg.meta // {
+            description = "T3 Code CLI from the desktop nightly";
+            mainProgram = "t3";
+          };
+        }
+      );
   # llm-agents desktop stores OSCrypt under application="T3 Code (Alpha)"
   # (electron productName). The nightly AppImage looks up application="t3code"
   # (asar package.json name). Copy the productName key onto t3code so the
@@ -280,14 +295,14 @@ let
       "features.codingTools.nixTools.enable is true, but no Nix language server (nixd or nil) could be resolved."
     )
     (mkRequiredPackageRule t3codeEnabled t3codePkg
-      "features.codingTools.editors.t3code.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
+      "features.codingTools.editors.t3code.enable is true, but the nightly CLI could not be resolved from t3code-nightly-nix."
     )
     (mkRequiredPackageRule t3codeEnabled t3DesktopPkg
       "features.codingTools.editors.t3code.enable is true, but package 't3code-nightly' could not be resolved from t3code-nightly-nix."
     )
     (mkPackageRule (t3codeEnabled && t3DesktopPkg != null) t3OscryptAlias)
     (mkValidationRule t3ServiceEnabled t3codePkg
-      "features.codingTools.editors.t3code.service.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
+      "features.codingTools.editors.t3code.service.enable is true, but the nightly CLI could not be resolved from t3code-nightly-nix."
     )
     (mkValidationRule nixToolsEnabled ghPkg
       "features.codingTools.nixTools.enable is true, but nixpkgs package 'gh' could not be resolved."
