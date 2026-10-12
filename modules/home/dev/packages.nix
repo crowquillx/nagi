@@ -20,12 +20,22 @@ let
   cursorEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "cursor" "enable" ] true;
   zedEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "zed" "enable" ] true;
   aiCliEnabled = get [ "features" "codingTools" "aiCli" "enable" ] codingToolsEnabled;
+  codexEnabled = get [ "features" "codingTools" "aiCli" "codex" "enable" ] aiCliEnabled;
+  codexNative =
+    codexEnabled && get [ "features" "codingTools" "aiCli" "codex" "installMethod" ] "nix" == "native";
   claudeEnabled = get [ "features" "codingTools" "aiCli" "claude" "enable" ] aiCliEnabled;
+  claudeNative =
+    claudeEnabled
+    && get [ "features" "codingTools" "aiCli" "claude" "installMethod" ] "nix" == "native";
+  nativeBinPath = "${config.home.homeDirectory}/.local/bin";
   cliProxyApiEnabled = get [ "features" "codingTools" "aiCli" "cliProxyApi" "enable" ] aiCliEnabled;
   opencode2Enabled = get [ "features" "codingTools" "aiCli" "opencode2" "enable" ] false;
   geminiEnabled = get [ "features" "codingTools" "aiCli" "gemini" "enable" ] aiCliEnabled;
   grokEnabled = get [ "features" "codingTools" "aiCli" "grok" "enable" ] aiCliEnabled;
   piEnabled = get [ "features" "codingTools" "aiCli" "pi" "enable" ] aiCliEnabled;
+  piNative =
+    piEnabled && get [ "features" "codingTools" "aiCli" "pi" "installMethod" ] "nix" == "native";
+  nativeCliEnabled = claudeNative || codexNative || piNative;
   ohMyPiEnabled = get [ "features" "codingTools" "aiCli" "ohMyPi" "enable" ] aiCliEnabled;
   herdrEnabled = get [ "features" "codingTools" "aiCli" "herdr" "enable" ] aiCliEnabled;
   primeAgentEnabled = get [ "features" "codingTools" "aiCli" "primeAgent" "enable" ] aiCliEnabled;
@@ -105,14 +115,16 @@ let
     "t3code-nightly"
   ] null inputs;
   t3ProviderPackages = lib.filter (pkg: pkg != null) [
-    (llmAgent "codex")
-    claudeCodePkg
+    (if codexNative then null else llmAgent "codex")
+    (if claudeNative then null else claudeCodePkg)
     (llmAgent "cursor-agent")
     (if grokEnabled then grokPkg else null)
     (llmAgent "opencode")
     (lib.attrByPath [ "gh" ] null pkgs)
     (lib.attrByPath [ "git" ] null pkgs)
   ];
+  t3ProviderPath =
+    lib.optionalString nativeCliEnabled "${nativeBinPath}:" + lib.makeBinPath t3ProviderPackages;
   t3codePkg =
     if t3NightlyPkg == null then
       null
@@ -124,7 +136,7 @@ let
           inherit (t3NightlyPkg) version;
           runScript = pkgs.writeShellScript "t3-nightly-cli" ''
             export ELECTRON_RUN_AS_NODE=1
-            export PATH=${lib.escapeShellArg (lib.makeBinPath t3ProviderPackages)}:"$PATH"
+            export PATH=${lib.escapeShellArg t3ProviderPath}:"$PATH"
             exec ${t3NightlyPkg.contents}/t3code \
               ${t3NightlyPkg.contents}/resources/app.asar/apps/server/dist/bin.mjs "$@"
           '';
@@ -178,7 +190,7 @@ let
           makeShellWrapper ${lib.getExe t3NightlyPkg} \
             "$out/bin/t3code-desktop" \
             --prefix PATH : ${
-              lib.escapeShellArg (lib.makeBinPath (t3ProviderPackages ++ [ pkgs.libsecret ]))
+              lib.escapeShellArg (t3ProviderPath + ":" + lib.makeBinPath [ pkgs.libsecret ])
             } \
             --run ${lib.escapeShellArg (lib.getExe t3OscryptAlias)}
           ln -s t3code-desktop "$out/bin/t3code-nightly"
@@ -248,7 +260,7 @@ let
     (mkRequiredPackageRule geminiEnabled geminiCliPkg
       "features.codingTools.aiCli.gemini.enable is true, but package 'gemini-cli' could not be resolved from llm-agents.nix, nixpkgs, or gemini-cli-bin fallback."
     )
-    (mkRequiredPackageRule claudeEnabled claudeCodePkg
+    (mkRequiredPackageRule (claudeEnabled && !claudeNative) claudeCodePkg
       "features.codingTools.aiCli.claude.enable is true, but package 'claude-code' could not be resolved from llm-agents.nix."
     )
     (mkRequiredPackageRule cliProxyApiEnabled cliProxyApiPkg
@@ -260,7 +272,7 @@ let
     (mkRequiredPackageRule grokEnabled grokPkg
       "features.codingTools.aiCli.grok.enable is true, but package 'grok' could not be resolved from llm-agents.nix."
     )
-    (mkRequiredPackageRule piEnabled piPkg
+    (mkRequiredPackageRule (piEnabled && !piNative) piPkg
       "features.codingTools.aiCli.pi.enable is true, but package 'pi' could not be resolved from llm-agents.nix."
     )
     (mkRequiredPackageRule ohMyPiEnabled ohMyPiPkg
@@ -353,7 +365,18 @@ in
   assertions = packageAssertions;
 
   # `gh` is provided by programs.gh in modules/home/base (git HTTPS→SSH fixes).
-  home.packages = resolvedPackages;
+  home = {
+    packages = resolvedPackages;
+    sessionPath = lib.optional nativeCliEnabled nativeBinPath;
+
+    # T3 may register its unwrapped Electron binary as the protocol handler.
+    file.".local/share/applications/t3code-url-handler.desktop" =
+      lib.mkIf (t3codeEnabled && t3DesktopPkg != null)
+        {
+          text = t3UrlHandlerText;
+          force = true;
+        };
+  };
 
   xdg.desktopEntries = lib.optionalAttrs (t3codeEnabled && t3DesktopPkg != null) {
     t3code = {
@@ -379,15 +402,6 @@ in
       "t3code-url-handler.desktop"
     ];
   };
-
-  # T3 may register x-scheme-handler/t3code with process.execPath, which
-  # is the unwrapped Electron binary. Rewrite the desktop file whenever T3 does.
-  home.file.".local/share/applications/t3code-url-handler.desktop" =
-    lib.mkIf (t3codeEnabled && t3DesktopPkg != null)
-      {
-        text = t3UrlHandlerText;
-        force = true;
-      };
 
   systemd.user = {
     paths.nagi-t3code-url-handler = lib.mkIf (t3codeEnabled && t3DesktopPkg != null) {

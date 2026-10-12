@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   vars ? { },
   ...
@@ -7,10 +8,11 @@ let
   get = path: default: lib.attrByPath path default vars;
   desktopEnabled = get [ "desktop" "enable" ] true;
   enabled = get [ "features" "theme" "qt" "enable" ] true;
-  noctaliaSettings = {
+  noctaliaSettings = qtct: {
     Appearance = {
-      color_scheme = "noctalia";
-      style = "kvantum";
+      color_scheme_path = "${config.xdg.configHome}/${qtct}/colors/noctalia.conf";
+      custom_palette = true;
+      style = "Fusion";
     };
   };
 in
@@ -19,9 +21,9 @@ in
     qt = {
       enable = true;
       platformTheme.name = "qtct";
-      style.name = "kvantum";
-      qt5ctSettings = noctaliaSettings;
-      qt6ctSettings = noctaliaSettings;
+      style.name = "Fusion";
+      qt5ctSettings = noctaliaSettings "qt5ct";
+      qt6ctSettings = noctaliaSettings "qt6ct";
     };
   };
 }

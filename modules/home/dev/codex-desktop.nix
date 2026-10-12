@@ -10,6 +10,7 @@ let
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
   aiCliEnabled = get [ "features" "codingTools" "aiCli" "enable" ] codingToolsEnabled;
   codexEnabled = get [ "features" "codingTools" "aiCli" "codex" "enable" ] aiCliEnabled;
+  codexNative = get [ "features" "codingTools" "aiCli" "codex" "installMethod" ] "nix" == "native";
   codexPkg = lib.attrByPath [ "llm-agents" "codex" ] null pkgs;
   chatgptPkg = lib.attrByPath [ "llm-agents" "chatgpt" ] null pkgs;
   chatgptBinName = if chatgptPkg == null then "chatgpt" else chatgptPkg.meta.mainProgram or "chatgpt";
@@ -28,7 +29,7 @@ in
     {
       assertions = [
         {
-          assertion = !(codexEnabled && codexPkg == null);
+          assertion = !(codexEnabled && !codexNative && codexPkg == null);
           message = "features.codingTools.aiCli.codex.enable is true, but pkgs.llm-agents.codex could not be resolved.";
         }
         {
@@ -42,10 +43,7 @@ in
       ];
     }
     (lib.mkIf codexEnabled {
-      home.packages = [
-        codexPkg
-        chatgptPkg
-      ];
+      home.packages = lib.optional (!codexNative) codexPkg ++ [ chatgptPkg ];
 
       # llm-agents wraps chatgpt with makeShellWrapper (bin + share only).
       # CUA resources live on the unwrapped output; resolve that at activation
@@ -77,7 +75,12 @@ in
         CODEX_NODE_REPL_NODE_PATH="$resources/cua_node/bin/node" \
         CODEX_NODE_REPL_NODE_MODULE_DIRS="$resources/cua_node/lib/node_modules" \
         CODEX_NODE_REPL_TRUSTED_CODE_PATHS="${config.home.homeDirectory}/.codex:$resources/cua_node/lib/node_modules" \
-        CODEX_CLI_PATH="$resources/codex" \
+        CODEX_CLI_PATH=${
+          if codexNative then
+            lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/codex"
+          else
+            ''"$resources/codex"''
+        } \
         CODEX_DESKTOP_APP_VERSION="$version" \
         ${
           lib.optionalString (computerUseEnabled && computerUseCommand != null) ''

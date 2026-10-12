@@ -11,6 +11,7 @@ let
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
   aiCliEnabled = get [ "features" "codingTools" "aiCli" "enable" ] codingToolsEnabled;
   codexEnabled = get [ "features" "codingTools" "aiCli" "codex" "enable" ] aiCliEnabled;
+  codexNative = get [ "features" "codingTools" "aiCli" "codex" "installMethod" ] "nix" == "native";
   opencodeEnabled = get [ "features" "codingTools" "aiCli" "opencode" "enable" ] aiCliEnabled;
   nixosMcpEnabled = get [ "features" "mcp" "nixos" "enable" ] aiCliEnabled;
   computerUseEnabled = get [ "features" "mcp" "computerUseLinux" "enable" ] false;
@@ -44,7 +45,7 @@ in
     {
       assertions = [
         {
-          assertion = !(codexEnabled && codexPkg == null);
+          assertion = !(codexEnabled && !codexNative && codexPkg == null);
           message = "features.codingTools.aiCli.codex.enable is true, but nixpkgs package 'codex' could not be resolved.";
         }
         {

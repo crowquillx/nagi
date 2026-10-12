@@ -25,7 +25,7 @@ let
     if sessionShell == "noctalia" && qtThemeEnabled then
       {
         QT_QPA_PLATFORMTHEME = "qt5ct";
-        QT_STYLE_OVERRIDE = "kvantum";
+        QT_STYLE_OVERRIDE = "Fusion";
       }
     else
       { };

@@ -78,6 +78,11 @@
   };
 
   features = {
+    codingTools.aiCli = {
+      claude.installMethod = "native";
+      codex.installMethod = "native";
+      pi.installMethod = "native";
+    };
     swap = {
       zram = {
         enable = true;

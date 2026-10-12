@@ -129,6 +129,38 @@ Use the schema modules as the authoritative option reference. Unknown options
 are rejected by the strict submodules; package names in `users.extraPackages`
 are resolved against `pkgs` and checked during evaluation.
 
+## AI CLI installation
+
+`features.codingTools.aiCli.claude.installMethod` defaults to `"nix"`.
+Set it to `"native"` to use Anthropic's native installer for the primary user.
+Run `curl -fsSL https://claude.ai/install.sh | bash` once as that user.
+The installer owns `~/.local/bin/claude` and updates the binary outside Nix.
+Home Manager adds `~/.local/bin` to the session PATH and T3's provider PATH,
+and removes Claude Code from its package list and T3's bundled providers.
+It does not run the installer during activation.
+
+`features.codingTools.aiCli.codex.installMethod` and
+`features.codingTools.aiCli.pi.installMethod` also accept `"nix"` and `"native"`.
+Both default to `"nix"`. For native installs, run these commands as the primary
+user:
+
+```zsh
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+curl -fsSL https://pi.dev/install.sh | sh
+```
+
+The installers manage `~/.local/bin/codex` and `~/.local/bin/pi`. Update Codex
+by running its installer again. Update Pi with `pi update`. Remove an existing
+Nix Pi package from the installer's PATH when staging a managed Pi installation;
+the installer refuses to replace an installation from another package manager.
+Home Manager removes the Nix CLI packages and T3's bundled Codex provider,
+and adds `~/.local/bin` to the session and T3 provider paths. Codex's desktop
+package and plugin resources remain in Nix; its Node REPL configuration uses
+the native Codex CLI. No installer runs during activation.
+
+Tandesk uses `"native"` for Claude Code, Codex, and Pi. Other hosts retain
+the default. Other AI tools keep their existing installation methods.
+
 ## Adding or changing a host
 
 1. Add or update the host's variable fragments.

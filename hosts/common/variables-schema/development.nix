@@ -70,11 +70,31 @@ in
                   description = "Enable AI CLI tools.";
                 };
                 codex = mkOption {
-                  type = packageToggle "Codex" aiCliArgs.config.enable;
+                  type = strictSubmodule {
+                    enable = enableOption "Enable Codex." aiCliArgs.config.enable;
+                    installMethod = mkOption {
+                      type = types.enum [
+                        "nix"
+                        "native"
+                      ];
+                      default = "nix";
+                      description = "Use the Nix CLI package or an existing user installation from OpenAI's standalone installer.";
+                    };
+                  };
                   default = { };
                 };
                 claude = mkOption {
-                  type = packageToggle "Claude Code" aiCliArgs.config.enable;
+                  type = strictSubmodule {
+                    enable = enableOption "Enable Claude Code." aiCliArgs.config.enable;
+                    installMethod = mkOption {
+                      type = types.enum [
+                        "nix"
+                        "native"
+                      ];
+                      default = "nix";
+                      description = "Use the Nix package or an existing user installation from Anthropic's native installer.";
+                    };
+                  };
                   default = { };
                 };
                 cliProxyApi = mkOption {
@@ -98,7 +118,17 @@ in
                   default = { };
                 };
                 pi = mkOption {
-                  type = packageToggle "Pi" aiCliArgs.config.enable;
+                  type = strictSubmodule {
+                    enable = enableOption "Enable Pi." aiCliArgs.config.enable;
+                    installMethod = mkOption {
+                      type = types.enum [
+                        "nix"
+                        "native"
+                      ];
+                      default = "nix";
+                      description = "Use the Nix package or an existing user installation from Pi's managed installer.";
+                    };
+                  };
                   default = { };
                 };
                 ohMyPi = mkOption {
