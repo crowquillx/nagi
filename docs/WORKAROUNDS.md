@@ -14,15 +14,6 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
   Python to Hydra's application environment.
 - Remove when the pinned nixpkgs package provides Python for `umu-run`.
 
-### Millennium bun-deps hash
-
-- Scope: hosts with `features.gaming.steam.millennium.enable`.
-- Reason: the upstream `millennium-typescript-bun-deps` fixed-output hash is
-  stale. `bun install` produces a different output for the pinned source even
-  on upstream's own nixpkgs pin. The overlay passes upstream's `millennium.nix`
-  a `stdenv` that replaces only that derivation's `outputHash`.
-- Remove when upstream `packages/nix/millennium.nix` ships the new hash.
-
 ### Noctalia generated color files
 
 Noctalia owns runtime colors, but its built-in GTK, Qt, Ghostty, Kitty, and

@@ -16,7 +16,6 @@ let
     ]
     ++ lib.optionals vars.features.gaming.steam.millennium.enable [
       inputs.millennium.overlays.default
-      compatibility.millennium
     ]
     ++ lib.optionals vars.features.gaming.cheatengine.enable [
       inputs.cheatengine-flake.overlays.default
