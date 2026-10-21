@@ -32,7 +32,6 @@ jobs:
             .#checks.x86_64-linux.nix-parse \
             .#checks.x86_64-linux.tcli-help \
             .#checks.x86_64-linux.codex-desktop-config \
-            .#checks.x86_64-linux.repo-sync \
             .#checks.x86_64-linux.orphan-modules
 
       # This evaluates every published NixOS and standalone Home Manager

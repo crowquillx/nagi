@@ -22,8 +22,6 @@
         fileset = lib.fileset.unions [
           ../../install/bootstrap.sh
           ../../scripts/bg3-mode
-          ../../scripts/repo-sync
-          ../../scripts/repo-sync-codebox
           ../../scripts/tcli
           ../../secrets/scripts/validate-host.sh
         ];
@@ -102,28 +100,6 @@
             }
             ''
               python ${../../scripts/check-orphan-modules.py} ${orphanSource}
-              touch "$out"
-            '';
-
-        repo-sync =
-          pkgs.runCommandLocal "repo-sync-tests"
-            {
-              nativeBuildInputs = [
-                pkgs.bash
-                pkgs.coreutils
-                pkgs.git
-                pkgs.gnugrep
-                pkgs.gnused
-                pkgs.openssh
-                pkgs.python3
-              ];
-            }
-            ''
-              NAGI_REPO_SYNC=${../../scripts/repo-sync} \
-                python ${../../tests/test_repo_sync.py}
-              NAGI_REPO_SYNC=${../../scripts/repo-sync} \
-              NAGI_REPO_SYNC_CODEBOX=${../../scripts/repo-sync-codebox} \
-                python ${../../tests/test_repo_sync_codebox.py}
               touch "$out"
             '';
 

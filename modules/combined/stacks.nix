@@ -32,6 +32,7 @@ let
 
   nixosServices = [
     ../nixos/services/audio.nix
+    ../nixos/services/arctis-sound-manager.nix
     ../nixos/services/core.nix
     ../nixos/services/nix-ld.nix
     ../nixos/services/bluetooth.nix
@@ -83,7 +84,6 @@ let
     ../home/dev/mcp.nix
     ../home/dev/computer-use-linux.nix
     ../home/dev/codex-desktop.nix
-    ../home/dev/repo-sync.nix
     ../home/dev/macos-builder.nix
   ];
 

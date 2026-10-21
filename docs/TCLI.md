@@ -6,11 +6,6 @@ It provides one place to run common flake lifecycle tasks while handling both la
 
 Rebuild commands run through `nh`, so rebuilds get the generation tree view and closure diffs. The host and home composition model is unchanged.
 
-Before a NixOS or standalone Home Manager build, `tcli` asks the configured
-`nagi-repo-checkpoint` wrapper to preserve dirty nagi files in the private
-codebox mirror. A checkpoint failure is reported but never mutates or discards
-the working tree.
-
 ## Commands
 
 ### `tcli`
@@ -176,7 +171,7 @@ Shell aliases are set by Home Manager:
 - `winblows` -> reboot into the Windows boot entry
 - `enterbios` -> reboot into firmware setup
 
-Fish and Zsh also define `codebox`, `tanime`, and `tanmedia` as SSH shortcuts.
+Fish and Zsh also define `tanime` and `tanmedia` as SSH shortcuts.
 
 ## Bootstrap integration
 

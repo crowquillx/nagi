@@ -134,7 +134,7 @@ features.flatpak = {
 Pull requests run a fast, unprivileged validation tier with Determinate Nix:
 
 - Nix formatting, Statix, ShellCheck, and syntax parsing for every tracked Nix file
-- focused tcli, repo-sync, orphan-scanner, and Codex Desktop transformation tests
+- focused tcli, orphan-scanner, and Codex Desktop transformation tests
 - `nix flake check --no-build --accept-flake-config`, which evaluates every published NixOS and standalone Home Manager configuration
 
 The lightweight checks run in one `nix build` command. All check definitions live
@@ -164,7 +164,6 @@ hours, validates the newest nightly AppImage, and publishes it to Cachix.
 
 - Host variable reference: `docs/VARIABLES.md`
 - `tcli` behavior: `docs/TCLI.md`
-- repository synchronization: `docs/REPO_SYNC.md`
 - sops key and secret setup: `docs/SOPS.md`
 - adding a host: `docs/NEW_HOST.md`
 - flake-parts structure: `docs/DENDRITIC.md`

@@ -114,6 +114,58 @@ let
     );
   };
 
+  # Introduced 2026-10-20.
+  # The upstream package sets makeWrapperArgs as one Nix string per flag
+  # ("--prefix QT_PLUGIN_PATH : <dirs>", ...). With __structuredAttrs those
+  # stay whole array elements, and wrapPythonPrograms hands each to
+  # makeShellWrapper as a single argv entry, which dies with
+  # "makeWrapper doesn't understand the arg --prefix ...". Split every entry
+  # on spaces so each flag, variable, separator, and value is its own token
+  # (store paths contain no spaces, so this is exact and idempotent).
+  # Remove when upstream lists one token per element.
+  # Upstream: https://github.com/loteran/Arctis-Sound-Manager (nix/package.nix)
+  arctisWrapperArgs = final: prev: {
+    arctis-sound-manager = prev.arctis-sound-manager.overrideAttrs (old: {
+      makeWrapperArgs = lib.concatMap (s: lib.splitString " " s) (old.makeWrapperArgs or [ ]);
+    });
+  };
+
+  # Introduced 2026-10-20.
+  # nixos-unstable signs out-of-tree kernel modules with kmodigest at
+  # install time and the *-modules aggregation concatenates every
+  # module's .ko.cer into modules.cer. openrazer's custom installPhase
+  # copies only driver/*.ko instead of running Kbuild modules_install,
+  # so its modules are never signed and the aggregation fails with
+  # missing razerkbd.ko.cer (and siblings) errors. Sign the installed
+  # modules in postFixup (after stripping) to generate the certificates.
+  # Remove when upstream openrazer installs .cer files itself.
+  openrazerCer =
+    final: prev:
+    let
+      kmodigestPkg = prev.buildPackages.kmodigest;
+      fixOpenrazer =
+        kpkgs:
+        kpkgs.extend (
+          _kfinal: kprev: {
+            openrazer = kprev.openrazer.overrideAttrs (old: {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ kmodigestPkg ];
+              postFixup = (old.postFixup or "") + ''
+                for ko in "$out"/lib/modules/*/kernel/drivers/hid/razer*.ko; do
+                  if [ -f "$ko" ]; then
+                    kmodigest "$ko"
+                  fi
+                done
+              '';
+            });
+          }
+        );
+    in
+    {
+      linuxPackages = fixOpenrazer prev.linuxPackages;
+      linuxPackages_zen = fixOpenrazer prev.linuxPackages_zen;
+      linuxPackages_latest = fixOpenrazer prev.linuxPackages_latest;
+    };
+
   # Introduced 2026-07-17.
   # Preserve the historical pkgs.llm-agents namespace when an llm-agents.nix
   # revision exposes packages but no default overlay. Direct package reuse also
@@ -133,9 +185,11 @@ let
 in
 {
   inherit
+    arctisWrapperArgs
     cheatengine
     hydraLauncher
     llmAgents
+    openrazerCer
     patool
     ;
 }

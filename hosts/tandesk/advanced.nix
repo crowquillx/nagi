@@ -141,6 +141,7 @@
   };
 
   features = {
+    audio.arctis.enable = true;
     chat.discord = {
       forceXwayland = false;
       mouseMute = {

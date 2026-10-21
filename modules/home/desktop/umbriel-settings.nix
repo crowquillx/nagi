@@ -14,9 +14,6 @@
       dim = 0.5;
       duration_ms = 250;
       enabled = true;
-      fullscreen = false;
-      maximize = false;
-      scale = 0;
     };
     windows_in = {
       curve = "easeout";

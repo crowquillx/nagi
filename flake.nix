@@ -122,6 +122,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    arctis-sound-manager = {
+      url = "github:loteran/Arctis-Sound-Manager?dir=nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     vortex-nix = {
       url = "github:crowquillx/vortex-nix";
     };

@@ -92,6 +92,13 @@ in
     audio = mkOption {
       type = strictSubmodule {
         enable = enableOption "Enable PipeWire audio." true;
+        arctis = mkOption {
+          type = strictSubmodule {
+            enable = enableOption "Enable Arctis Sound Manager for SteelSeries Arctis headsets." false;
+            autostartTray = enableOption "Launch the Arctis tray GUI (asm-gui --systray) on login." true;
+          };
+          default = { };
+        };
       };
       default = { };
     };

@@ -25,7 +25,14 @@ let
       compatibility.hydraLauncher
       compatibility.patool
     ]
-    ++ [ compatibility.llmAgents ];
+    ++ [ compatibility.llmAgents ]
+    ++ lib.optionals vars.features.razer.openrazer.enable [
+      compatibility.openrazerCer
+    ]
+    ++ lib.optionals vars.features.audio.arctis.enable [
+      inputs.arctis-sound-manager.overlays.default
+      compatibility.arctisWrapperArgs
+    ];
 in
 {
   inherit sharedOverlays;

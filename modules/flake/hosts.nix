@@ -12,6 +12,7 @@ let
   homeModule = import ../../users/default/home.nix;
   umbrielHmModule = inputs.umbriel.homeModules.default;
   greeterNixosModule = inputs.noctalia-greeter.nixosModules.default;
+  arctisNixosModule = inputs.arctis-sound-manager.nixosModules.default;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
   importVariables = files: lib.foldl' lib.recursiveUpdate { } (map import files);
   # Validate each host's raw variables against the schema and materialise
@@ -80,6 +81,7 @@ let
         inputs.sops-nix.nixosModules.sops
         inputs.lanzaboote.nixosModules.lanzaboote
         greeterNixosModule
+        arctisNixosModule
         nixosHostModules.${hostName}
       ]
       ++ lib.optionals (comfyuiEnabled vars) [ inputs.comfyui-nix.nixosModules.default ];

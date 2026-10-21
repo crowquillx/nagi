@@ -15,7 +15,6 @@ let
     ncg = "tcli gc";
     winblows = "systemctl reboot --boot-loader-entry=auto-windows";
     enterbios = "systemctl reboot --boot-loader-entry=auto-reboot-to-firmware-setup";
-    codebox = "ssh tan@codebox";
     tandesk = "ssh tan@tandesk";
     tanlappy = "ssh tan@tanlappy";
     tanime = "ssh root@tanime";

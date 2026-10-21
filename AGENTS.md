@@ -104,7 +104,6 @@ Fallback commands:
 - [docs/NEW_HOST.md](/home/tan/nagi/docs/NEW_HOST.md): adding a host.
 - [docs/SOPS.md](/home/tan/nagi/docs/SOPS.md): secrets workflow.
 - [docs/SECURE_BOOT.md](/home/tan/nagi/docs/SECURE_BOOT.md): secure boot setup.
-- [docs/REPO_SYNC.md](/home/tan/nagi/docs/REPO_SYNC.md): branch sync and work checkpointing through `codebox`.
 - [docs/WORKAROUNDS.md](/home/tan/nagi/docs/WORKAROUNDS.md): where compatibility overlays and package exposure live.
 
 ## Useful reminders for agents

@@ -65,6 +65,30 @@ existing explicit cursor package.
 - Remove when the upstream flake packages the current archive and runtime
   libraries resolve through `/run/wrappers/bin/cheatengine-bin`.
 
+### openrazer module certificates
+
+- Scope: hosts with `features.razer.openrazer.enable` (kernel modules aggregation).
+- Reason: nixos-unstable signs out-of-tree modules with kmodigest and the
+  `*-modules` aggregation concatenates every `.ko.cer` into `modules.cer`.
+  openrazer's custom `installPhase` copies only `driver/*.ko`, dropping the
+  generated certificates, so the build fails with missing
+  `razerkbd.ko.cer` (and siblings) errors. The compatibility overlay installs
+  the certificates alongside the modules.
+- Remove when upstream openrazer installs `.cer` files itself.
+
+### arctis-sound-manager wrapper arguments
+
+- Scope: hosts with `features.audio.arctis.enable`.
+- Reason: the upstream package sets `makeWrapperArgs` as one Nix string per
+  flag (`"--prefix QT_PLUGIN_PATH : <dirs>"`). With `__structuredAttrs`
+  those stay whole array elements, and `wrapPythonPrograms` hands each to
+  `makeShellWrapper` as a single argument, which dies with
+  "makeWrapper doesn't understand the arg --prefix ...". The compatibility
+  overlay splits every entry on spaces (exact: store paths contain no
+  spaces). The service is pinned to the overlay build because the flake
+  module defaults to its own unpatched `self.packages` output.
+- Remove when upstream lists one token per `makeWrapperArgs` element.
+
 ### llm-agents overlay fallback
 
 Older `llm-agents.nix` revisions expose packages without `overlays.default`.

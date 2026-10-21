@@ -110,7 +110,7 @@ NixOS enables `uinput` and grants the primary user access. The feature requires
   `graphics.extraPackages` control hardware graphics.
 - `users.primary`, `users.flakeDirectory`, `users.extraPackages`, and
   `users.git` control the primary account and package inventory.
-- `features.audio`, `features.bluetooth`, `features.portals`, `features.nh`,
+- `features.audio`, `features.audio.arctis`, `features.bluetooth`, `features.portals`, `features.nh`,
   `features.nixLd`, `features.swap`, and `features.nixMaintenance` control system services.
 - `features.ssh` controls OpenSSH (port, auth policy, authorized keys) and its
   optional mosh companion at `features.ssh.mosh`; mosh requires

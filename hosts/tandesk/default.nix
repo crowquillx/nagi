@@ -26,7 +26,11 @@ in
     lanzaboote.configurationLimit = 4;
     lanzaboote.measuredBoot = {
       enable = true;
-      pcrs = [ 0 4 7 ];
+      pcrs = [
+        0
+        4
+        7
+      ];
       # This firmware omits the EFI Application action event. Requiring it
       # makes pcrlock drop PCR 4 even though its recorded measurements match.
       upstreamStaticMeasurements = lib.mkForce [
@@ -49,7 +53,7 @@ in
       };
     };
 
-    teamviewer.enable = true;
+    teamviewer.enable = false;
     udisks2.settings."mount_options.conf".defaults.ntfs_drivers = [
       "ntfs"
       "ntfs3"
