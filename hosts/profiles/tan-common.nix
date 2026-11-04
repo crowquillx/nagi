@@ -94,7 +94,6 @@
     };
     codingTools = {
       enable = true;
-      orca.enable = true;
       editors = {
         enable = true;
         t3code.enable = true;

@@ -2,7 +2,6 @@
   lib,
   pkgs,
   vars ? { },
-  inputs,
   config,
   ...
 }:
@@ -10,7 +9,6 @@ let
   v = vars;
   get = path: default: lib.attrByPath path default v;
   codingToolsEnabled = get [ "features" "codingTools" "enable" ] true;
-  orcaEnabled = get [ "features" "codingTools" "orca" "enable" ] codingToolsEnabled;
   paseoEnabled = get [ "features" "codingTools" "paseo" "enable" ] codingToolsEnabled;
   editorsEnabled = get [ "features" "codingTools" "editors" "enable" ] codingToolsEnabled;
   t3codeEnabled = editorsEnabled && get [ "features" "codingTools" "editors" "t3code" "enable" ] true;
@@ -40,10 +38,8 @@ let
   herdrEnabled = get [ "features" "codingTools" "aiCli" "herdr" "enable" ] aiCliEnabled;
   primeAgentEnabled = get [ "features" "codingTools" "aiCli" "primeAgent" "enable" ] aiCliEnabled;
   nixToolsEnabled = get [ "features" "codingTools" "nixTools" "enable" ] codingToolsEnabled;
-  system = pkgs.stdenv.hostPlatform.system;
 
   llmAgent = name: lib.attrByPath [ "llm-agents" name ] null pkgs;
-  orcaPkg = llmAgent "orca";
 
   geminiCliPkg =
     let
@@ -108,12 +104,7 @@ let
     (lib.attrByPath [ "nixd" ] null pkgs)
     (lib.attrByPath [ "nil" ] null pkgs)
   ];
-  t3NightlyPkg = lib.attrByPath [
-    "t3code-nightly-nix"
-    "packages"
-    system
-    "t3code-nightly"
-  ] null inputs;
+  t3UpstreamPkg = llmAgent "t3code";
   t3ProviderPackages = lib.filter (pkg: pkg != null) [
     (if codexNative then null else llmAgent "codex")
     (if claudeNative then null else claudeCodePkg)
@@ -123,33 +114,30 @@ let
     (lib.attrByPath [ "gh" ] null pkgs)
     (lib.attrByPath [ "git" ] null pkgs)
   ];
-  t3ProviderPath =
-    lib.optionalString nativeCliEnabled "${nativeBinPath}:" + lib.makeBinPath t3ProviderPackages;
-  t3codePkg =
-    if t3NightlyPkg == null then
+  t3WrappedPkg =
+    if t3UpstreamPkg == null then
       null
     else
-      pkgs.buildFHSEnv (
-        pkgs.appimageTools.defaultFhsEnvArgs
-        // {
-          name = "t3";
-          inherit (t3NightlyPkg) version;
-          runScript = pkgs.writeShellScript "t3-nightly-cli" ''
-            export ELECTRON_RUN_AS_NODE=1
-            export PATH=${lib.escapeShellArg t3ProviderPath}:"$PATH"
-            exec ${t3NightlyPkg.contents}/t3code \
-              ${t3NightlyPkg.contents}/resources/app.asar/apps/server/dist/bin.mjs "$@"
-          '';
-          meta = t3NightlyPkg.meta // {
-            description = "T3 Code CLI from the desktop nightly";
-            mainProgram = "t3";
-          };
-        }
-      );
-  # llm-agents desktop stores OSCrypt under application="T3 Code (Alpha)"
-  # (electron productName). The nightly AppImage looks up application="t3code"
-  # (asar package.json name). Copy the productName key onto t3code so the
-  # AppImage can decrypt ~/.t3/userdata/connection-catalog.json.
+      t3UpstreamPkg.override { providerPackages = t3ProviderPackages; };
+  t3NativePathFlags = lib.optionalString nativeCliEnabled "--prefix PATH : ${lib.escapeShellArg nativeBinPath}";
+  t3codePkg =
+    if t3WrappedPkg == null || !nativeCliEnabled then
+      t3WrappedPkg
+    else
+      pkgs.symlinkJoin {
+        name = "${t3WrappedPkg.name}-native-path";
+        paths = [ t3WrappedPkg ];
+        nativeBuildInputs = [ pkgs.makeBinaryWrapper ];
+        postBuild = ''
+          rm "$out/bin/t3"
+          makeWrapper ${lib.getExe' t3WrappedPkg "t3"} "$out/bin/t3" ${t3NativePathFlags}
+        '';
+        inherit (t3WrappedPkg) meta;
+      };
+  t3AppName = t3UpstreamPkg.unwrapped.appName or "T3 Code (Beta)";
+  # Electron keys OSCrypt by productName. The previous nightly AppImage used
+  # application="t3code"; copy that key onto the stable productName so it can
+  # still decrypt ~/.t3/userdata/connection-catalog.json.
   t3OscryptAlias = pkgs.writeShellApplication {
     name = "nagi-t3code-alias-oscrypt";
     runtimeInputs = [
@@ -158,47 +146,44 @@ let
     ];
     text = ''
       set -euo pipefail
-      src="$(secret-tool lookup application "T3 Code (Alpha)" || true)"
-      if [ -z "$src" ]; then
-        echo "nagi-t3code-alias-oscrypt: no T3 Code (Alpha) OSCrypt key; skipping" >&2
+      app=${lib.escapeShellArg t3AppName}
+      if [ -n "$(secret-tool lookup application "$app" || true)" ]; then
         exit 0
       fi
-      dst="$(secret-tool lookup application t3code || true)"
-      if [ -n "$dst" ] && [ "$src" = "$dst" ]; then
+      src="$(secret-tool lookup application t3code || true)"
+      if [ -z "$src" ]; then
         exit 0
       fi
       printf '%s' "$src" | secret-tool store \
         --label='Chromium Safe Storage' \
         xdg:schema chrome_libsecret_os_crypt_password_v2 \
-        application t3code
-      echo "nagi-t3code-alias-oscrypt: aliased T3 Code (Alpha) OSCrypt key onto application=t3code" >&2
+        application "$app"
+      echo "nagi-t3code-alias-oscrypt: aliased t3code OSCrypt key onto application=$app" >&2
     '';
   };
   t3DesktopPkg =
-    if t3NightlyPkg == null then
+    if t3WrappedPkg == null then
       null
     else
       pkgs.stdenvNoCC.mkDerivation {
         pname = "t3code-desktop";
-        inherit (t3NightlyPkg) version;
+        inherit (t3WrappedPkg) version;
         dontUnpack = true;
         strictDeps = true;
         nativeBuildInputs = [ pkgs.makeWrapper ];
         installPhase = ''
           runHook preInstall
           mkdir -p "$out/bin"
-          makeShellWrapper ${lib.getExe t3NightlyPkg} \
+          makeShellWrapper ${lib.getExe' t3WrappedPkg.desktop "t3code-desktop"} \
             "$out/bin/t3code-desktop" \
-            --prefix PATH : ${
-              lib.escapeShellArg (t3ProviderPath + ":" + lib.makeBinPath [ pkgs.libsecret ])
-            } \
+            ${t3NativePathFlags} \
+            --add-flags "--no-sandbox --password-store=gnome-libsecret" \
             --run ${lib.escapeShellArg (lib.getExe t3OscryptAlias)}
-          ln -s t3code-desktop "$out/bin/t3code-nightly"
-          ln -s ${t3NightlyPkg}/share "$out/share"
+          ln -s ${t3WrappedPkg.desktop}/share "$out/share"
           runHook postInstall
         '';
-        meta = t3NightlyPkg.meta // {
-          description = "Nightly desktop control surface for coding agents";
+        meta = t3WrappedPkg.meta // {
+          description = "Desktop control surface for coding agents";
           mainProgram = "t3code-desktop";
         };
       };
@@ -251,9 +236,6 @@ let
     (mkRequiredPackageRule enable package message) // { install = false; };
   packageRules = [
     (mkPackageRule codingToolsEnabled pkgs.nodejs)
-    (mkRequiredPackageRule orcaEnabled orcaPkg
-      "features.codingTools.orca.enable is true, but package 'orca' (the orca-ide executable) could not be resolved from llm-agents.nix."
-    )
     (mkRequiredPackageRule paseoEnabled paseoPkg
       "features.codingTools.paseo.enable is true, but package 'paseo-desktop' could not be resolved from llm-agents.nix."
     )
@@ -307,14 +289,14 @@ let
       "features.codingTools.nixTools.enable is true, but no Nix language server (nixd or nil) could be resolved."
     )
     (mkRequiredPackageRule t3codeEnabled t3codePkg
-      "features.codingTools.editors.t3code.enable is true, but the nightly CLI could not be resolved from t3code-nightly-nix."
+      "features.codingTools.editors.t3code.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
     )
     (mkRequiredPackageRule t3codeEnabled t3DesktopPkg
-      "features.codingTools.editors.t3code.enable is true, but package 't3code-nightly' could not be resolved from t3code-nightly-nix."
+      "features.codingTools.editors.t3code.enable is true, but the t3code desktop output could not be resolved from llm-agents.nix."
     )
     (mkPackageRule (t3codeEnabled && t3DesktopPkg != null) t3OscryptAlias)
     (mkValidationRule t3ServiceEnabled t3codePkg
-      "features.codingTools.editors.t3code.service.enable is true, but the nightly CLI could not be resolved from t3code-nightly-nix."
+      "features.codingTools.editors.t3code.service.enable is true, but package 't3code' could not be resolved from llm-agents.nix."
     )
     (mkValidationRule nixToolsEnabled ghPkg
       "features.codingTools.nixTools.enable is true, but nixpkgs package 'gh' could not be resolved."
@@ -381,7 +363,7 @@ in
   xdg.desktopEntries = lib.optionalAttrs (t3codeEnabled && t3DesktopPkg != null) {
     t3code = {
       name = "T3 Code";
-      comment = "T3 Code desktop build";
+      comment = "Control surface for coding agents";
       exec = "${t3DesktopProgram} %U";
       terminal = false;
       type = "Application";

@@ -1,4 +1,6 @@
 {
+  desktop.umbriel.xwaylandPrimaryOutput = "DP-3";
+
   desktop.umbriel.settings = {
     general.autostart = [
       "nagi-noctalia-shell"
@@ -69,7 +71,7 @@
     ];
 
     keybinds = {
-      "Mod+G" = "output-toggle:HDMI-A-1";
+      "Mod+G" = "output-toggle HDMI-A-1";
       "Mod+Ctrl+Left" = "output-focus-left";
       "Mod+Ctrl+Right" = "output-focus-right";
       "Mod+Ctrl+H" = "output-focus-left";

@@ -5,6 +5,29 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Active workarounds
 
+### Discord stable version pin
+
+- Scope: hosts with `features.chat.client = "discord"`.
+- Reason: Discord 1.0.166 advertises H.265 decode on Linux but cannot create
+  the decoder (`Could not create any video decoder, format: H265`), so H.265
+  Go Live streams fail with error 2012. The compatibility overlay builds
+  `discord` from the 1.0.167 distro manifest in
+  `lib/overlays/discord-stable-source.json`, generated the same way as
+  nixpkgs' `discord/update.py`.
+- The override is skipped once the pinned nixpkgs ships that version or newer;
+  remove it then.
+
+### Equicord notification sounds
+
+- Scope: hosts with `features.chat.discord.equicord.enable`.
+- Reason: Equicord 2026-09-03 has an outdated `AudioPlayerAPI` patch. Discord
+  rejects part of the patch, leaving sound calls with a missing filename.
+  Deafen, mute, and call sounds fail with `Cannot find module './undefined.mp3'`.
+- The compatibility overlay backports the
+  [upstream October 5 fix](https://github.com/Equicord/Equicord/commit/c5fb124e496bdc364deb28eb026e29422d35bd19).
+- Remove when the pinned Equicord includes that fix. The patch is skipped for
+  package versions dated 2026-10-05 or later.
+
 ### Hydra Proton launcher
 
 - Scope: gaming hosts using `hydralauncher`.
@@ -48,6 +71,14 @@ that narrow action still requires administrator authentication. Automatic shell
 sync remains off. The greeter still exposes the Umbriel session and uses the
 existing explicit cursor package.
 
+### Noctalia shell package
+
+`programs.noctalia.package` uses the `noctalia` flake input (`cachix` branch)
+instead of the nixpkgs release. Noctalia talks to Umbriel over its IPC socket,
+and Umbriel changes that protocol without compatibility shims (for example the
+typed action requests that replaced `{"cmd":"msg"}`). Update the `umbriel` and
+`noctalia` inputs together.
+
 ### patool test skips
 
 - Scope: gaming hosts using `python314Packages.patool` through Bottles.
@@ -89,6 +120,14 @@ existing explicit cursor package.
   module defaults to its own unpatched `self.packages` output.
 - Remove when upstream lists one token per `makeWrapperArgs` element.
 
+### mcp-nixos on mcp 1.x
+
+- Scope: hosts with `features.mcp.nixos.enable`.
+- Reason: nixpkgs moved `python3Packages.mcp` to 2.x and marks `fastmcp-slim`
+  broken against it, so `mcp-nixos` refuses to evaluate.
+- The compatibility overlay builds `mcp-nixos` with `mcp = mcp_1`.
+- Remove when `fastmcp-slim` is no longer marked broken with the default `mcp`.
+
 ### llm-agents overlay fallback
 
 Older `llm-agents.nix` revisions expose packages without `overlays.default`.
@@ -98,9 +137,9 @@ revisions expose the standard overlay.
 
 ## Intentional independent input pins
 
-- T3 Code uses `pkgs.llm-agents.t3code` for the optional CLI and the separately
-  pinned `t3code-nightly-nix` AppImage for the desktop. The wrapper preserves
-  the shared provider packages and OSCrypt alias.
+- T3 Code uses `pkgs.llm-agents.t3code` for both the CLI and the desktop. The
+  wrapper injects the shared provider packages and aliases the old nightly
+  OSCrypt key onto the stable app name.
 - `nix-gaming` and `llm-agents` retain their upstream nixpkgs pins for tested
   package sets and cache compatibility.
 - Other independent transitive nixpkgs nodes remain unchanged unless the

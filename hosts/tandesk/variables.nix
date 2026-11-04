@@ -74,7 +74,7 @@
     session = {
       polkit.enable = false;
     };
-    hushmic.deviceId = "alsa_input.usb-Blue_Microphones_Yeti_X_2118SG005V78_888-000313110306-00.analog-stereo";
+    hushmic.deviceId = "alsa_input.usb-SteelSeries_Arctis_Nova_Pro_Omni-00.mono-fallback";
   };
 
   features = {

@@ -1,6 +1,38 @@
 # Local compatibility patches. Each workaround documents its removal condition.
 { lib, inputs }:
 let
+  # Remove when the pinned Equicord includes the 2026-10-05 AudioPlayerAPI fix.
+  equicordAudioPlayer = final: prev: {
+    equicord = prev.equicord.overrideAttrs (old: {
+      patches =
+        (old.patches or [ ])
+        ++ lib.optional (lib.versionOlder old.version "2026-10-05") (
+          final.fetchpatch {
+            url = "https://github.com/Equicord/Equicord/commit/c5fb124e496bdc364deb28eb026e29422d35bd19.patch";
+            hash = "sha256-032qjpja9i/E0tCEjRCNQug/+GuLoON6M4ZZ4AzrzA8=";
+          }
+        );
+    });
+  };
+
+  # Introduced 2026-10-30.
+  # Discord 1.0.166 advertises H.265 decode on Linux but cannot create the
+  # decoder, so H.265 Go Live streams fail with error 2012. Pin the newer
+  # stable distro manifest (regenerate with nixpkgs' discord/update.py logic).
+  # Inert once nixpkgs ships this version; remove then.
+  discordStable =
+    _final: prev:
+    let
+      source = lib.importJSON ./discord-stable-source.json;
+    in
+    {
+      discord =
+        if lib.versionOlder prev.discord.version source.version then
+          prev.discord.override { inherit source; }
+        else
+          prev.discord;
+    };
+
   # Hydra's bundled UMU launcher needs Python to start Proton. Remove when
   # nixpkgs includes Python in Hydra's AppImage environment.
   hydraLauncher = final: prev: {
@@ -166,6 +198,21 @@ let
       linuxPackages_latest = fixOpenrazer prev.linuxPackages_latest;
     };
 
+  # Introduced 2026-10-26.
+  # nixpkgs moved python3Packages.mcp to 2.x, and fastmcp-slim is marked
+  # broken against it, which blocks mcp-nixos evaluation. Build mcp-nixos
+  # against the mcp_1 package nixpkgs still ships. Remove when fastmcp-slim
+  # is no longer marked broken with the default mcp.
+  mcpNixosMcp1 = _final: prev: {
+    mcp-nixos = prev.mcp-nixos.override {
+      python3Packages = prev.python3Packages.overrideScope (
+        _pyFinal: pyPrev: {
+          mcp = pyPrev.mcp_1;
+        }
+      );
+    };
+  };
+
   # Introduced 2026-07-17.
   # Preserve the historical pkgs.llm-agents namespace when an llm-agents.nix
   # revision exposes packages but no default overlay. Direct package reuse also
@@ -187,8 +234,11 @@ in
   inherit
     arctisWrapperArgs
     cheatengine
+    discordStable
+    equicordAudioPlayer
     hydraLauncher
     llmAgents
+    mcpNixosMcp1
     openrazerCer
     patool
     ;

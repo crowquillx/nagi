@@ -20,6 +20,11 @@ in
         };
         umbriel = mkOption {
           type = strictSubmodule {
+            xwaylandPrimaryOutput = mkOption {
+              type = types.nullOr types.nonEmptyStr;
+              default = null;
+              description = "Output to mark as Xwayland's primary monitor at session startup.";
+            };
             settings = mkOption {
               type = types.attrsOf types.anything;
               default = { };

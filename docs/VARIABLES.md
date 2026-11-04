@@ -32,6 +32,15 @@ positions, HDR, VRR, app-to-output rules, and other display-coupled settings
 in `hosts/<host>/advanced.nix`. Host-specific session applications belong in
 the same override's `general.autostart` list.
 
+Set `desktop.umbriel.xwaylandPrimaryOutput = "DP-3";` in the host's
+`advanced.nix` to select Xwayland's primary monitor at login. Home Manager
+installs `xrandr` and starts a helper through Umbriel's autostart list. The
+helper waits up to 30 seconds for that output to be connected and active,
+then marks it as primary. This lets Xwayland games use that monitor's
+resolution list. The default is `null`, which adds no helper or package.
+The setting applies at session startup; it does not follow focus changes
+or monitor hotplug events.
+
 The session options are:
 
 - `desktop.session.enable`: enable session helpers.
