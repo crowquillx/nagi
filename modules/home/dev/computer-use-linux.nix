@@ -70,7 +70,7 @@ in
           PartOf = [ waylandTarget ];
         };
         Service = {
-          ExecStart = "${lib.getExe' ydotoolPkg "ydotoold"} --socket-path=%t/.ydotool_socket --socket-own=%U:%U --socket-perm=0600";
+          ExecStart = "${lib.getExe' ydotoolPkg "ydotoold"} --socket-path=%t/.ydotool_socket --socket-perm=0600";
           Restart = "on-failure";
           RestartSec = 1;
         };

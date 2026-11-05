@@ -46,6 +46,7 @@ let
   vulkanToolsPkg = pkgs.vulkan-tools or null;
   pciutilsPkg = pkgs.pciutils or null;
   bottlesPkg = pkgs.bottles or null;
+  wowupPkg = pkgs.wowup-cf or null;
   cheatenginePkg = pkgs.cheatengine or null;
   pcsx2Pkg = pkgs.pcsx2 or null;
   godotPkg = pkgs.godot or null;
@@ -135,6 +136,10 @@ in
           message = "features.gaming.enable is true, but nixpkgs package 'bottles' could not be resolved.";
         }
         {
+          assertion = !enabled || wowupPkg != null;
+          message = "features.gaming.enable is true, but nixpkgs package 'wowup-cf' could not be resolved.";
+        }
+        {
           assertion = !enabled || mo2LintPkg != null;
           message = "features.gaming.enable is true, but the 'mo2-lint' package could not be resolved. Ensure the mo2LintOverlay is applied.";
         }
@@ -161,6 +166,10 @@ in
       ];
     }
     (lib.mkIf enabled {
+      # Lutris still supplies GTK 2 for legacy games. Remove when its FHS
+      # environment no longer needs the deprecated library.
+      nixpkgs.config.problems.handlers."gtk+".broken = "warn";
+
       programs.steam = {
         enable = true;
         package = lib.mkIf millenniumEnable pkgs.millennium-steam;
@@ -190,6 +199,7 @@ in
         vulkanToolsPkg
         pciutilsPkg
         bottlesPkg
+        wowupPkg
         mo2LintPkg
         rustyPathOfBuildingPkg
         awakenedPoeTradePkg

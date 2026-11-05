@@ -14,7 +14,6 @@ in
 
   boot = {
     initrd = {
-      systemd.enable = true;
       # Keep FIDO2 and passphrase recovery available after TPM enrollment.
       luks.devices."luks-840bc2c4-3551-4cd7-b379-e0e70db6b623".crypttabExtraOpts = [
         "tpm2-device=auto"
@@ -62,6 +61,13 @@ in
 
   programs.ssh.knownHosts.tanlappy.publicKey =
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIB8xhsg67hSFq4ouV7yWw04UOyYo/fVIHuHL+d1ABvwq";
+
+  home-manager.users.tan.programs.ssh.settings.codebox = {
+    HostName = "codebox.tail5b807.ts.net";
+    User = "tan";
+    IdentityFile = "~/.ssh/codebox_ed25519";
+    IdentitiesOnly = true;
+  };
 
   programs.gamemode.settings.custom = {
     start = "${wallpaperHook}/bin/noctalia-gamemode-wallpaper pause";

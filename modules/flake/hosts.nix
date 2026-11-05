@@ -47,7 +47,9 @@ let
       standalone ? false,
       umbriel ? false,
     }:
-    [ homeModule ]
+    [
+      homeModule
+    ]
     ++ lib.optionals umbriel [ umbrielHmModule ]
     ++ lib.optional standalone determinateHmModule;
 

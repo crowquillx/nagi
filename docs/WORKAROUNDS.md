@@ -5,6 +5,17 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Active workarounds
 
+### Equicord notification sounds
+
+- Scope: hosts with `features.chat.discord.equicord.enable`.
+- Reason: Equicord 2026-09-03 has an outdated `AudioPlayerAPI` patch. Discord
+  rejects part of the patch, leaving sound calls with a missing filename.
+  Deafen, mute, and call sounds fail with `Cannot find module './undefined.mp3'`.
+- The compatibility overlay backports the
+  [upstream October 5 fix](https://github.com/Equicord/Equicord/commit/c5fb124e496bdc364deb28eb026e29422d35bd19).
+- Remove when the pinned Equicord includes that fix. The patch is skipped for
+  package versions dated 2026-10-05 or later.
+
 ### Hydra Proton launcher
 
 - Scope: gaming hosts using `hydralauncher`.
@@ -13,6 +24,17 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
   Wine instead of the selected Proton version. The compatibility overlay adds
   Python to Hydra's application environment.
 - Remove when the pinned nixpkgs package provides Python for `umu-run`.
+
+### Lutris GTK 2 compatibility
+
+- Scope: hosts with `features.gaming.enable`.
+- Reason: Lutris includes GTK 2 in its 32-bit and 64-bit game library set.
+  Nixpkgs marks GTK 2 as broken because it is retired and scheduled for
+  removal, which blocks the system build.
+- The gaming module changes only the `gtk+` broken-package check to a warning.
+  It keeps the library available for older games.
+- Remove when Lutris no longer needs GTK 2 in its compatibility environment.
+- Track: [nixpkgs GTK 2 removal](https://github.com/NixOS/nixpkgs/issues/410814).
 
 ### Noctalia generated color files
 
@@ -47,6 +69,14 @@ passwordless appearance sync via `passwordless-sync-users`; anything outside
 that narrow action still requires administrator authentication. Automatic shell
 sync remains off. The greeter still exposes the Umbriel session and uses the
 existing explicit cursor package.
+
+### Noctalia shell package
+
+`programs.noctalia.package` uses the `noctalia` flake input (`cachix` branch)
+instead of the nixpkgs release. Noctalia talks to Umbriel over its IPC socket,
+and Umbriel changes that protocol without compatibility shims (for example the
+typed action requests that replaced `{"cmd":"msg"}`). Update the `umbriel` and
+`noctalia` inputs together.
 
 ### patool test skips
 
@@ -89,6 +119,14 @@ existing explicit cursor package.
   module defaults to its own unpatched `self.packages` output.
 - Remove when upstream lists one token per `makeWrapperArgs` element.
 
+### mcp-nixos on mcp 1.x
+
+- Scope: hosts with `features.mcp.nixos.enable`.
+- Reason: nixpkgs moved `python3Packages.mcp` to 2.x and marks `fastmcp-slim`
+  broken against it, so `mcp-nixos` refuses to evaluate.
+- The compatibility overlay builds `mcp-nixos` with `mcp = mcp_1`.
+- Remove when `fastmcp-slim` is no longer marked broken with the default `mcp`.
+
 ### llm-agents overlay fallback
 
 Older `llm-agents.nix` revisions expose packages without `overlays.default`.
@@ -98,9 +136,9 @@ revisions expose the standard overlay.
 
 ## Intentional independent input pins
 
-- T3 Code uses `pkgs.llm-agents.t3code` for the optional CLI and the separately
-  pinned `t3code-nightly-nix` AppImage for the desktop. The wrapper preserves
-  the shared provider packages and OSCrypt alias.
+- T3 Code uses `pkgs.llm-agents.t3code` for both the CLI and the desktop. The
+  wrapper injects the shared provider packages and aliases the old nightly
+  OSCrypt key onto the stable app name.
 - `nix-gaming` and `llm-agents` retain their upstream nixpkgs pins for tested
   package sets and cache compatibility.
 - Other independent transitive nixpkgs nodes remain unchanged unless the

@@ -34,6 +34,30 @@ let
       run mv -f ${lib.escapeShellArg "${path}.materialized"} ${lib.escapeShellArg path}
     fi
   '';
+  # linkGeneration backs up any regular file at a managed path, even with
+  # force = true. Drop our own materialized copy (identical to the old or new
+  # generation) so relinking does not create a backup on every activation.
+  releaseGtkPath =
+    path:
+    let
+      relPath = lib.removePrefix "${config.home.homeDirectory}/" path;
+    in
+    ''
+      if [ -f ${lib.escapeShellArg path} ] && [ ! -L ${lib.escapeShellArg path} ]; then
+        for gen in "$newGenPath" "''${oldGenPath:-}"; do
+          if [ -n "$gen" ] && cmp -s ${lib.escapeShellArg path} "$gen/home-files/"${lib.escapeShellArg relPath}; then
+            run rm -f ${lib.escapeShellArg path}
+            break
+          fi
+        done
+      fi
+    '';
+  gtkManagedPaths = [
+    "${gtkConfigHome}/gtk-3.0/gtk.css"
+    "${gtkConfigHome}/gtk-3.0/settings.ini"
+    "${gtkConfigHome}/gtk-4.0/gtk.css"
+    "${gtkConfigHome}/gtk-4.0/settings.ini"
+  ];
 in
 {
   config = lib.mkIf (desktopEnabled && enabled) {
@@ -83,12 +107,14 @@ in
     # Home Manager writes gtk.css and settings.ini as store symlinks. Flatpak
     # bind-mounts the directory but cannot follow those targets, so copy them
     # into regular files after link generation.
-    home.activation.materializeGtkThemeForFlatpak = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-      ${materializeGtkPath "${gtkConfigHome}/gtk-3.0/gtk.css"}
-      ${materializeGtkPath "${gtkConfigHome}/gtk-3.0/settings.ini"}
-      ${materializeGtkPath "${gtkConfigHome}/gtk-4.0/gtk.css"}
-      ${materializeGtkPath "${gtkConfigHome}/gtk-4.0/settings.ini"}
-    '';
+    home.activation = {
+      releaseMaterializedGtkTheme = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] (
+        lib.concatMapStrings releaseGtkPath gtkManagedPaths
+      );
+      materializeGtkThemeForFlatpak = lib.hm.dag.entryAfter [ "linkGeneration" ] (
+        lib.concatMapStrings materializeGtkPath gtkManagedPaths
+      );
+    };
 
     dconf = {
       enable = true;

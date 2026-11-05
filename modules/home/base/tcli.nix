@@ -19,6 +19,7 @@ let
     tanlappy = "ssh tan@tanlappy";
     tanime = "ssh root@tanime";
     tanmedia = "ssh tan@tanmedia";
+    codebox = "ssh tan@codebox";
   };
   homeManagerPkg =
     let

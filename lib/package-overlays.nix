@@ -14,6 +14,9 @@ let
       packages.mo2Lint
       packages.computerUseLinux
     ]
+    ++ lib.optionals vars.features.chat.discord.equicord.enable [
+      compatibility.equicordAudioPlayer
+    ]
     ++ lib.optionals vars.features.gaming.steam.millennium.enable [
       inputs.millennium.overlays.default
     ]
@@ -26,6 +29,9 @@ let
       compatibility.patool
     ]
     ++ [ compatibility.llmAgents ]
+    ++ lib.optionals vars.features.mcp.nixos.enable [
+      compatibility.mcpNixosMcp1
+    ]
     ++ lib.optionals vars.features.razer.openrazer.enable [
       compatibility.openrazerCer
     ]
