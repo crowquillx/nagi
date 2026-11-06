@@ -48,6 +48,7 @@
       "wtype"
       "vortex"
       "ntfs3g"
+      "multios-usb"
       "remmina"
     ];
   };

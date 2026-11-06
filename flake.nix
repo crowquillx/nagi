@@ -127,6 +127,12 @@
       url = "github:crowquillx/vortex-nix";
     };
 
+    multios-usb = {
+      url = "github:Mexit/MultiOS-USB";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     # Do not follow nixpkgs: nix-gaming.cachix.org caches against upstream's pin.
     nix-gaming = {
       url = "github:fufexan/nix-gaming";

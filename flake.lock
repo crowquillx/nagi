@@ -449,6 +449,27 @@
         "url": "https://flakehub.com/f/cachix/git-hooks.nix/0.1.941"
       }
     },
+    "gitignore": {
+      "inputs": {
+        "nixpkgs": [
+          "multios-usb",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1709087332,
+        "narHash": "sha256-HG2cCnktfHsKV0s4XW83gU3F57gaTljL9KNSuG6bnQs=",
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "rev": "637db329424fd7e46cf4185293b9cc8c88c95394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "gitignore.nix",
+        "type": "github"
+      }
+    },
     "helium2nix": {
       "inputs": {
         "flake-compat": "flake-compat_2",
@@ -629,6 +650,30 @@
         "owner": "SteamClientHomebrew",
         "repo": "Millennium",
         "rev": "3858d60a2081f612739f07386ceac9b79f68274b",
+        "type": "github"
+      }
+    },
+    "multios-usb": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "gitignore": "gitignore",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1793471468,
+        "narHash": "sha256-7cKYVLoYj3V6Ot6pcpce9TjccID7zT8LpTzIjhUTPaA=",
+        "owner": "Mexit",
+        "repo": "MultiOS-USB",
+        "rev": "af9cf491c82dbb57beb887a9acf11eaf959b405b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mexit",
+        "repo": "MultiOS-USB",
         "type": "github"
       }
     },
@@ -969,6 +1014,7 @@
         "llm-agents": "llm-agents",
         "mcp-servers-nix": "mcp-servers-nix",
         "millennium": "millennium",
+        "multios-usb": "multios-usb",
         "nix-flatpak": "nix-flatpak",
         "nix-gaming": "nix-gaming",
         "nixpkgs": "nixpkgs_6",

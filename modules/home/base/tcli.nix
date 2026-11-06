@@ -20,6 +20,7 @@ let
     tanime = "ssh root@tanime";
     tanmedia = "ssh tan@tanmedia";
     codebox = "ssh tan@codebox";
+    mainbox = "ssh tan@mainbox";
   };
   homeManagerPkg =
     let

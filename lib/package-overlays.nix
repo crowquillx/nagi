@@ -13,6 +13,7 @@ let
       packages.nixGaming
       packages.mo2Lint
       packages.computerUseLinux
+      packages.multiosUsb
     ]
     ++ lib.optionals vars.features.chat.discord.equicord.enable [
       compatibility.equicordAudioPlayer

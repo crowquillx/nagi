@@ -13,6 +13,9 @@ let
   vortex = final: _prev: {
     vortex = inputs.vortex-nix.packages.${final.stdenv.hostPlatform.system}.vortex;
   };
+  multiosUsb = final: _prev: {
+    multios-usb = inputs.multios-usb.packages.${final.stdenv.hostPlatform.system}.default;
+  };
 
   # Prefer flake packages over nix-gaming's overlay so these stay compatible
   # with the upstream pin and binary cache.
@@ -39,6 +42,7 @@ in
     determinateNix
     hushmic
     mo2Lint
+    multiosUsb
     nixGaming
     vortex
     ;
