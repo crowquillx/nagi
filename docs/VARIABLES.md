@@ -57,6 +57,15 @@ The session options are:
 browser has a matching `.enable` toggle. `desktop.hushmic.deviceId` selects a
 PipeWire node for the HushMic tray.
 
+`desktop.hex.enable` installs [Hex](https://github.com/anomalyco/hex) local
+voice dictation through its upstream Home Manager module, autostarts its user
+service, and downloads its selected model after login. Hex records through
+PipeWire's default source (`microphone = "PipeWire Sound Server"`) so it never
+holds the raw ALSA device away from HushMic or Discord. `desktop.hex.keybind`
+(default `Mod+Shift+D`) binds `hex dictation toggle` in Umbriel: press to
+start recording, press again to transcribe and paste. Umbriel has no release
+binds or GlobalShortcuts portal, so hold-to-talk is unavailable.
+
 ## Static package and theme ownership
 
 Nix remains the owner of packages, fonts, cursor packages, icon packages,

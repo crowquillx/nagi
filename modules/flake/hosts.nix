@@ -11,6 +11,8 @@ let
 
   homeModule = import ../../users/default/home.nix;
   umbrielHmModule = inputs.umbriel.homeModules.default;
+  # Inert until programs.hex.enable; imported everywhere so the option exists.
+  hexHmModule = inputs.hex.homeManagerModules.default;
   greeterNixosModule = inputs.noctalia-greeter.nixosModules.default;
   arctisNixosModule = inputs.arctis-sound-manager.nixosModules.default;
   hostPlatforms = lib.mapAttrs (_: spec: spec.system) hosts;
@@ -49,6 +51,7 @@ let
     }:
     [
       homeModule
+      hexHmModule
     ]
     ++ lib.optionals umbriel [ umbrielHmModule ]
     ++ lib.optional standalone determinateHmModule;

@@ -163,6 +163,17 @@ in
           };
           default = { };
         };
+        hex = mkOption {
+          type = strictSubmodule {
+            enable = enableOption "Enable Hex local voice dictation as an autostarted user service." false;
+            keybind = mkOption {
+              type = types.nonEmptyStr;
+              default = "Mod+Shift+D";
+              description = "Umbriel keybind that toggles Hex dictation. Umbriel has no release binds or GlobalShortcuts portal, so this is press-to-start, press-to-stop.";
+            };
+          };
+          default = { };
+        };
       };
     });
     default = { };

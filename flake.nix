@@ -133,6 +133,14 @@
       inputs.flake-parts.follows = "flake-parts";
     };
 
+    # Upstream ships the package and Home Manager module; follow nixpkgs so
+    # Hex's glibc matches the system graphics drivers (see upstream docs/nix.md).
+    hex = {
+      url = "github:anomalyco/hex";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     # Do not follow nixpkgs: nix-gaming.cachix.org caches against upstream's pin.
     nix-gaming = {
       url = "github:fufexan/nix-gaming";

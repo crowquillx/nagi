@@ -76,6 +76,7 @@
       polkit.enable = false;
     };
     hushmic.deviceId = "alsa_input.usb-SteelSeries_Arctis_Nova_Pro_Omni-00.mono-fallback";
+    hex.enable = true;
   };
 
   features = {
