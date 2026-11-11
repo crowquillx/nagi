@@ -1,20 +1,6 @@
 # Local compatibility patches. Each workaround documents its removal condition.
 { lib, inputs }:
 let
-  # Remove when the pinned Equicord includes the 2026-10-05 AudioPlayerAPI fix.
-  equicordAudioPlayer = final: prev: {
-    equicord = prev.equicord.overrideAttrs (old: {
-      patches =
-        (old.patches or [ ])
-        ++ lib.optional (lib.versionOlder old.version "2026-10-05") (
-          final.fetchpatch {
-            url = "https://github.com/Equicord/Equicord/commit/c5fb124e496bdc364deb28eb026e29422d35bd19.patch";
-            hash = "sha256-032qjpja9i/E0tCEjRCNQug/+GuLoON6M4ZZ4AzrzA8=";
-          }
-        );
-    });
-  };
-
   # Hydra's bundled UMU launcher needs Python to start Proton. Remove when
   # nixpkgs includes Python in Hydra's AppImage environment.
   hydraLauncher = final: prev: {
@@ -30,6 +16,19 @@ let
           );
       };
     };
+  };
+
+  # Introduced 2026-11-10.
+  # nixpkgs' cargoUseSystemLibs hook makes zstd-sys and aws-lc-sys link system
+  # libraries, but the package omits them from buildInputs. Remove when the
+  # pinned package lists zstd and aws-lc.
+  rustyPathOfBuilding = final: prev: {
+    rusty-path-of-building = prev.rusty-path-of-building.overrideAttrs (old: {
+      buildInputs = (old.buildInputs or [ ]) ++ [
+        final.aws-lc
+        final.zstd
+      ];
+    });
   };
 
   # Introduced 2026-07-17.
@@ -216,11 +215,11 @@ in
   inherit
     arctisWrapperArgs
     cheatengine
-    equicordAudioPlayer
     hydraLauncher
     llmAgents
     mcpNixosMcp1
     openrazerCer
     patool
+    rustyPathOfBuilding
     ;
 }

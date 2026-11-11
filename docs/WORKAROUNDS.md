@@ -5,17 +5,6 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
 
 ## Active workarounds
 
-### Equicord notification sounds
-
-- Scope: hosts with `features.chat.discord.equicord.enable`.
-- Reason: Equicord 2026-09-03 has an outdated `AudioPlayerAPI` patch. Discord
-  rejects part of the patch, leaving sound calls with a missing filename.
-  Deafen, mute, and call sounds fail with `Cannot find module './undefined.mp3'`.
-- The compatibility overlay backports the
-  [upstream October 5 fix](https://github.com/Equicord/Equicord/commit/c5fb124e496bdc364deb28eb026e29422d35bd19).
-- Remove when the pinned Equicord includes that fix. The patch is skipped for
-  package versions dated 2026-10-05 or later.
-
 ### Hydra Proton launcher
 
 - Scope: gaming hosts using `hydralauncher`.
@@ -24,6 +13,15 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
   Wine instead of the selected Proton version. The compatibility overlay adds
   Python to Hydra's application environment.
 - Remove when the pinned nixpkgs package provides Python for `umu-run`.
+
+### Rusty Path of Building system libraries
+
+- Scope: hosts with `features.gaming.enable`.
+- Reason: nixpkgs' `cargoUseSystemLibs` hook makes the vendored `zstd-sys`
+  and `aws-lc-sys` crates link system libraries, but the package does not
+  list `zstd` or `aws-lc` in `buildInputs`, so the build fails. The
+  compatibility overlay adds both.
+- Remove when the pinned nixpkgs package includes `zstd` and `aws-lc`.
 
 ### Lutris GTK 2 compatibility
 
@@ -141,6 +139,12 @@ revisions expose the standard overlay.
   OSCrypt key onto the stable app name.
 - `nix-gaming` and `llm-agents` retain their upstream nixpkgs pins for tested
   package sets and cache compatibility.
+- Equicord comes from the `nixcord` input on hosts with
+  `features.chat.discord.equicord.enable`. Nixpkgs updates it too slowly for
+  Discord's web client, whose bundle changes break older builds at startup. Only
+  the package is used, not the Home Manager module. `nixpkgs-packages` stays on
+  nixcord's pin because its bun dependency hash is tested against that package
+  set. Run `nix flake update nixcord` to update Equicord alone.
 - Other independent transitive nixpkgs nodes remain unchanged unless the
   package/cache audit proves that a `follows` edge is safe.
 

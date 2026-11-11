@@ -8,6 +8,7 @@ let
     vars:
     [
       packages.determinateNix
+      packages.brave
       packages.hushmic
       packages.vortex
       packages.nixGaming
@@ -16,7 +17,7 @@ let
       packages.multiosUsb
     ]
     ++ lib.optionals vars.features.chat.discord.equicord.enable [
-      compatibility.equicordAudioPlayer
+      packages.equicord
     ]
     ++ lib.optionals vars.features.gaming.steam.millennium.enable [
       inputs.millennium.overlays.default
@@ -28,6 +29,7 @@ let
     ++ lib.optionals vars.features.gaming.enable [
       compatibility.hydraLauncher
       compatibility.patool
+      compatibility.rustyPathOfBuilding
     ]
     ++ [ compatibility.llmAgents ]
     ++ lib.optionals vars.features.mcp.nixos.enable [

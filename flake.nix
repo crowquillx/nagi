@@ -88,6 +88,20 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Brave was removed from nixpkgs.
+    brave-browser = {
+      url = "github:drishal/brave-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Keeps Equicord current; nixpkgs lags behind Discord's web client. Its
+    # nixpkgs-packages pin stays independent so the bun deps hash matches.
+    nixcord = {
+      url = "github:4evy/nixcord";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
     mcp-servers-nix = {
       url = "github:natsukium/mcp-servers-nix";
       inputs.nixpkgs.follows = "nixpkgs";

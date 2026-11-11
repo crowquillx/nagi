@@ -7,6 +7,16 @@ let
     };
   };
 
+  # The flake's default package is Nightly, so select the stable channel.
+  brave = final: _prev: {
+    brave = inputs.brave-browser.packages.${final.stdenv.hostPlatform.system}.brave-stable;
+  };
+
+  # Consumed by discord.override { withEquicord = true; }.
+  equicord = final: _prev: {
+    equicord = inputs.nixcord.packages.${final.stdenv.hostPlatform.system}.equicord;
+  };
+
   hushmic = final: _prev: {
     hushmic = inputs.hushmic-nix.packages.${final.stdenv.hostPlatform.system}.default;
   };
@@ -38,8 +48,10 @@ let
 in
 {
   inherit
+    brave
     computerUseLinux
     determinateNix
+    equicord
     hushmic
     mo2Lint
     multiosUsb
