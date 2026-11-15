@@ -170,6 +170,11 @@ NIX_OPTS=(
   --option connect-timeout 10
 )
 
+# Newer Nix refuses world-writable build dirs (the ISO's /tmp), and /tmp is
+# RAM-backed there anyway. Build on the target disk in a root-only dir.
+export TMPDIR="/mnt/root/.nixos-install-build"
+mkdir -p -m 0700 "${TMPDIR}"
+
 log "Building tandesk into /mnt (measured boot off for the first boot)"
 system="$("${NIX[@]}" build --store /mnt "${NIX_OPTS[@]}" --no-link --print-out-paths --impure \
   -f "${SCRIPT_DIR}/install-system.nix" --argstr flakePath "path:${FLAKE_DIR}")"
@@ -177,6 +182,8 @@ log "System: ${system}"
 
 log "Running nixos-install"
 nixos-install --root /mnt --system "${system}" --no-root-passwd --no-channel-copy "${NIX_OPTS[@]}"
+rm -rf "${TMPDIR}"
+export TMPDIR=/tmp
 
 # --- fix ownership, set password ---------------------------------------------------
 log "Fixing ownership of restored state"

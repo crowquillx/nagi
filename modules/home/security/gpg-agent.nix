@@ -39,7 +39,7 @@ in
     home.activation.importYubikeyPgpKey = lib.hm.dag.entryAfter [ "writeBoundary" ] (
       if pgpPublicKey != null then
         ''
-          key=${lib.escapeShellArg (toString pgpPublicKey)}
+          key=${lib.escapeShellArg "${pgpPublicKey}"}
           gpgHome="$HOME/.gnupg"
 
           mkdir -p "$gpgHome"

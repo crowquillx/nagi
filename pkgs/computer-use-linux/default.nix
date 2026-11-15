@@ -20,7 +20,7 @@ rustPlatform.buildRustPackage {
   pname = "computer-use-linux";
   inherit version src;
 
-  cargoLock.lockFile = "${src}/Cargo.lock";
+  cargoHash = "sha256-+Eum9F6jBsLSlqSr8E8QL1dnlCyjPe8ekPhKZqc5/+A=";
 
   # The test suite spawns a private D-Bus session and probes /tmp ownership, so
   # it cannot run inside the build sandbox. Upstream CI runs it on a live session.
