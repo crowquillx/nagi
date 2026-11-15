@@ -1,0 +1,68 @@
+# GNU tar exclude patterns for the home archive (tar -C /home/tan .).
+# Anchored at "./"; "*" also matches "/". Lines starting with # are ignored
+# by backup.sh. Symlinks into /nix/store are excluded separately (Home
+# Manager recreates them on first boot).
+
+# Caches, trash, indexes
+./.cache
+./.local/share/Trash
+./.local/share/baloo
+./.nv
+./.gvfs
+./.thumbnails
+*/node_modules
+./.config/*/Cache
+./.config/*/Code Cache
+./.config/*/GPUCache
+./.config/*/DawnCache
+./.config/*/DawnGraphiteCache
+./.config/*/DawnWebGPUCache
+./.config/*/GrShaderCache
+./.config/*/ShaderCache
+./.config/*/GraphiteDawnCache
+./.config/*/CachedData
+./.config/*/CacheStorage
+./.config/*/component_crx_cache
+./.config/*/extensions_crx_cache
+./.config/*/Crashpad
+./.var/app/*/cache
+./.t3/*/Cache
+./.t3/*/Code Cache
+./.t3/*/GPUCache
+./.t3/*/DawnCache
+./.t3/*/GrShaderCache
+./.config/zen/*/cache2
+./.mozilla/*/cache2
+
+# Package manager / toolchain caches (re-downloaded on demand)
+./.npm
+./.nuget
+./.pub-cache
+./.dartServer
+./.dart-tool
+./.cargo/registry
+./.cargo/git
+./go/pkg/mod
+./.local/share/NuGet
+./.local/share/umu
+./.local/share/lutris/runners
+./.local/share/lutris/runtime
+
+# Re-provisioned declaratively or not wanted
+./.local/share/flatpak
+./.local/share/containers
+./.local/state/nix
+./.local/state/home-manager
+./.nix-profile
+./.nix-profile-*
+./.nix-defexpr
+
+# Large re-downloadable items (deliberately skipped)
+./Games
+./.config/AmethystModManager
+# Steam is skipped except config/ and userdata/, which go in steam.tar.zst
+./.local/share/Steam
+
+# nagi build outputs
+./nagi/result
+./nagi/result-*

@@ -1,0 +1,28 @@
+# Absolute paths (relative to /) archived into system.tar.zst by backup.sh
+# and restored into /mnt by install.sh before nixos-install. Missing paths
+# are skipped.
+
+# sops-nix host age key: without it /run/secrets (SSH keys etc.) stays empty
+var/lib/sops-nix
+# Lanzaboote/sbctl Secure Boot keys already enrolled in the firmware
+var/lib/sbctl
+# SSH host identity (tanlappy and others pin it)
+etc/ssh/ssh_host_ed25519_key
+etc/ssh/ssh_host_ed25519_key.pub
+etc/ssh/ssh_host_rsa_key
+etc/ssh/ssh_host_rsa_key.pub
+etc/ssh/ssh_host_mldsa44_ed25519_key
+etc/ssh/ssh_host_mldsa44_ed25519_key.pub
+# Tailscale node identity (keeps name/IP, no re-login)
+var/lib/tailscale
+# Bluetooth pairings
+var/lib/bluetooth
+# Wi-Fi / wired profiles
+etc/NetworkManager/system-connections
+# Mullvad device + settings (keeps the device slot)
+etc/mullvad-vpn
+# Noctalia Greeter mutable sync state, user avatar
+var/lib/noctalia-greeter
+var/lib/AccountsService
+# root's home (contains boot-unlock-backup with old sbctl keys + LUKS header)
+root

@@ -15,7 +15,7 @@ in
   boot = {
     initrd = {
       # Keep FIDO2 and passphrase recovery available after TPM enrollment.
-      luks.devices."luks-840bc2c4-3551-4cd7-b379-e0e70db6b623".crypttabExtraOpts = [
+      luks.devices.cryptroot.crypttabExtraOpts = [
         "tpm2-device=auto"
         "fido2-device=auto"
         "token-timeout=5s"
