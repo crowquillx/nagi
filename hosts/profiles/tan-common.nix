@@ -9,7 +9,7 @@
   };
 
   boot = {
-    kernel = "zen";
+    kernel = "latest";
     systemdBoot.enable = true;
     secureBoot = {
       includeMicrosoftKeys = true;

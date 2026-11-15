@@ -23,6 +23,16 @@ Ordinary package exposure lives in `lib/overlays/packages.nix`.
   compatibility overlay adds both.
 - Remove when the pinned nixpkgs package includes `zstd` and `aws-lc`.
 
+### Lutris GnomeDesktop RandR check
+
+- Scope: hosts with `features.gaming.enable`.
+- Reason: gnome-desktop 51 removed the `RR*` RandR API from
+  `GnomeDesktop-3.0`. Lutris only checks that the typelib loads, then calls
+  `GnomeDesktop.RRScreen` and crashes at startup with `AttributeError`. The
+  compatibility overlay makes Lutris require `RRScreen` before using that
+  backend, so it falls back to its xrandr display manager.
+- Remove when the pinned Lutris guards the GnomeDesktop backend itself.
+
 ### Lutris GTK 2 compatibility
 
 - Scope: hosts with `features.gaming.enable`.

@@ -136,7 +136,7 @@
       theme = "BreezeX-RosePine-Linux";
     };
     focus = {
-      follows_mouse = true;
+      follows_mouse = "sloppy";
       follows_mouse_max_scroll = 0.15;
     };
     keyboard = {

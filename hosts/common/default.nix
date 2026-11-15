@@ -57,4 +57,10 @@ in
       xdg.configHome = lib.mkForce "/home/${primaryUser}/.config";
     };
   };
+
+  # Boot-time HM activation runs dconf/xfconf in a throwaway dbus-run-session
+  # without XDG_RUNTIME_DIR. GIO then autostarts gvfsd, whose gvfsd-fuse falls
+  # back to ~/.gvfs and crashes when the bus closes, leaving a dead FUSE mount
+  # that breaks file managers listing $HOME. Keep GIO on the local VFS here.
+  systemd.services."home-manager-${primaryUser}".environment.GIO_USE_VFS = "local";
 }

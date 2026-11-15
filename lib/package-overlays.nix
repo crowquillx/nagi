@@ -28,6 +28,7 @@ let
     ]
     ++ lib.optionals vars.features.gaming.enable [
       compatibility.hydraLauncher
+      compatibility.lutrisGnomeDesktopRR
       compatibility.patool
       compatibility.rustyPathOfBuilding
     ]

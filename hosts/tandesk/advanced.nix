@@ -38,7 +38,8 @@
           1080
         ];
         scale = 1;
-        vrr = "fullscreen";
+        # VA mini-LED panel: VRR causes brightness flicker in games.
+        vrr = "disabled";
         hdr = "auto";
         sdr_white = 250;
       };
@@ -89,11 +90,21 @@
     };
 
     window_rule = [
+      # APT (forced to XWayland by its wrapper) sizes itself over the PoE
+      # window. Umbriel only reveals floats above fullscreen on the same
+      # workspace, so follow PoE to GAME. APT's keys (Shift+Space, Ctrl+D,
+      # F5, F9) need no compositor binds: Xwayland only sees keys while an
+      # X11 window is focused, and APT arms them only while PoE or APT is
+      # active, so they stay untouched in other apps.
       {
         match.app_id = "^awakened-poe-trade$";
-        default_output = "DP-3";
+        default_output = "HDMI-A-1";
+        default_workspace = "GAME";
         default_floating = true;
+        focus_on_activate = true;
         blur = false;
+        shadow = false;
+        border_width = 0;
       }
       {
         match.app_id = "^(steam_app_238960|steam_app_2694490)$";
@@ -116,11 +127,10 @@
         default_fullscreen = true;
         blur = false;
       }
-      # VRR/HDR follow for any game content, including fallback to DP-3 while
-      # the TV is disabled.
+      # HDR follows any game content, including fallback to DP-3 while the TV
+      # is disabled. VRR stays per-output so DP-3 keeps it off.
       {
         match.content_type = "game";
-        vrr = "fullscreen";
         hdr = "auto";
       }
       {

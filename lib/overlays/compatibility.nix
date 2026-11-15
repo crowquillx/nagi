@@ -18,6 +18,22 @@ let
     };
   };
 
+  # Introduced 2026-11-12.
+  # gnome-desktop 51 dropped the RR* RandR API from GnomeDesktop-3.0, but
+  # Lutris only checks that the typelib loads before calling RRScreen and
+  # crashes at import. Require RRScreen so it falls back to xrandr. Remove
+  # when Lutris guards the GnomeDesktop display backend itself.
+  lutrisGnomeDesktopRR = _final: prev: {
+    lutris-unwrapped = prev.lutris-unwrapped.overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        substituteInPlace lutris/util/display.py \
+          --replace-fail \
+            '    LIB_GNOME_DESKTOP_AVAILABLE = True' \
+            '    LIB_GNOME_DESKTOP_AVAILABLE = hasattr(GnomeDesktop, "RRScreen")'
+      '';
+    });
+  };
+
   # Introduced 2026-11-10.
   # nixpkgs' cargoUseSystemLibs hook makes zstd-sys and aws-lc-sys link system
   # libraries, but the package omits them from buildInputs. Remove when the
@@ -217,6 +233,7 @@ in
     cheatengine
     hydraLauncher
     llmAgents
+    lutrisGnomeDesktopRR
     mcpNixosMcp1
     openrazerCer
     patool
